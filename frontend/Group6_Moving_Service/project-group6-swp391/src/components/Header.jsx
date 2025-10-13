@@ -15,6 +15,7 @@ const Header = () => {
   const isLoggedIn = !!token;
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const dropdownRef = useRef(null);
+  const roleName = localStorage.getItem("roleName");
   // Inline request preview removed; we navigate to a dedicated page
 
   // Close dropdown when clicking outside
@@ -76,6 +77,24 @@ const Header = () => {
 
   const userMenuItems = [
     {
+      key: "my-requests",
+      label: "Danh sách yêu cầu",
+      onClick: () => {
+        navigate("/my-requests");
+        setIsDropdownVisible(false);
+      }
+    },
+    ...(roleName === "admin" ? [ // Thêm link chỉ cho admin
+      {
+        key: "admin-dashboard",
+        label: "Admin Dashboard",
+        onClick: () => {
+          navigate("/admin-dashboard");
+          setIsDropdownVisible(false);
+        }
+      }
+    ] : []),
+    {
       key: "profile",
       label: "Thông tin cá nhân",
       onClick: () => {
@@ -123,14 +142,14 @@ const Header = () => {
           {/* User Actions */}
           {isLoggedIn ? (
             <div className="user-menu" ref={dropdownRef}>
-              <button 
-                className="user-button" 
+              <button
+                className="user-button"
                 onClick={handleUserMenuClick}
               >
                 <UserOutlined className="user-icon" />
                 <DownOutlined className="dropdown-icon" />
               </button>
-              
+
               {isDropdownVisible && (
                 <div className="user-dropdown">
                   <button
@@ -157,15 +176,15 @@ const Header = () => {
             </div>
           ) : (
             <div className="auth-buttons">
-              <Button 
-                type="text" 
+              <Button
+                type="text"
                 className="login-btn"
                 onClick={() => navigate("/login")}
               >
                 Đăng Nhập
               </Button>
-              <Button 
-                type="primary" 
+              <Button
+                type="primary"
                 className="register-btn"
                 onClick={() => navigate("/customer-register")}
               >

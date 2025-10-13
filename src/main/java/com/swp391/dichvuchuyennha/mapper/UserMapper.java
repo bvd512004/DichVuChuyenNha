@@ -21,7 +21,6 @@ public interface UserMapper {
     @Mapping(target = "requests", ignore = true)
     Users toUsersCreateRequest(UserCreateRequest request);
 
-   
+
     UserResponse toUserResponse(Users users);
 }
-

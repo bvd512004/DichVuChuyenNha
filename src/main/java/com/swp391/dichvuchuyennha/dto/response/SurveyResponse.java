@@ -23,10 +23,11 @@ public class SurveyResponse {
     private String username;
     private String companyName;
     private LocalDateTime requestTime;
-
+   private String listService;
 
 
 
 
 
 }
+

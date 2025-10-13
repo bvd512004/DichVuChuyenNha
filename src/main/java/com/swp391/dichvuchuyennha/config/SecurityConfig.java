@@ -17,7 +17,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -40,10 +40,29 @@ public class SecurityConfig {
         private String jwtSecret;
 
         private final String[] PUBLIC_URL = {
-                        "/api/auth/**", // Login/logout
-                        "/api/users/customer-company", // Đăng ký customer
-                        "/api/users/roles" // Get roles cho register
-        };
+
+
+                "/api/auth/**", // Login/logout
+                "/api/users/customer-company",
+                "/api/auth/**",
+                "/api/public/**",
+                "/api/test/public",
+                "/api/users/**",
+                "/api/manager/contracts/**",
+                "/api/manager/view-contracts",
+                "/api/employees/**",
+                "/api/assignments/**",
+                "/api/contracts/**",
+                "/api/surveys/**",
+                "/api/requests/**",
+                "/api/admin/**",
+                "/api/prices/**",
+                "/api/quotations/**",
+                "/api/quotation-services/**",
+                "/api/chat-ai"};
+
+
+
 
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -107,7 +126,7 @@ public class SecurityConfig {
                                                 .hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
 
                                                 // Default
-                                                .anyRequest().authenticated())
+                                                )
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -140,8 +159,9 @@ public class SecurityConfig {
                 corsConfiguration.addAllowedHeader("*");
                 corsConfiguration.addAllowedMethod("*");
                 corsConfiguration.addAllowedOrigin("http://localhost:5173");
+            corsConfiguration.setAllowCredentials(true); // quan trọng nếu gửi JWT qua cookie
 
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                 source.registerCorsConfiguration("/**", corsConfiguration);
                 return new CorsFilter(source);
         }
@@ -165,6 +185,7 @@ public class SecurityConfig {
 
         @Bean
         public PasswordEncoder passwordEncoder() {
-                return new BCryptPasswordEncoder(); // Đổi sang BCrypt
+                // return new BCryptPasswordEncoder(); // Đổi sang BCrypt
+                return NoOpPasswordEncoder.getInstance();
         }
 }

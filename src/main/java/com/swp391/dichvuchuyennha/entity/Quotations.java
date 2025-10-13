@@ -37,4 +37,6 @@ public class Quotations {
 
     @OneToMany(mappedBy = "quotation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Vehicles> vehicles;
+    @Column(name = "status")
+    private String status;
 }

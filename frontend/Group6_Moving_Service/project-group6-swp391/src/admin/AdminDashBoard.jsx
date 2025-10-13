@@ -14,6 +14,7 @@ import {
 import axios from "axios";
 import moment from "moment"; // Import moment để format date
 import CreateAdminUser from "./CreateAdminUser";
+import VehiclesCRUD from "../vehicles/VehiclesPage"; // Import VehiclesCRUD component
 const { TabPane } = Tabs;
 
 export default function AdminDashboard() {
@@ -61,8 +62,15 @@ export default function AdminDashboard() {
       const res = await axios.get(`http://localhost:8080/api/users/${userId}/history`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUserHistory(res.data);
+      setUserHistory({
+        requests: res.data.requests,
+        contracts: res.data.contracts,
+        payments: res.data.payments,
+        feedbacks: res.data.feedbacks,
+        progress: res.data.progress
+      });
     } catch (err) {
+      console.error(err);
       message.error("Không tải được lịch sử!");
     } finally {
       setHistoryLoading(false);
@@ -235,6 +243,11 @@ export default function AdminDashboard() {
         <TabPane tab="Tạo người dùng" key="2">
           <CreateAdminUser onSuccess={fetchUsers} />
         </TabPane>
+
+        {/* New Tab for Vehicles Management */}
+        <TabPane tab="Quản lý phương tiện" key="3">
+          <VehiclesCRUD />
+        </TabPane>
       </Tabs>
 
       {/* Modal sửa user */}
@@ -312,6 +325,37 @@ export default function AdminDashboard() {
               rowKey="feedbackId"
               columns={feedbackColumns}
               dataSource={userHistory.feedbacks}
+              loading={historyLoading}
+              pagination={{ pageSize: 5 }}
+            />
+          </TabPane>
+          <TabPane tab="Payments" key="payments">
+            <Table
+              rowKey="paymentId"
+              columns={[
+                { title: "ID", dataIndex: "paymentId" },
+                { title: "Amount", dataIndex: "amount" },
+                { title: "Date", dataIndex: "paymentDate", render: (date) => moment(date).format("DD/MM/YYYY") },
+                { title: "Method", dataIndex: "method" },
+                { title: "Status", dataIndex: "status" }
+              ]}
+              dataSource={userHistory.payments}
+              loading={historyLoading}
+              pagination={{ pageSize: 5 }}
+            />
+          </TabPane>
+          <TabPane tab="Progress" key="progress">
+            <Table
+              rowKey="progressId"
+              columns={[
+                { title: "ID", dataIndex: "progressId" },
+                { title: "Contract ID", dataIndex: "contractId" },
+                { title: "Employee ID", dataIndex: "employeeId" },
+                { title: "Task", dataIndex: "taskDescription" },
+                { title: "Status", dataIndex: "progressStatus" },
+                { title: "Updated", dataIndex: "updatedAt", render: (time) => moment(time).format("DD/MM/YYYY HH:mm") }
+              ]}
+              dataSource={userHistory.progress}
               loading={historyLoading}
               pagination={{ pageSize: 5 }}
             />

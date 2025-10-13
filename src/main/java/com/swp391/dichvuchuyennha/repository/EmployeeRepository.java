@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
@@ -20,4 +21,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     LEFT JOIN e.user u
 """)
     List<EmployeeDTO> findAllEmployeeDTO();
+    // 🔎 Thêm hàm này để tìm nhân viên từ userId trong JWT
+    Optional<Employee> findByUser_UserId(Long userId);
 }

@@ -23,6 +23,11 @@ import com.swp391.dichvuchuyennha.service.RequestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+
+
+
+
+
 @RestController
 @RequestMapping("/api/requests")
 @RequiredArgsConstructor
@@ -31,7 +36,6 @@ public class RequestsController {
     private final RequestService requestService;
     private final UserRepository userRepository;
     private final RequestRepository requestRepository;
-
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<RequestResponse>> create(@Valid @RequestBody RequestCreateRequest requestDto) {
         String context = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -57,8 +61,12 @@ public class RequestsController {
                         .requestId(r.getRequestId())
                         .username(r.getUser() != null ? r.getUser().getUsername() : "N/A")
                         .companyName(r.getBusiness() != null ? r.getBusiness().getCompanyName() : "N/A")
-                        .build())
-                .collect(Collectors.toList());
+                        .requestTime(r.getRequestTime())
+                        .status(r.getStatus())
+                        .build()
+                ).collect(Collectors.toList());
     }
 
 }
+
+

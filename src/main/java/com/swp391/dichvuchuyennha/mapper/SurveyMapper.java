@@ -11,22 +11,12 @@ import org.mapstruct.Mapping;
 
 
 public interface SurveyMapper {
-    @Mapping(target = "surveyId", ignore = true) // auto-generated
-
-    @Mapping(target = "surveyDate", source = "surveyDate")
-    @Mapping(target = "addressFrom", source = "addressFrom")
-    @Mapping(target = "addressTo", source = "addressTo")
-    @Mapping(target = "status", source = "status")
-    @Mapping(target = "estimatedWorkers", source = "estimatedWorkers")
+    @Mapping(target = "surveyId", ignore = true)
+    @Mapping(target = "request", ignore = true)
 
     Surveys toEntity(SurveyRequest dto);
-    default Requests mapRequest(Integer requestId) {
-        if (requestId == null) return null;
-        Requests req = new Requests();
-        req.setRequestId(requestId);
-        return req;
-    }
-    @Mapping(target = "surveyId",source = "surveyId")
+
+
     @Mapping(target = "requestId",source = "request.requestId")
 
     @Mapping(target = "requestTime",source = "request.requestTime")
@@ -35,3 +25,4 @@ public interface SurveyMapper {
     SurveyResponse toResponse(Surveys survey);
 
 }
+

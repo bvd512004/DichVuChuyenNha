@@ -19,6 +19,7 @@ const VehiclesCRUD = () => {
             });
             setVehicles(res.data);
         } catch (err) {
+            console.error(err);
             message.error("Failed to fetch vehicles");
         } finally {
             setLoading(false);
@@ -51,6 +52,7 @@ const VehiclesCRUD = () => {
             setEditingId(null);
             fetchVehicles();
         } catch (err) {
+            console.error(err);
             message.error("Operation failed");
         }
     };
@@ -69,6 +71,7 @@ const VehiclesCRUD = () => {
             message.success("Deleted successfully");
             fetchVehicles();
         } catch (err) {
+            console.error(err);
             message.error("Delete failed");
         }
     };

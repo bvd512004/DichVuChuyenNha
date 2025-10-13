@@ -41,7 +41,7 @@ public class AuthenticationService {
     private final EmailService emailService; // Inject EmailService
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        Users user = userRepository.findByEmail(request.getUsername()) // Thay username → email
+        Users user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
@@ -68,6 +68,7 @@ public class AuthenticationService {
                     .expirationTime(Date.from(Instant.now().plusSeconds(jwtExpirationSec)))
                     .jwtID(UUID.randomUUID().toString())
                     .claim("roles", List.of(user.getRole().getRoleName()))
+                    .claim("userId", user.getUserId())
                     .build();
 
             JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);

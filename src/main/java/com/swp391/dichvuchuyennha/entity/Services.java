@@ -32,4 +32,7 @@ public class Services {
 
     @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<QuotationServices> quotationServices;
+    @Column(name = "image_url")
+    private String imageUrl;
+
 }

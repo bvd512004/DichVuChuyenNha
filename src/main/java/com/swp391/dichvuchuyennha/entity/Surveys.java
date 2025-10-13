@@ -32,6 +32,9 @@ public class Surveys {
     @Column(name = "address_to")
     private String addressTo;
 
+    @Column(name = "distance_km")
+    private Double distanceKm;
+
     @Column(name = "status")
     private String status;
 
@@ -41,4 +44,6 @@ public class Surveys {
 
     @OneToMany(mappedBy = "survey", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Quotations> quotations;
+    @Column(name = "list_services")
+    private String listService;
 }
