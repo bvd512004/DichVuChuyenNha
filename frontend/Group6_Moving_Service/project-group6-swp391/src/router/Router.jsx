@@ -37,36 +37,36 @@ const Router = () => {
 
         {
           path: "",
-          element: <HomePage/>
+          element: <HomePage />
         },
         {
-  path: "contract-assignment",
-  element: (
-    <ProtectedRoute allowedRoles={["manager"]}>
-      <ContractAssignment />
-    </ProtectedRoute>
-  ),
-},
-        {
-          path:"user-profile",
-          element: <ProfilePage/>
+          path: "contract-assignment",
+          element: (
+            <ProtectedRoute allowedRoles={["manager"]}>
+              <ContractAssignment />
+            </ProtectedRoute>
+          ),
         },
         {
-          path:"survey-dashboard",
-          element: <SurveyDashboard/>
-        },
-     
-      {
-          path:"price-service",
-          element: <PriceTable/>
+          path: "user-profile",
+          element: <ProfilePage />
         },
         {
-          path:"quotations-services",
-          element: <QuotationServiceManager/>
+          path: "survey-dashboard",
+          element: <SurveyDashboard />
+        },
+
+        {
+          path: "price-service",
+          element: <PriceTable />
         },
         {
-          path:"quotations-services-list",
-          element: <QuotationServiceList/>
+          path: "quotations-services",
+          element: <QuotationServiceManager />
+        },
+        {
+          path: "quotations-services-list",
+          element: <QuotationServiceList />
         },
 
 
@@ -90,7 +90,7 @@ const Router = () => {
         },
 
         { path: "customer-page", element: <CustomerPage /> },
-  
+
         { path: "list-contract-unsigned", element: <UserContractsPage /> },
 
         // Admin routes
@@ -114,8 +114,8 @@ const Router = () => {
 
         },
         {
-          path:"my-requests",
-          element:<UserRequestsPage/>
+          path: "my-requests",
+          element: <UserRequestsPage />
 
         },
 
@@ -123,7 +123,7 @@ const Router = () => {
         { path: "my-requests", element: <UserRequestsPage /> },
 
         { path: "access-denied", element: <AccessDeniedPage /> },
-        { path: "employee/work-progress", element: <WorkProgressPage />}
+        { path: "employee/work-progress", element: <WorkProgressPage /> }
       ],
     },
   ]);
