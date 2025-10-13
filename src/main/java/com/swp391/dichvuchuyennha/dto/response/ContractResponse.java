@@ -32,6 +32,10 @@ public class ContractResponse {
 
     // Thông tin bổ sung
     private String startLocation; // địa chỉ đi
-    private String endLocation;   // địa chỉ đến
+    private String endLocation;
+    private List<QuotationServiceInfo> services;
+    private Double totalPrice;
+
+// địa chỉ đến
 }
 

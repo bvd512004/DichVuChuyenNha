@@ -17,6 +17,7 @@ public class ServicePriceDTO {
     private String serviceName;
     private String description;
     private Boolean isActive;
+    private String imageUrl;
     private List<PriceDTO> prices;
 }
 

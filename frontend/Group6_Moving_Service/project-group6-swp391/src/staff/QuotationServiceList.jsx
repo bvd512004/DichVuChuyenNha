@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Table, Card, Spin, Input, message, InputNumber, Popconfirm, Button } from "antd";
+import { Table, Card, Spin, Input, message, Popconfirm, Button, Space } from "antd";
 import axios from "axios";
 
 const { Search } = Input;
@@ -30,15 +30,30 @@ const QuotationServiceList = () => {
     ? data.filter(item => item.username.toLowerCase().includes(searchText.toLowerCase()))
     : data;
 
-  // Cập nhật quantity
-  const handleQuantityChange = async (id, value) => {
+  // Hàm cập nhật quantity
+  const updateQuantity = async (id, newQuantity) => {
     try {
-      await axios.put(`http://localhost:8080/api/quotation-services/${id}?quantity=${value}`);
-      message.success("Cập nhật quantity thành công");
+      await axios.put(`http://localhost:8080/api/quotation-services/${id}?quantity=${newQuantity}`);
+      message.success("Cập nhật số lượng thành công");
       fetchData();
     } catch (error) {
       console.error(error);
       message.error("Cập nhật thất bại");
+    }
+  };
+
+  // Xử lý tăng/giảm
+  const handleIncrease = (record) => {
+    const newQuantity = record.quantity + 1;
+    updateQuantity(record.id, newQuantity);
+  };
+
+  const handleDecrease = (record) => {
+    if (record.quantity > 1) {
+      const newQuantity = record.quantity - 1;
+      updateQuantity(record.id, newQuantity);
+    } else {
+      message.warning("Số lượng tối thiểu là 1");
     }
   };
 
@@ -60,23 +75,31 @@ const QuotationServiceList = () => {
     { title: "Company Name", dataIndex: "companyName", key: "companyName" },
     { title: "Service Name", dataIndex: "serviceName", key: "serviceName" },
     { title: "Price Type", dataIndex: "priceType", key: "priceType" },
-    { 
-      title: "Quantity", 
-      dataIndex: "quantity", 
+    {
+      title: "Quantity",
+      dataIndex: "quantity",
       key: "quantity",
-      render: (value, record) => (
-        <InputNumber 
-          min={1} 
-          value={value} 
-          onChange={(val) => handleQuantityChange(record.id, val)} 
-        />
-      )
+      render: (_, record) => (
+        <Space>
+          <Button
+            size="small"
+            onClick={() => handleDecrease(record)}
+            disabled={record.quantity <= 1}
+          >
+            −
+          </Button>
+          <span>{record.quantity}</span>
+          <Button size="small" onClick={() => handleIncrease(record)}>
+            +
+          </Button>
+        </Space>
+      ),
     },
-    { 
-      title: "Subtotal", 
-      dataIndex: "subtotal", 
-      key: "subtotal", 
-      render: v => `$${v.toFixed(2)}` 
+    {
+      title: "Subtotal",
+      dataIndex: "subtotal",
+      key: "subtotal",
+      render: (v) => `$${v.toFixed(2)}`,
     },
     {
       title: "Action",
@@ -88,7 +111,9 @@ const QuotationServiceList = () => {
           okText="Yes"
           cancelText="No"
         >
-          <Button type="link" danger>Xóa</Button>
+          <Button type="link" danger>
+            Xóa
+          </Button>
         </Popconfirm>
       ),
     },
@@ -102,7 +127,7 @@ const QuotationServiceList = () => {
         enterButton="Search"
         size="middle"
         style={{ marginBottom: 16, width: 300 }}
-        onSearch={value => setSearchText(value)}
+        onSearch={(value) => setSearchText(value)}
       />
 
       {loading ? (

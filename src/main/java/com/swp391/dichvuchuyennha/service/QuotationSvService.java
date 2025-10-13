@@ -44,8 +44,6 @@ public class QuotationSvService {
 
     // Ví dụ khi tạo mới một QuotationService
     public QuotationServices create(QuotationServiceRequest request) {
-        QuotationServices entity = mapper.toEntity(request);
-
         Quotations quotation = quotationRepository.findById(request.getQuotationId())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Không tìm thấy quotation với ID: " + request.getQuotationId()));
@@ -58,6 +56,24 @@ public class QuotationSvService {
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Không tìm thấy price với ID: " + request.getPriceId()));
 
+        // ✅ Kiểm tra xem service đã tồn tại trong quotation chưa
+        QuotationServices existing = quotationServiceRepository
+                .findByQuotationAndServiceAndPrice(quotation, service, price)
+                .orElse(null);
+
+        if (existing != null) {
+            // Đã tồn tại → cộng dồn quantity
+            int newQuantity = existing.getQuantity() + request.getQuantity();
+            existing.setQuantity(newQuantity);
+            existing.setSubtotal(price.getAmount() * newQuantity);
+
+            QuotationServices updated = quotationServiceRepository.save(existing);
+            updateQuotationTotalPrice(quotation.getQuotationId());
+            return updated;
+        }
+
+        // Chưa có → tạo mới
+        QuotationServices entity = mapper.toEntity(request);
         entity.setQuotation(quotation);
         entity.setService(service);
         entity.setPrice(price);
@@ -65,12 +81,9 @@ public class QuotationSvService {
         entity.setSubtotal((price.getAmount() != null && request.getQuantity() != null)
                 ? price.getAmount() * request.getQuantity() : 0);
 
-        QuotationServices savedService = quotationServiceRepository.save(entity);
-
-        // Cập nhật tổng subtotal vào quotation
+        QuotationServices saved = quotationServiceRepository.save(entity);
         updateQuotationTotalPrice(quotation.getQuotationId());
-
-        return savedService;
+        return saved;
     }
     public List<ListQuotationServicesResponse> getAllQuotationServices() {
         List<QuotationServices> quotationServicesList = quotationServiceRepository.findAll();

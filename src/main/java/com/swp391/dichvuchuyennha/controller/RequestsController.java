@@ -61,6 +61,8 @@ public class RequestsController {
                         .requestId(r.getRequestId())
                         .username(r.getUser() != null ? r.getUser().getUsername() : "N/A")
                         .companyName(r.getBusiness() != null ? r.getBusiness().getCompanyName() : "N/A")
+                        .requestTime(r.getRequestTime())
+                        .status(r.getStatus())
                         .build()
                 ).collect(Collectors.toList());
     }

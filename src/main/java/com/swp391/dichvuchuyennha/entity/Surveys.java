@@ -44,5 +44,6 @@ public class Surveys {
 
     @OneToMany(mappedBy = "survey", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Quotations> quotations;
-
+    @Column(name = "list_services")
+    private String listService;
 }

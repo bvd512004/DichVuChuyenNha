@@ -18,13 +18,12 @@ public class SurveyResponse {
     private int estimatedWorkers;
     private String status;
     private LocalDateTime surveyDate;
-    private Double distanceKm;
 
     private int requestId;
     private String username;
     private String companyName;
     private LocalDateTime requestTime;
-
+   private String listService;
 
 
 

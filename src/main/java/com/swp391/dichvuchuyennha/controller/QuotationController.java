@@ -4,7 +4,9 @@ import com.swp391.dichvuchuyennha.dto.request.QuotationCreateRequest;
 import com.swp391.dichvuchuyennha.dto.response.QuotationResponse;
 import com.swp391.dichvuchuyennha.entity.Quotations;
 import com.swp391.dichvuchuyennha.mapper.QuotationMapper;
+import com.swp391.dichvuchuyennha.repository.QuotationRepository;
 import com.swp391.dichvuchuyennha.service.QuotationService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +21,7 @@ public class QuotationController {
 
     private final QuotationService quotationService;
     private final QuotationMapper mapper;
-
+    private final QuotationRepository quotationRepository;
     @PostMapping
     public ResponseEntity<Quotations> createQuotation(@RequestBody QuotationCreateRequest request) {
         Quotations savedQuotation = quotationService.createQuotation(request);
@@ -33,5 +35,7 @@ public class QuotationController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
+
+
 
 }

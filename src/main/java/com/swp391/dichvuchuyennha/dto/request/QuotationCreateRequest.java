@@ -15,9 +15,7 @@ import java.time.LocalDateTime;
 public class QuotationCreateRequest {
     private Integer surveyId;
     private Double totalPrice;
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-
-    private LocalDateTime createdDate;
+    private LocalDateTime createdAt;
 
 }
 

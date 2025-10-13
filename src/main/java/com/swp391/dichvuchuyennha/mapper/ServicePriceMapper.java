@@ -13,6 +13,7 @@ import java.util.List;
 public interface ServicePriceMapper {
 
     @Mapping(target = "prices", source = "prices")
+    @Mapping(target = "imageUrl",source = "imageUrl")
     ServicePriceDTO toDTO(Services service);
 
     List<PriceDTO> toPriceDTOs(List<Prices> prices);

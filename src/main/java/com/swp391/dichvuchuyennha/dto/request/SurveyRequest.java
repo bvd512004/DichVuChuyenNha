@@ -21,5 +21,6 @@ public class SurveyRequest {
     private String addressTo;
     private String status;
     private Integer estimatedWorkers;
+    private String listService;
 }
 
