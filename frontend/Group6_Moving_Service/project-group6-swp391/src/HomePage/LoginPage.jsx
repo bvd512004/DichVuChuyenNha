@@ -31,7 +31,7 @@ const LoginPage = () => {
       );
 
       // Lấy dữ liệu từ backend (AuthenticationResponse)
-      const { token, userId, username, roleId, roleName } =
+      const { token, userId, username, roleId, roleName,position } =
         response.data.result;
 
       // Lưu vào localStorage
@@ -40,15 +40,22 @@ const LoginPage = () => {
       localStorage.setItem("username", username);
       localStorage.setItem("roleId", roleId);
       localStorage.setItem("roleName", roleName);
-
+localStorage.setItem("position", position);
       alert("Login successful!");
-
-      // Điều hướng theo roleId
-      if (roleId === 4 || roleId === 5) {
-        navigate("/customer-page");
-      } else {
-        navigate("/"); // ví dụ: admin/manager → home
-      }
+      
+ if (roleId === 3 && position === "Surveyer") {
+  navigate("/survey-dashboard");
+} else if (roleId === 3) {
+  navigate("/employee/dashboard");
+} else if (roleId === 4 || roleId === 5) {
+  navigate("/customer-page");
+} else if (roleId === 2) {
+  navigate("/manager/dashboard");
+} else if (roleId === 1) {
+  navigate("/admin-dashboard");
+} else {
+  navigate("/");
+}
     } catch (error) {
       alert(error.response?.data?.message || "Login failed");
       setSubmitting(false);

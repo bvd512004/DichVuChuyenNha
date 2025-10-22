@@ -4,6 +4,7 @@ import com.swp391.dichvuchuyennha.dto.request.QuotationServiceRequest;
 import com.swp391.dichvuchuyennha.dto.response.ListQuotationServicesResponse;
 import com.swp391.dichvuchuyennha.entity.QuotationServices;
 import com.swp391.dichvuchuyennha.entity.Quotations;
+import com.swp391.dichvuchuyennha.entity.Services;
 import com.swp391.dichvuchuyennha.mapper.QuotationServiceMapper;
 import com.swp391.dichvuchuyennha.repository.PriceRepository;
 import com.swp391.dichvuchuyennha.repository.QuotationRepository;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +29,7 @@ public class QuotationSvService {
     private final PriceRepository priceRepository;
     private final QuotationServiceRepository quotationServiceRepository;
 
+
     public void updateQuotationTotalPrice(Integer quotationId) {
         Quotations quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -39,6 +42,15 @@ public class QuotationSvService {
                 .sum();
 
         quotation.setTotalPrice(total);
+        if (total <= 0.0) {
+            quotation.setStatus("DRAFT"); // tổng = 0 → DRAFT
+        } else {
+            // Nếu đang là DRAFT hoặc PENDING → chuyển sang REVIEW
+            String status = quotation.getStatus();
+            if ("DRAFT".equals(status) || "PENDING".equals(status)) {
+                quotation.setStatus("REVIEW");
+            }
+        }
         quotationRepository.save(quotation);
     }
 

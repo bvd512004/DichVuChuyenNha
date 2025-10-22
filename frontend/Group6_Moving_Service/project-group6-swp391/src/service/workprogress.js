@@ -67,7 +67,12 @@ export const workProgressApi = {
     return axios.get(`${API_BASE}/api/customer/work-progress/${contractId}`, {
       headers: getAuthHeaders(),
     });
+    
   },
+   getEligibleContracts: () => axios.get(`${API_BASE}/api/contracts/eligible`, { headers: getAuthHeaders() }),
+
+  // ✅ Tạo work progress cho nhân viên thuộc hợp đồng
+  createForEmployee: (payload) => axios.post(`${API_BASE}/api/work-progress/create`, payload, { headers: getAuthHeaders() }),
 };
 
 export default workProgressApi;

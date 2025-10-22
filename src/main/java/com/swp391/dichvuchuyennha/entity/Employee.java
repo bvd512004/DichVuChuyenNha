@@ -42,4 +42,9 @@ public class Employee {
 
     @OneToMany(mappedBy = "driver", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Vehicles> vehicles;
+    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<RequestAssignment> assignedRequests;
+
+
+
 }

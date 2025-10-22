@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuotationForCustomer {
+    private Integer quotationId;
     private String username;
     private String companyName;
     private List<QuotationServiceInfo> services;
@@ -19,6 +20,6 @@ public class QuotationForCustomer {
     private LocalDateTime surveyDate;
     private String addressFrom;
     private String addressTo;
-    private String listService;
+
 
 }

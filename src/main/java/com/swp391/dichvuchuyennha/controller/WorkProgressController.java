@@ -101,4 +101,23 @@ public class WorkProgressController {
         workProgressService.deleteWorkProgress(id, employee.getEmployeeId());
         return ResponseEntity.noContent().build();
     }
+    @PostMapping("/create")
+    public ResponseEntity<WorkProgressResponse> createWorkProgressForEmployee(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody WorkProgressRequest request) {
+
+        // Xác thực người dùng quản lý từ token
+//        Long userId = extractUserIdFromToken(authHeader);
+//        Employee manager = employeeRepository.findByUser_UserId(userId)
+//                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        Long userId = extractUserIdFromToken(authHeader);
+        System.out.println("Manager userId = " + userId);
+
+        // Quản lý tạo work-progress cho nhân viên
+//        return ResponseEntity.ok(workProgressService.createWorkProgressForEmployee(request, manager.getEmployeeId()));
+        return ResponseEntity.ok(workProgressService.createWorkProgressForEmployee(request, null));
+    }
+//fix xong lỗi
+
 }

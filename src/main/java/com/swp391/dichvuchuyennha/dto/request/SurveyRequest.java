@@ -13,14 +13,13 @@ import java.time.LocalDateTime;
 @Builder
 public class SurveyRequest {
     private Integer requestId;
-
-
-
     private LocalDateTime surveyDate;
-    private String addressFrom;
-    private String addressTo;
     private String status;
-    private Integer estimatedWorkers;
-    private String listService;
+    private Integer numFloors;
+    private Integer numRooms;
+    private Double distanceKm;
+    private String note;
+    private Integer estimateWorkers;
+
 }
 

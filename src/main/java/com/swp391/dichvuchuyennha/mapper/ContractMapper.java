@@ -16,10 +16,13 @@ public interface ContractMapper {
     @Mapping(target = "contractId", source = "contractId")
     @Mapping(target = "signedById", source = "signedBy.userId")
     @Mapping(target = "signedByUsername", source = "signedBy.username")
-    @Mapping(target = "startLocation", source = "quotation.survey.addressFrom")
-    @Mapping(target = "endLocation", source = "quotation.survey.addressTo")
+    @Mapping(target = "startLocation", source = "quotation.survey.request.pickupAddress")
+    @Mapping(target = "endLocation", source = "quotation.survey.request.destinationAddress")
     @Mapping(target = "services", expression = "java(mapQuotationServices(contract.getQuotation().getQuotationServices()))")
     @Mapping(target = "totalPrice",source = "quotation.totalPrice")
+    @Mapping(target = "username",source = "quotation.survey.request.user.username")
+    @Mapping(target = "companyName",source = "quotation.survey.request.user.customerCompany.companyName")
+
     ContractResponse toResponse(Contract contract);
 
     default List<QuotationServiceInfo> mapQuotationServices(List<QuotationServices> services) {

@@ -1,0 +1,361 @@
+/* Work Progress Page Container */
+.work-progress-page {
+  padding: 0;
+}
+
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-header h2 {
+  margin: 0 !important;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.page-header .anticon {
+  margin-right: 12px;
+  color: #11998e;
+}
+
+.page-header .ant-btn-primary {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  height: 40px;
+  padding: 0 20px;
+  box-shadow: 0 2px 8px rgba(17, 153, 142, 0.3);
+  transition: all 0.3s ease;
+}
+
+.page-header .ant-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
+}
+
+/* Statistics Row */
+.stats-row {
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card .ant-statistic-title {
+  color: #8c8c8c;
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.stat-card .ant-statistic-content {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.stat-card .anticon {
+  margin-right: 8px;
+}
+
+/* Progress Card */
+.progress-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+  border: none;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.progress-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.progress-percent {
+  font-size: 24px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.progress-card .ant-progress {
+  margin-bottom: 0;
+}
+
+.progress-card .ant-progress-outer {
+  height: 24px;
+}
+
+.progress-card .ant-progress-inner {
+  background: #f0f0f0;
+  border-radius: 12px;
+}
+
+.progress-card .ant-progress-bg {
+  border-radius: 12px;
+  height: 24px !important;
+}
+
+/* Table Card */
+.table-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: none;
+}
+
+.table-card h4 {
+  margin-bottom: 16px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* Table Styling */
+.table-card .ant-table {
+  border-radius: 8px;
+}
+
+.table-card .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #262626;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.table-card .ant-table-tbody > tr {
+  transition: all 0.3s ease;
+}
+
+.table-card .ant-table-tbody > tr:hover {
+  background: #fafafa;
+}
+
+.table-card .ant-table-cell {
+  padding: 12px 16px;
+}
+
+/* Input in table */
+.table-card .ant-input {
+  border-radius: 6px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.table-card .ant-input:hover {
+  border-color: #11998e;
+}
+
+.table-card .ant-input:focus {
+  border-color: #11998e;
+  box-shadow: 0 0 0 2px rgba(17, 153, 142, 0.1);
+}
+
+/* Select in table */
+.table-card .ant-select-selector {
+  border-radius: 6px !important;
+  border: 1px solid #d9d9d9 !important;
+  transition: all 0.3s ease;
+}
+
+.table-card .ant-select-selector:hover {
+  border-color: #11998e !important;
+}
+
+.table-card .ant-select-focused .ant-select-selector {
+  border-color: #11998e !important;
+  box-shadow: 0 0 0 2px rgba(17, 153, 142, 0.1) !important;
+}
+
+/* Tags */
+.table-card .ant-tag {
+  border-radius: 4px;
+  font-weight: 500;
+  padding: 2px 12px;
+  border: none;
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.loading-container .ant-spin {
+  color: #11998e;
+}
+
+.loading-container .ant-spin-dot-item {
+  background-color: #11998e;
+}
+
+/* Pagination */
+.table-card .ant-pagination {
+  margin-top: 16px;
+}
+
+.table-card .ant-pagination-item {
+  border-radius: 6px;
+}
+
+.table-card .ant-pagination-item-active {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  border-color: transparent;
+}
+
+.table-card .ant-pagination-item-active a {
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .page-header .ant-btn {
+    width: 100%;
+  }
+
+  .stats-row {
+    margin-bottom: 16px;
+  }
+
+  .stat-card .ant-statistic-content {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .work-progress-page {
+    padding: 0;
+  }
+
+  .page-header h2 {
+    font-size: 20px;
+  }
+
+  .progress-label {
+    font-size: 14px;
+  }
+
+  .progress-percent {
+    font-size: 20px;
+  }
+
+  .table-card .ant-table-cell {
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .page-header h2 {
+    font-size: 18px;
+  }
+
+  .stat-card .ant-statistic-content {
+    font-size: 20px;
+  }
+
+  .stat-card .ant-statistic-title {
+    font-size: 12px;
+  }
+
+  .progress-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .progress-percent {
+    font-size: 18px;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-card,
+.progress-card,
+.table-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.stats-row .ant-col:nth-child(1) .stat-card {
+  animation-delay: 0.1s;
+}
+
+.stats-row .ant-col:nth-child(2) .stat-card {
+  animation-delay: 0.2s;
+}
+
+.stats-row .ant-col:nth-child(3) .stat-card {
+  animation-delay: 0.3s;
+}
+
+.stats-row .ant-col:nth-child(4) .stat-card {
+  animation-delay: 0.4s;
+}
+
+/* Editable cell hover effect */
+.table-card .ant-table-cell [style*="cursor: pointer"]:hover {
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+/* Scrollbar for table */
+.ant-table-body::-webkit-scrollbar {
+  height: 8px;
+}
+
+.ant-table-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.ant-table-body::-webkit-scrollbar-thumb {
+  background: #11998e;
+  border-radius: 10px;
+}
+
+.ant-table-body::-webkit-scrollbar-thumb:hover {
+  background: #0e7d72;
+}

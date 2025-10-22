@@ -16,7 +16,9 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -50,7 +52,8 @@ public class SecurityConfig {
                 "/api/users/**",
                 "/api/manager/contracts/**",
                 "/api/manager/view-contracts",
-                "/api/employees/**",
+                "/api/employees/**", // Employee endpoints - temporarily public for testing
+                "/api/vehicles/**", // Vehicle endpoints - temporarily public for testing
                 "/api/assignments/**",
                 "/api/contracts/**",
                 "/api/surveys/**",
@@ -59,6 +62,14 @@ public class SecurityConfig {
                 "/api/prices/**",
                 "/api/quotations/**",
                 "/api/quotation-services/**",
+                "/api/admin/**",
+                "/api/request-assignment/**",
+                "/api/work-progress/**",
+                "/api/customer/work-progress/**",
+                "/api/survey-floors/**",
+                "/api/survey-images/**",
+                "/images/survey/**",
+                "/api/manager/quotations/**",
                 "/api/chat-ai"};
 
 
@@ -81,13 +92,15 @@ public class SecurityConfig {
                                                                                                          // user
 
                                                 // Assignment endpoints
+                                                .requestMatchers(POST, "/api/assignments/assign").hasRole("MANAGER")
+
                                                 .requestMatchers("/api/assignments").hasRole("MANAGER")
 
                                                 // Contract endpoints
                                                 .requestMatchers("/api/contracts/unsigned/me")
                                                 .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY")
                                                 .requestMatchers("/api/contracts/sign/{contractId}")
-                                                .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY")
+                                                .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY", "MANAGER")
                                                 .requestMatchers("/api/contracts").hasAnyRole("MANAGER", "ADMIN")
 
                                                 // Damages endpoints
@@ -99,8 +112,8 @@ public class SecurityConfig {
                                                 .hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
                                                 .requestMatchers(DELETE, "/api/damages/{damageId}").hasRole("MANAGER")
 
-                                                // Employee endpoints
-                                                .requestMatchers("/api/employees").hasAnyRole("MANAGER", "ADMIN")
+                                                // Employee endpoints - temporarily disabled for testing
+                                                // .requestMatchers("/api/employees").hasAnyRole("MANAGER", "ADMIN")
 
                                                 // Request endpoints
                                                 .requestMatchers(POST, "/api/requests/create")
@@ -118,8 +131,8 @@ public class SecurityConfig {
                                                 .requestMatchers(PUT, "/api/users/me").authenticated()
                                                 .requestMatchers(POST, "/api/users/create").hasRole("ADMIN")
 
-                                                // Vehicles CRUD (mới thêm)
-                                                .requestMatchers("/api/vehicles/**").hasAnyRole("MANAGER", "ADMIN")
+                                                // Vehicles CRUD - temporarily disabled for testing
+                                                // .requestMatchers("/api/vehicles/**").hasAnyRole("MANAGER", "ADMIN")
 
                                                 // WorkProgress (nếu có)
                                                 .requestMatchers("/api/work-progress/**")
@@ -153,7 +166,9 @@ public class SecurityConfig {
                 return jwtAuthenticationConverter;
         }
 
-        @Bean
+
+
+    @Bean
         public CorsFilter corsFilter() {
                 CorsConfiguration corsConfiguration = new CorsConfiguration();
                 corsConfiguration.addAllowedHeader("*");
@@ -185,7 +200,7 @@ public class SecurityConfig {
 
         @Bean
         public PasswordEncoder passwordEncoder() {
-                // return new BCryptPasswordEncoder(); // Đổi sang BCrypt
-                return NoOpPasswordEncoder.getInstance();
+                 return new BCryptPasswordEncoder(); // Đổi sang BCrypt
+//                return NoOpPasswordEncoder.getInstance();
         }
 }

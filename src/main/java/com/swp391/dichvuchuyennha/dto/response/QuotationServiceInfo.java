@@ -10,8 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuotationServiceInfo {
+    private Integer id;
     private String serviceName;
     private String priceType;
     private Integer quantity;
     private Double subtotal;
+    private Double amount;
 }

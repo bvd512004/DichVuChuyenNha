@@ -26,6 +26,8 @@ public class RequestService {
     public RequestResponse createRequest(Users currentUser, RequestCreateRequest requestDto) {
         Requests request = new Requests();
         request.setUser(currentUser);
+        request.setDestinationAddress(requestDto.getDestinationAddress());
+
         if (requestDto.getBusinessId() != null && currentUser.getCustomerCompany() != null
                 && currentUser.getCustomerCompany().getBusinessId().equals(requestDto.getBusinessId())) {
             request.setBusiness(currentUser.getCustomerCompany());
@@ -36,7 +38,7 @@ public class RequestService {
         }
         request.setDescription(requestDto.getDescription());
         request.setPickupAddress(requestDto.getPickupAddress());
-        request.setDestinationAddress(requestDto.getDestinationAddress());
+        request.setMovingType(requestDto.getMovingType());
         request.setStatus("PENDING");
         requestRepository.save(request);
 
@@ -62,6 +64,7 @@ public class RequestService {
                 .pickupAddress(request.getPickupAddress())
                 .destinationAddress(request.getDestinationAddress())
                 .movingDay(request.getMovingDay())
+                .movingType(request.getMovingType())
                 .build();
     }
 
@@ -76,6 +79,7 @@ public class RequestService {
                         .pickupAddress(r.getPickupAddress())
                         .destinationAddress(r.getDestinationAddress())
                         .movingDay(r.getMovingDay())
+                        .movingType(r.getMovingType()) // 👈 ĐÂY LÀ DÒNG BẠN CẦN THÊM
                         .build())
                 .collect(Collectors.toList());
     }

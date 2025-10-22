@@ -40,13 +40,7 @@ export const EditSurveyModal = ({
         >
           <Input />
         </Form.Item>
-        <Form.Item
-          name="estimatedWorkers"
-          label="Số công nhân ước tính"
-          rules={[{ required: true }]}
-        >
-          <InputNumber min={1} max={50} style={{ width: "100%" }} />
-        </Form.Item>
+      
         <Form.Item name="status" label="Trạng thái">
           <Input />
         </Form.Item>

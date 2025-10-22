@@ -90,9 +90,8 @@ public class AdminService {
         Employee employee = new Employee();
         employee.setUser(savedUser);
         employee.setPosition(req.getPosition());
-        employee.setStatus(req.getStatus());
         employee.setPhone(req.getPhone()); // 👈 thêm dòng này
-
+        employee.setStatus("FREE");
         employeeRepository.save(employee);
 
         return UserResponse.builder()

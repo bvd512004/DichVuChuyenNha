@@ -18,6 +18,6 @@ public interface QuotationServiceRepository extends JpaRepository<QuotationServi
             Services service,
             Prices price
     );
-//    List<QuotationServices> findByQuotation_Survey_Request_UserIdAndStatus(Integer userId,String status);
+    List<QuotationServices> findByQuotation_Survey_Request_User_UserIdAndQuotation_Status(Integer userId, String status);
 
 }

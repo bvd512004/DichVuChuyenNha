@@ -7,6 +7,11 @@ import lombok.Data;
 @AllArgsConstructor
 public class EmployeeDTO {
     private Integer employeeId;
-    private String username; // lấy từ Users
+
+    private String username;
+
     private String position;
+
+
 }
+// employee sau khi bỏ của dũng

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.minidev.json.annotate.JsonIgnore;
 
 @Entity
 @Table(name = "quotation_services")
@@ -18,6 +19,8 @@ public class QuotationServices {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quotation_id")
+    @JsonIgnore
+
     private Quotations quotation;
 
     @ManyToOne(fetch = FetchType.LAZY)

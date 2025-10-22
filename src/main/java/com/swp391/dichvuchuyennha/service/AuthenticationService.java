@@ -56,6 +56,7 @@ public class AuthenticationService {
                 .username(user.getUsername())
                 .roleId(user.getRole().getRoleId())
                 .roleName(user.getRole().getRoleName())
+                .position(user.getEmployee() != null ? user.getEmployee().getPosition() : null)
                 .build();
     }
 
@@ -68,6 +69,7 @@ public class AuthenticationService {
                     .expirationTime(Date.from(Instant.now().plusSeconds(jwtExpirationSec)))
                     .jwtID(UUID.randomUUID().toString())
                     .claim("roles", List.of(user.getRole().getRoleName()))
+                    .claim("position", user.getEmployee() != null ? user.getEmployee().getPosition() : null)
                     .claim("userId", user.getUserId())
                     .build();
 

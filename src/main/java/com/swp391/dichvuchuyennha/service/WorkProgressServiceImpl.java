@@ -81,4 +81,57 @@ public class WorkProgressServiceImpl implements WorkProgressService {
 
         workProgressRepository.delete(progress);
     }
-}
+    @Override
+    public WorkProgressResponse createWorkProgressForEmployee(WorkProgressRequest request, Integer managerId) {
+        // 👉 Không dùng userId nữa, chỉ cần employeeId
+        if (request.getEmployeeId() == null) {
+            throw new AppException(ErrorCode.MISSING_PARAMETER);
+        }
+
+        Employee employee = employeeRepository.findById(request.getEmployeeId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        Contract contract = contractRepository.findById(request.getContractId())
+                .orElseThrow(() -> new AppException(ErrorCode.CONTRACT_NOT_FOUND));
+
+        // Kiểm tra trạng thái hợp đồng
+        if (!"SIGNED".equalsIgnoreCase(contract.getStatus())) {
+            throw new AppException(ErrorCode.INVALID_CONTRACT_STATUS);
+        }
+
+        // Kiểm tra hợp đồng có nhân viên được gán chưa
+        if (contract.getAssignmentEmployees() == null || contract.getAssignmentEmployees().isEmpty()) {
+            throw new AppException(ErrorCode.NO_EMPLOYEES_ASSIGNED);
+        }
+
+        // Kiểm tra nhân viên có nằm trong danh sách được gán không
+        boolean isAssigned = contract.getAssignmentEmployees()
+                .stream()
+                .anyMatch(ae -> ae.getEmployee().getEmployeeId().equals(employee.getEmployeeId()));
+        if (!isAssigned) {
+            throw new AppException(ErrorCode.EMPLOYEE_NOT_ASSIGNED_TO_CONTRACT);
+        }
+
+        // Kiểm tra trạng thái nhân viên
+        if (!"busy".equalsIgnoreCase(employee.getStatus())) {
+            throw new AppException(ErrorCode.INVALID_EMPLOYEE_STATUS);
+        }
+
+        // Kiểm tra trùng work progress
+        boolean exists = workProgressRepository
+                .existsByContract_ContractIdAndEmployee_EmployeeId(contract.getContractId(), employee.getEmployeeId());
+        if (exists) {
+            throw new AppException(ErrorCode.WORK_PROGRESS_ALREADY_EXISTS);
+        }
+
+        // ✅ Tạo mới work progress
+        WorkProgress progress = new WorkProgress();
+        progress.setEmployee(employee);
+        progress.setContract(contract);
+        progress.setTaskDescription(request.getTaskDescription());
+        progress.setProgressStatus(request.getProgressStatus());
+        progress.setUpdatedAt(LocalDateTime.now());
+
+        return mapper.toResponse(workProgressRepository.save(progress));
+    }
+}//fix

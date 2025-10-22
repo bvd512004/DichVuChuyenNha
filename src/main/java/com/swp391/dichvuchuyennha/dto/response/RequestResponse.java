@@ -16,6 +16,7 @@ public class RequestResponse {
     private String pickupAddress;
     private String destinationAddress;
     private Date movingDay;
+    private String movingType;
 }
 
 

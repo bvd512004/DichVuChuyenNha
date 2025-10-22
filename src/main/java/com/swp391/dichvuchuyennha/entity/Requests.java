@@ -30,7 +30,8 @@ public class Requests {
 
     @Column(name = "request_time")
     private LocalDateTime requestTime;
-
+    @Column(name = "moving_type", length = 50)
+    private String movingType;
     @Column(name = "moving_day")
     private Date movingDay;
 
@@ -48,4 +49,7 @@ public class Requests {
 
     @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Surveys> surveys;
+    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<RequestAssignment> assignedEmployees;
+
 }

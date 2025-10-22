@@ -16,34 +16,42 @@ import java.util.List;
 public class Surveys {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "survey_id")
     private Integer surveyId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "request_id")
     private Requests request;
 
     @Column(name = "survey_date")
     private LocalDateTime surveyDate;
 
-    @Column(name = "address_from")
-    private String addressFrom;
+ // 'HOUSE' hoặc 'COMPANY'
 
-    @Column(name = "address_to")
-    private String addressTo;
+    @Column(name = "total_area")
+    private Double totalArea; // Tổng diện tích tất cả tầng
+
+    @Column(name = "num_floors")
+    private Integer numFloors; // Số tầng (nhà riêng)
+
+    @Column(name = "num_rooms")
+    private Integer numRooms; // Số phòng (công ty / văn phòng)
 
     @Column(name = "distance_km")
-    private Double distanceKm;
+    private Double distanceKm; // Khoảng cách vận chuyển (km)
+
+    @Column(name = "estimate_worker")
+    private  Integer estimateWorkers; // Danh sách dịch vụ bổ sung
+
+    @Column(name = "note", columnDefinition = "TEXT")
+    private String note; // Ghi chú chung
+
+    @Column(name = "list_services", columnDefinition = "TEXT")
+    private String listService; // Danh sách dịch vụ bổ sung
 
     @Column(name = "status")
-    private String status;
-
-    // 🔥 Thêm field số nhân công ước tính
-    @Column(name = "estimated_workers")
-    private Integer estimatedWorkers;
+    private String status; // Trạng thái khảo sát (PENDING, DONE,...)
 
     @OneToMany(mappedBy = "survey", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Quotations> quotations;
-    @Column(name = "list_services")
-    private String listService;
+    private List<SurveyFloor> floors; // Danh sách các tầng
 }
+
