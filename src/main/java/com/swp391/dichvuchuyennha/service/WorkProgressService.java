@@ -10,6 +10,6 @@ public interface WorkProgressService {
     WorkProgressResponse createWorkProgress(Integer employeeId, WorkProgressRequest request);
     WorkProgressResponse updateWorkProgress(Integer progressId, Integer employeeId, WorkProgressRequest request);
     void deleteWorkProgress(Integer progressId, Integer employeeId);
-
+    WorkProgressResponse createWorkProgressForEmployee(WorkProgressRequest request, Integer managerId);
 }
 //l

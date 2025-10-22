@@ -10,6 +10,7 @@ import java.util.List;
 @Entity
 @Table(name = "roles")
 @Data
+
 @NoArgsConstructor
 @AllArgsConstructor
 public class Roles {

@@ -1,3 +1,4 @@
+
 package com.swp391.dichvuchuyennha.service;
 
 import com.swp391.dichvuchuyennha.dto.response.EmployeeDTO;
@@ -24,4 +25,8 @@ public class EmployeeService {
                 ))
                 .toList();
     }
-}
+    public List<EmployeeDTO> getFreeEmployees() {
+        return employeeRepository.findFreeEmployeeDTO();
+    }
+}// employee sau khi bỏ của dũng
+

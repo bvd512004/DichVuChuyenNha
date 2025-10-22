@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button, message, Dropdown, Menu } from "antd";
 import { UserOutlined, PhoneOutlined, DownOutlined } from "@ant-design/icons";
 import axios from "axios";
-import api from "../service/api";
+import api from "../service/axiosInstance";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./Header.css";
 
@@ -125,7 +125,7 @@ const Header = () => {
 
         {/* Navigation Links */}
         <nav className="navbar-nav">
-          <a href="#services" className="nav-link">Dịch Vụ</a>
+          <a onClick={() => navigate("/price-service")} className="nav-link" style={{ cursor: 'pointer' }}>Dịch Vụ</a>
           <a href="#about" className="nav-link">Giới Thiệu</a>
           <a href="#reviews" className="nav-link">Đánh Giá</a>
           <a href="#contact" className="nav-link">Liên Hệ</a>

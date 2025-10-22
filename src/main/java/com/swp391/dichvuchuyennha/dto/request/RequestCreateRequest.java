@@ -14,7 +14,7 @@ public class RequestCreateRequest {
     private String pickupAddress;
     @NotBlank
     private String destinationAddress;
-
+    private String movingType;
     // Optional: planned moving day
     private Date movingDay;
 }

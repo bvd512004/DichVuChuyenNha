@@ -14,5 +14,7 @@ public class AuthenticationResponse {
     String username;
     Integer userId;
     Integer roleId;    // thêm
-    String roleName;   // thêm
+    String roleName;
+    String position; // <-- thêm position
+// thêm
 }

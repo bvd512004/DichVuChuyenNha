@@ -31,9 +31,8 @@ export const CreateSurveyModal = ({
           <p>
             <strong>Công ty:</strong> {selectedRequest.companyName}
           </p>
-          <p>
-            <strong>Địa chỉ:</strong> {selectedRequest.address}
-          </p>
+         <p><strong>Địa chỉ đi:</strong> {selectedRequest.pickupAddress}</p>
+    <p><strong>Địa chỉ đến:</strong> {selectedRequest.destinationAddress}</p>
         </div>
       )}
       <Form form={form} onFinish={onSubmit} layout="vertical">
@@ -66,19 +65,37 @@ export const CreateSurveyModal = ({
         </Form.Item>
 
         <Form.Item
-          name="estimatedWorkers"
-          label="Số công nhân ước tính"
-          rules={[{ required: true, message: "Vui lòng nhập số công nhân!" }]}
+          name="numFloors"
+          label="Số tầng của căn nhà"
+          rules={[{ required: true, message: "Vui lòng nhập số tầng!" }]}
         >
           <InputNumber min={1} max={50} style={{ width: "100%" }} />
         </Form.Item>
-         <Form.Item
-          name="listService"
-          label="Các dịch vụ thêm (bổ sung)"
-          rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
+
+           <Form.Item
+          name="distanceKm"
+          label="Số cây số vận chuyển"
+          rules={[{ required: true, message: "Vui lòng nhập số cây!" }]}
         >
-          <Input />
+          <InputNumber min={1}  style={{ width: "100%" }} />
         </Form.Item>
+             <Form.Item
+          name="estimateWorkers"
+          label="Số công nhân dự tính"
+          rules={[{ required: true, message: "Vui lòng nhập số công nhân dự tính!" }]}
+        >
+          <InputNumber min={1}  style={{ width: "100%" }} />
+        </Form.Item>
+          <Form.Item
+          name="note"
+          label="Ghi chú"
+          rules={[{ required: true, message: "Vui lòng nhập số cây!" }]}
+        >
+                  <Input />
+
+        </Form.Item>
+        
+      
 
         <Form.Item>
           <Button type="primary" htmlType="submit" block>

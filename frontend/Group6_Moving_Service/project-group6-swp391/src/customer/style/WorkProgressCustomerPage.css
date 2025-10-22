@@ -1,0 +1,264 @@
+/* Work Progress Customer Page Styles */
+
+.work-progress-customer-page {
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* Header Section */
+.work-progress-header {
+  background: linear-gradient(135deg, #8B0000 0%, #a30000 100%);
+  color: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 15px rgba(139, 0, 0, 0.2);
+}
+
+.work-progress-header-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.work-progress-header-subtitle {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 16px;
+}
+
+/* Loading State */
+.work-progress-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+/* Progress Card */
+.work-progress-card {
+  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+}
+
+.work-progress-card:hover {
+  box-shadow: 0 4px 20px rgba(139, 0, 0, 0.15);
+  transform: translateY(-2px);
+  border-color: #8B0000;
+}
+
+.work-progress-card .ant-card-body {
+  padding: 24px;
+}
+
+/* Card Header */
+.work-progress-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.work-progress-card-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.work-progress-status-tag {
+  font-size: 14px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* Info Grid */
+.work-progress-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.work-progress-info-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: #fafafa;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.work-progress-info-item:hover {
+  background-color: #f0f0f0;
+  transform: translateX(2px);
+}
+
+.work-progress-info-icon {
+  font-size: 20px;
+  color: #8B0000;
+  flex-shrink: 0;
+}
+
+.work-progress-info-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.work-progress-info-label {
+  font-size: 12px;
+  color: #8c8c8c;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.work-progress-info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  word-wrap: break-word;
+}
+
+/* Description Section */
+.work-progress-description {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border-left: 4px solid #8B0000;
+}
+
+.work-progress-description-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.work-progress-description-title .anticon {
+  color: #8B0000;
+}
+
+.work-progress-description-text {
+  font-size: 14px;
+  color: #595959;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Empty State */
+.work-progress-empty {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 60px 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.work-progress-empty .ant-empty-description {
+  font-size: 16px;
+  color: #8c8c8c;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .work-progress-customer-page {
+    padding: 16px;
+  }
+
+  .work-progress-header {
+    padding: 20px;
+  }
+
+  .work-progress-header-title {
+    font-size: 22px;
+  }
+
+  .work-progress-header-subtitle {
+    font-size: 14px;
+  }
+
+  .work-progress-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .work-progress-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .work-progress-card-title {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .work-progress-header {
+    padding: 16px;
+  }
+
+  .work-progress-header-title {
+    font-size: 20px;
+  }
+
+  .work-progress-card .ant-card-body {
+    padding: 16px;
+  }
+
+  .work-progress-info-item {
+    padding: 10px;
+  }
+
+  .work-progress-description {
+    padding: 12px;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.work-progress-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Print Styles */
+@media print {
+  .work-progress-customer-page {
+    background-color: #fff;
+  }
+
+  .work-progress-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+
+  .work-progress-card:hover {
+    transform: none;
+  }
+}

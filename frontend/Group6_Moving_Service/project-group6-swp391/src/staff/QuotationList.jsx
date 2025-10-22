@@ -1,268 +1,314 @@
-import React from "react";
-import { Table, Select, Button, Spin, Card, Row, Col, InputNumber, message } from "antd";
+import React, { useState } from "react";
+import {
+    Card,
+    Row,
+    Col,
+    Button,
+    Select,
+    InputNumber,
+    message, // Sử dụng message của Antd
+    Tag,
+    Typography,
+    Divider,
+    Space,
+} from "antd";
+import { DeleteOutlined, MinusOutlined, PlusOutlined, InfoCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
+// Giả định axios ở đây là axiosInstance đã được cấu hình
+import axiosInstance from "../service/axiosInstance"; 
 import dayjs from "dayjs";
 
-const { Option } = Select;
+const { Text, Title } = Typography;
 
 export const QuotationList = ({
-  quotations,
-  serviceList,
-  loadingServices,
-  quotationServiceForm,
-  quotationServicesList,
-  onServiceChange,
-  onCreateService,
-  onQuantityChange,
+    quotations,
+    fetchQuotations,
+    selectedQuotation,
+    setSelectedQuotation,
 }) => {
-  const columns = [
-    { title: "Mã báo giá", dataIndex: "quotationId", width: 120 },
-    { title: "Mã khảo sát", dataIndex: "surveyId", width: 120 },
-    { title: "Khách hàng", dataIndex: "username", width: 150 },
-    { title: "Công ty", dataIndex: "companyName", width: 200 },
-    { title: "Địa chỉ từ", dataIndex: "addressFrom", width: 200 },
-    { title: "Địa chỉ đến", dataIndex: "addressTo", width: 200 },
-    {
-      title: "Tổng giá (VNĐ)",
-      dataIndex: "totalPrice",
-      render: (value) => value?.toLocaleString() || "0",
-      width: 150,
-    },
-    {
-      title: "Ngày tạo",
-      dataIndex: "createdAt",
-      render: (text) => (text ? dayjs(text).format("DD/MM/YYYY HH:mm") : "-"),
-      width: 150,
-    },
-  ];
 
-  const expandedRowRender = (record) => {
-    const qid = record.quotationId;
-    const data = quotationServiceForm[qid] || {};
-    const selectedService = serviceList.find((s) => s.serviceId === Number(data.serviceId));
-    const prices = selectedService?.prices || [];
-    const added = quotationServicesList[qid] || [];
-    const quantity = data.quantity || 1;
-
-    const handleAddService = async () => {
-      if (!data.serviceId || !data.priceId || quantity < 1) {
-        message.warning("Vui lòng chọn dịch vụ, giá và số lượng hợp lệ!");
-        return;
-      }
-
-      try {
-        // Call onCreateService, which handles create or update in parent
-        await onCreateService(qid);
-
-        // Reset form selections after add
-        onServiceChange(qid, "serviceId", undefined);
-        onServiceChange(qid, "priceId", undefined);
-        onServiceChange(qid, "quantity", 1);
-        message.success("Thêm hoặc cập nhật dịch vụ thành công!");
-      } catch (error) {
-        console.error("Lỗi khi thêm dịch vụ:", error);
-        message.error("Thêm dịch vụ thất bại!");
-      }
+    // Thay thế notification tự tạo bằng message Antd
+    const showMessage = (type, content) => {
+        message[type](content);
     };
 
-    return (
-      <div style={{ padding: 16, background: "#fafafa" }}>
-        <h4 style={{ marginBottom: 16, color: "#1890ff" }}>Chi tiết báo giá</h4>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
-          
-          <div><strong>Địa chỉ từ:</strong> {record.addressFrom || "N/A"}</div>
-          <div><strong>Địa chỉ đến:</strong> {record.addressTo || "N/A"}</div>
-          <div><strong>Tổng giá:</strong> {record.totalPrice?.toLocaleString() || "0"} VNĐ</div>
-        </div>
+    const statusColors = {
+        APPROVED: "success", // green
+        SENT: "processing", // blue
+        DRAFT: "warning", // orange
+        REJECTED: "error",
+    };
 
-       
-        {added.length > 0 ? (
-          <div style={{ marginBottom: 20 }}>
-            {added.map((s, idx) => (
-              <div
-                key={s.id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "12px",
-                  background: "white",
-                  border: "1px solid #d9d9d9",
-                  borderRadius: 6,
-                  marginBottom: 8,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <img
-                    src={s.service?.imageUrl }
-                    alt={s.service?.serviceName || "N/A"}
-                    style={{ width: 40, height: 40, borderRadius: 4 }}
-                  />
-                  <div>
-                    <strong>{s.service?.serviceName || "N/A"}</strong>
-                    <span style={{ color: "#666", marginLeft: 8 }}>
-                      ({s.price?.priceType}) - {s.price?.amount?.toLocaleString()} × {s.quantity}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <Button
-                    size="small"
-                    onClick={() => onQuantityChange(qid, idx, -1)}
-                    disabled={s.quantity <= 1}
-                  >
-                    −
-                  </Button>
-                  <span style={{ margin: "0 8px" }}>{s.quantity}</span>
-                  <Button size="small" onClick={() => onQuantityChange(qid, idx, 1)}>
-                    +
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p style={{ color: "#999", fontStyle: "italic" }}></p>
-        )}
+    const statusText = {
+        APPROVED: "Đã chấp nhận",
+        PENDING: "Đang chờ", // Sửa từ 'Đã gửi' thành 'Đang chờ' cho trạng thái PENDING
+        SENT: "Đã gửi",
+        DRAFT: "Bản nháp",
+        REJECTED: "Đã từ chối",
+        CREATED :"Đã được quản lí duyệt và tạo hợp đồng"
+    };
 
-        <h5 style={{ marginBottom: 12 }}>Thêm dịch vụ mới:</h5>
-        {loadingServices ? (
-          <Spin tip="Đang tải dịch vụ..." />
-        ) : (
-          <Row gutter={[16, 16]}>
-            {(serviceList || [])
-              .filter((s) => s && s.serviceName)
-              .map((service, index, arr) => {
-                const isComingSoon = index === arr.length - 1; // ✅ dịch vụ cuối cùng
-                return (
-                  <Col span={8} key={service.serviceId}>
-                    <Card
-                      hoverable={!isComingSoon}
-                      cover={
-                        <div style={{ position: "relative" }}>
-                          <img
-                            alt={service.serviceName}
-                            src={
-                              isComingSoon
-                                ? "https://i.pinimg.com/736x/b4/17/db/b417db405339afa64154b829e49824cb.jpg"
-                                : service.imageUrl ||
-                                  `https://source.unsplash.com/150x150/?${encodeURIComponent(
-                                    service.serviceName
-                                  )}`
-                            }
-                            style={{
-                              height: 150,
-                              width: "100%",
-                              objectFit: "cover",
-                              filter: isComingSoon
-                                ? "grayscale(40%) brightness(0.8)"
-                                : "none",
-                            }}
-                          />
-                          {isComingSoon && (
-                            <div
-                              style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                backgroundColor: "rgba(0,0,0,0.4)",
-                                color: "white",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontWeight: "bold",
-                                fontSize: 18,
-                                borderRadius: 4,
-                              }}
-                            >
-                              🚧 Coming Soon
-                            </div>
-                          )}
-                        </div>
-                      }
-                      onClick={() => {
-                        if (isComingSoon) return; // ❌ không cho click
-                        onServiceChange(qid, "serviceId", service.serviceId);
-                        onServiceChange(
-                          qid,
-                          "priceId",
-                          service.prices?.[0]?.priceId || null
-                        );
-                      }}
-                      style={{
-                        border:
-                          data.serviceId === service.serviceId
-                            ? "2px solid #1890ff"
-                            : "1px solid #d9d9d9",
-                        opacity: isComingSoon ? 0.6 : 1,
-                        pointerEvents: isComingSoon ? "none" : "auto",
-                      }}
-                    >
-                      <Card.Meta
-                        title={service.serviceName}
-                        description={
-                          isComingSoon
-                            ? "Sắp ra mắt..."
-                            : `Giá từ: ${
-                                service.prices?.[0]?.amount?.toLocaleString() ||
-                                "N/A"
-                              } VNĐ`
-                        }
-                      />
-                    </Card>
-                  </Col>
+    // 🧩 Hiển thị chi tiết báo giá
+    const renderQuotationDetails = (record) => {
+        if (!record) {
+            return (
+                <div
+                    style={{
+                        height: "75vh",
+                        display: "flex",
+                        flexDirection: 'column',
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#888",
+                        fontStyle: "italic",
+                        background: "#fafafa",
+                        borderRadius: 12, // Tăng bo tròn
+                        border: "2px dashed #e0e0e0", // Viền dash hiện đại
+                        padding: 24,
+                    }}
+                >
+                    <InfoCircleOutlined style={{ fontSize: 40, marginBottom: 16, color: '#999' }} />
+                    <Title level={4} style={{ color: '#999' }}>Chưa có báo giá được chọn</Title>
+                    <Text type="secondary">Vui lòng chọn một báo giá từ danh sách bên trái để xem chi tiết.</Text>
+                </div>
+            );
+        }
+
+        const added = record.services || [];
+
+        const handleUpdateQuantity = async (serviceId, newQuantity) => {
+            if (newQuantity < 1) return;
+            try {
+                // Sửa lại API call để sử dụng axiosInstance
+                await axiosInstance.put(
+                    `/quotation-services/${serviceId}`,
+                    null, // Body rỗng hoặc null cho PUT/DELETE nếu API chỉ dùng query/path
+                    { params: { quantity: newQuantity } } // Truyền số lượng qua params
                 );
-              })}
-          </Row>
-        )}
+                showMessage("success", "Cập nhật số lượng thành công!");
+                fetchQuotations?.();
+            } catch (error) {
+                console.error("Lỗi cập nhật số lượng:", error);
+                showMessage("error", "Cập nhật thất bại!");
+            }
+        };
 
-        {/* Chọn giá + số lượng */}
-        {data.serviceId && (
-          <div style={{ marginTop: 16 }}>
-            <h5>Chọn giá:</h5>
-            <Select
-              value={data.priceId}
-              onChange={(val) => onServiceChange(qid, "priceId", val)}
-              style={{ width: 300, marginBottom: 16 }}
-              placeholder="Chọn loại giá"
+        const handleDeleteService = async (serviceId) => {
+            try {
+                // Sửa lại API call để sử dụng axiosInstance
+                await axiosInstance.delete(
+                    `/quotation-services/${serviceId}`
+                );
+                showMessage("success", "Xóa dịch vụ thành công!");
+                fetchQuotations?.();
+            } catch (error) {
+                console.error("Lỗi xóa dịch vụ:", error);
+                showMessage("error", "Xóa thất bại!");
+            }
+        };
+
+        return (
+            <Card
+                style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)', minHeight: '75vh' }}
+                title={
+                    <Space>
+                        <Text strong>Báo giá #{record.quotationId}</Text>
+                        <Tag color={statusColors[record.status]} style={{ fontWeight: 'bold' }}>
+                            {statusText[record.status] || record.status}
+                        </Tag>
+                    </Space>
+                }
+                extra={
+                     // Thêm nút hành động (ví dụ: Chỉnh sửa/Duyệt)
+                    <Button type="primary" size="small" style={{ borderRadius: 6 }}>
+                        Duyệt báo giá
+                    </Button>
+                }
             >
-              {prices.map((p) => (
-                <Option key={p.priceId} value={p.priceId}>
-                  {p.priceType} - {p.amount?.toLocaleString()} VNĐ
-                </Option>
-              ))}
-            </Select>
+                <Row gutter={[16, 16]}>
+                    <Col span={12}>
+                        <Title level={5} style={{ color: '#1890ff' }}>Thông tin khách hàng</Title>
+                        <Text><strong>Tên:</strong> {record.username}</Text><br />
+                        <Text><strong>Điện thoại:</strong> {record.phone || "N/A"}</Text><br />
+                        <Text><strong>Ngày tạo:</strong> {dayjs(record.createdAt).format("DD/MM/YYYY HH:mm")}</Text>
+                    </Col>
+                    <Col span={12}>
+                        <Title level={5} style={{ color: '#1890ff' }}>Địa điểm & Thời gian</Title>
+                        <Text><strong>Từ:</strong> {record.addressFrom || "N/A"}</Text><br />
+                        <Text><strong>Đến:</strong> {record.addressTo || "N/A"}</Text><br />
+                        <Text><strong>Ngày chuyển:</strong> {dayjs(record.surveyDate).format("DD/MM/YYYY")}</Text>
+                    </Col>
+                </Row>
+                
+                <Divider orientation="left" style={{ margin: '20px 0' }}>
+                    <Title level={5} style={{ margin: 0 }}>Chi tiết Dịch vụ</Title>
+                </Divider>
 
-            <h5>Số lượng:</h5>
-            <InputNumber
-              min={1}
-              value={quantity}
-              onChange={(val) => onServiceChange(qid, "quantity", val)}
-              style={{ width: 100, marginBottom: 16 }}
-            />
+                {/* Dịch vụ đã thêm */}
+                <div style={{ maxHeight: '40vh', overflowY: 'auto', paddingRight: 8 }}>
+                    {added.length > 0 ? (
+                        added.map((s) => (
+                            <Card
+                                key={s?.id}
+                                size="small"
+                                style={{
+                                    marginBottom: 10,
+                                    borderRadius: 8,
+                                    // Tạo hiệu ứng đổ bóng cho từng dịch vụ
+                                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                                    transition: 'all 0.2s',
+                                    backgroundColor: '#f9f9f9'
+                                }}
+                            >
+                                <Row justify="space-between" align="middle">
+                                    <Col span={12}>
+                                        <Text strong style={{ color: '#333' }}>{s?.serviceName}</Text><br />
+                                        <Text type="secondary" style={{ fontSize: 12 }}>({s?.priceType})</Text>
+                                    </Col>
+                                    <Col span={6} style={{ textAlign: 'center' }}>
+                                        <Text>
+                                            {s?.amount?.toLocaleString()} × {s.quantity}
+                                        </Text>
+                                    </Col>
+                                    <Col span={6} style={{ textAlign: 'right' }}>
+                                        <Space>
+                                            <Button
+                                                icon={<MinusOutlined />}
+                                                size="small"
+                                                onClick={() => handleUpdateQuantity(s.id, s.quantity - 1)}
+                                                disabled={s.quantity <= 1}
+                                            />
+                                            <InputNumber
+                                                min={1}
+                                                size="small"
+                                                value={s.quantity}
+                                                onChange={(value) => handleUpdateQuantity(s.id, value || 1)}
+                                                style={{ width: 50, textAlign: 'center' }}
+                                            />
+                                            <Button
+                                                icon={<PlusOutlined />}
+                                                size="small"
+                                                onClick={() => handleUpdateQuantity(s.id, s.quantity + 1)}
+                                            />
+                                            <Button
+                                                danger
+                                                type="text" // Dùng type="text" để nút xóa gọn gàng hơn
+                                                size="small"
+                                                icon={<DeleteOutlined />}
+                                                onClick={() => handleDeleteService(s.id)}
+                                                title="Xóa dịch vụ"
+                                            />
+                                        </Space>
+                                    </Col>
+                                </Row>
+                                <div style={{ textAlign: 'right', marginTop: 8, borderTop: '1px dashed #eee', paddingTop: 4 }}>
+                                    <Text strong type="success">
+                                        Thành tiền: {s.subtotal?.toLocaleString()} đ
+                                    </Text>
+                                </div>
+                            </Card>
+                        ))
+                    ) : (
+                        <p style={{ color: "#999", fontStyle: "italic", textAlign: 'center' }}>
+                            Chưa có dịch vụ nào được thêm vào báo giá này.
+                        </p>
+                    )}
+                </div>
 
-            <Button
-              type="primary"
-              onClick={handleAddService}
-              disabled={!data.serviceId || !data.priceId || quantity < 1}
-            >
-              Thêm dịch vụ
-            </Button>
-          </div>
-        )}
-      </div>
+                {/* Tổng cộng */}
+                <div
+                    style={{
+                        background: "#e6f7ff", // Màu nền nhẹ nhàng
+                        padding: "16px",
+                        marginTop: 20,
+                        borderRadius: 8,
+                        textAlign: "right",
+                        border: '1px solid #91d5ff'
+                    }}
+                >
+                    <Title level={4} style={{ margin: 0 }}>
+                        <Text strong>TỔNG CỘNG: </Text>
+                        <Text strong style={{ color: "#1890ff" }}>
+                            {record.totalPrice?.toLocaleString() || 0} đ
+                        </Text>
+                    </Title>
+                </div>
+            </Card>
+        );
+    };
+
+    // 🧱 Giao diện chính — 2 cột
+    return (
+        <Row gutter={24}>
+            {/* Cột trái: danh sách báo giá */}
+            <Col span={10}>
+                <Title level={4} style={{ marginBottom: 16, borderLeft: '4px solid #1890ff', paddingLeft: 12 }}>
+                    Danh Sách Báo Giá ({quotations.length})
+                </Title>
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                        maxHeight: "75vh",
+                        overflowY: "auto",
+                        paddingRight: 8 // Thêm padding để không che scrollbar
+                    }}
+                >
+                    {quotations.map((q) => (
+                        <Card
+                            key={q.quotationId}
+                            hoverable
+                            onClick={() => setSelectedQuotation(q)}
+                            style={{
+                                borderRadius: 10,
+                                // Đổ bóng nhẹ khi chưa chọn, đổ bóng mạnh hơn khi chọn
+                                boxShadow: selectedQuotation?.quotationId === q.quotationId
+                                    ? "0 4px 10px rgba(24, 144, 255, 0.2)"
+                                    : "0 2px 5px rgba(0, 0, 0, 0.05)",
+                                border:
+                                    selectedQuotation?.quotationId === q.quotationId
+                                        ? "2px solid #1890ff"
+                                        : "1px solid #ddd",
+                                background:
+                                    selectedQuotation?.quotationId === q.quotationId
+                                        ? "#e6f7ff" // Nền xanh nhạt khi được chọn
+                                        : "white",
+                                transition: "all 0.2s ease",
+                            }}
+                        >
+                            <Space direction="vertical" style={{ width: '100%' }}>
+                                <Row justify="space-between" align="middle" style={{ width: '100%' }}>
+                                    <Text strong style={{ color: '#1890ff' }}>#{q.quotationId}</Text>
+                                    <Tag color={statusColors[q.status]} style={{ fontWeight: 'bold' }}>
+                                        {statusText[q.status] || q.status}
+                                    </Tag>
+                                </Row>
+                                <Text>{q.username} ({q.phone})</Text>
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                    <CheckCircleOutlined style={{ marginRight: 4 }} />
+                                    Ngày tạo: {dayjs(q.createdAt).format("DD/MM/YYYY")}
+                                </Text>
+                                <Divider style={{ margin: '8px 0' }} />
+                                <div style={{ textAlign: "right" }}>
+                                    <Text type="success" style={{ fontSize: 16, fontWeight: 'bold' }}>
+                                        Tổng: {q.totalPrice?.toLocaleString() || 0} đ
+                                    </Text>
+                                </div>
+                            </Space>
+                        </Card>
+                    ))}
+                    {quotations.length === 0 && (
+                        <Card style={{ textAlign: 'center', color: '#999', border: '1px dashed #ccc' }}>
+                            Không có báo giá nào.
+                        </Card>
+                    )}
+                </div>
+            </Col>
+
+            {/* Cột phải: chi tiết báo giá */}
+            <Col span={14}>
+                {renderQuotationDetails(selectedQuotation)}
+            </Col>
+        </Row>
     );
-  };
-
-  return (
-    <Table
-      dataSource={quotations}
-      columns={columns}
-      rowKey="quotationId"
-      bordered
-      expandable={{ expandedRowRender }}
-      pagination={{ pageSize: 10 }}
-    />
-  );
 };

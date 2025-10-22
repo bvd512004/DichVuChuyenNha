@@ -9,6 +9,8 @@ import UserContractsPage from "../customer/UserContractPage";
 import UserRequestsPage from "../customer/UserRequestsPage";
 import CustomerPage from "../customer/CustomerPage";
 import CreateAdminUser from "../admin/CreateAdminUser";
+import EmployeeManagement from "../admin/EmployeeManagement";
+import VehicleManagement from "../vehicles/VehiclesPage";
 import AnimatedPage from "../components/AnimatedPage";
 
 
@@ -25,6 +27,15 @@ import QuotationServiceManager from "../staff/QuotationServiceManager";
 import QuotationServiceList from "../staff/QuotationServiceList";
 
 import WorkProgressPage from "../employee/WorkProgressPage";
+import WorkProgressCustomerPage from "../customer/WorkProgressCustomerPage";
+import EmployeeDashboard from "../employee/EmployeeDashboard";
+import QuotationApproval from "../customer/QuotationApproval";
+import ManagerDashboard from "../manager/ManagerDashboard";
+import AssignSurveyer from "../manager/AssignSurveyer";
+import QuotationAddServices from "../staff/QuotationAddServices";
+import QuotationContractList from "../manager/QuotationContractList";
+import ManagerWorkProgressPage from "../manager/ManagerWorkProgressPage";
+import ReviewQuotationManagement from "../manager/ReviewQuotationManagement";
 
 
 const Router = () => {
@@ -42,9 +53,9 @@ const Router = () => {
         {
           path: "contract-assignment",
           element: (
-            <ProtectedRoute allowedRoles={["manager"]}>
-              <ContractAssignment />
-            </ProtectedRoute>
+
+            <ContractAssignment />
+
           ),
         },
         {
@@ -52,13 +63,25 @@ const Router = () => {
           element: <ProfilePage />
         },
         {
+          path: "assign-surveyer",
+          element: <AssignSurveyer />
+        },
+        {
           path: "survey-dashboard",
-          element: <SurveyDashboard />
+          element: (
+            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Surveyer">
+              <SurveyDashboard />
+            </ProtectedRoute>
+          ),
         },
 
         {
           path: "price-service",
           element: <PriceTable />
+        },
+        {
+          path: "add-services",
+          element: <QuotationAddServices />
         },
         {
           path: "quotations-services",
@@ -67,6 +90,18 @@ const Router = () => {
         {
           path: "quotations-services-list",
           element: <QuotationServiceList />
+        },
+        {
+          path: "review-quotations",
+          element: <ReviewQuotationManagement />
+        },
+        {
+          path: "quotation-for-customer",
+          element: <QuotationApproval />
+        },
+        {
+          path: "contracts-list-manager",
+          element: <QuotationContractList />
         },
 
 
@@ -111,11 +146,33 @@ const Router = () => {
               <AdminDashboard />
             </ProtectedRoute>
           ),
+        },
 
+        {
+          path: "employee-management",
+          element: (
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <EmployeeManagement />
+            </ProtectedRoute>
+          ),
+        },
+
+        {
+          path: "vehicle-management",
+          element: (
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <VehicleManagement />
+            </ProtectedRoute>
+          ),
         },
         {
           path: "my-requests",
           element: <UserRequestsPage />
+
+        },
+        {
+          path: "manager/work-progress",
+          element: <ManagerWorkProgressPage />
 
         },
 
@@ -123,7 +180,27 @@ const Router = () => {
         { path: "my-requests", element: <UserRequestsPage /> },
 
         { path: "access-denied", element: <AccessDeniedPage /> },
-        { path: "employee/work-progress", element: <WorkProgressPage /> }
+        { path: "employee/work-progress", element: <WorkProgressPage /> },
+        { path: "customer/work-progress", element: <WorkProgressCustomerPage /> },
+        {
+          path: "employee/dashboard",
+          element: <EmployeeDashboard />,
+          children: [
+            // { index: true, element: <WorkProgressPage /> }, // mặc định khi vào /employee/dashboard
+            { path: "work-progress", element: <WorkProgressPage /> },
+
+          ],
+        },
+        {
+          path: "manager/dashboard",
+          element: <ManagerDashboard />,
+          children: [
+            // { index: true, element: <ContractAssignment /> }, // mặc định khi vào /manager/dashboard
+            { path: "contract-assignment", element: <ContractAssignment /> },
+            { path: "manager/work-progress", element: <ManagerWorkProgressPage /> },
+          ],
+        },
+
       ],
     },
   ]);

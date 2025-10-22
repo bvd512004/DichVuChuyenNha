@@ -1,4 +1,5 @@
 import Header from './Header'
+import ChatBot from './ChatBot'
 import { Outlet } from 'react-router-dom';
 
 const Layout = () => {
@@ -6,6 +7,7 @@ const Layout = () => {
         <div>
             <Header/>
             <Outlet/>
+            <ChatBot/>
         </div>
     );
 };

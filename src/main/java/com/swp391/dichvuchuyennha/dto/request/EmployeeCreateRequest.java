@@ -14,5 +14,4 @@ public class EmployeeCreateRequest {
     private String phone;
 
     private String position;
-    private String status;
 }

@@ -3,6 +3,7 @@ package com.swp391.dichvuchuyennha.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.swp391.dichvuchuyennha.dto.request.SurveyRequest;
@@ -28,10 +29,11 @@ public class SurveyController {
         return ResponseEntity.ok(surveyMapper.toResponse(savedSurvey));
     }
 
-    @GetMapping
-    public ResponseEntity<List<SurveyResponse>> listAllSurveys() {
-        List<SurveyResponse> surveys = surveyService.getAllSurveys();
-        return ResponseEntity.ok(surveys);
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('employee') and @employeePositionService.hasPositionSurveyer(authentication)")
+
+    public ResponseEntity<List<SurveyResponse>> getMySurveys() {
+        return ResponseEntity.ok(surveyService.getSurveysByCurrentEmployee());
     }
 
     @PutMapping("/{id}")
@@ -44,6 +46,10 @@ public class SurveyController {
     public ResponseEntity<Void> deleteSurvey(@PathVariable Integer id) {
         surveyService.deleteSurvey(id);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping
+    public List<SurveyResponse> getAllSurveys() {
+        return surveyService.getAllSurveys();
     }
 
 }

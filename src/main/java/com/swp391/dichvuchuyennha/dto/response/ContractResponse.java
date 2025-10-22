@@ -22,7 +22,8 @@ public class ContractResponse {
     private Double totalAmount;
     private String status;
     private LocalDateTime signedDate;
-
+    private String username;
+    private String companyName;
     // Thông tin user owner
 
 
