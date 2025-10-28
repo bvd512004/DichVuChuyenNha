@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import { workProgressApi } from "../service/workprogress";
 import { assignmentApi } from "../service/assignment";
 import "./style/ManagerWorkProgressPage.css";
+import { Card, Tag, Row, Col } from "antd";
 
 // ===================== Modal Component =====================
 const Modal = ({ show, onClose, children }) => {
@@ -12,9 +13,7 @@ const Modal = ({ show, onClose, children }) => {
     <div
       className="modal-overlay-portal"
       onClick={(e) => {
-        if (e.target.className === "modal-overlay-portal") {
-          onClose();
-        }
+        if (e.target.className === "modal-overlay-portal") onClose();
       }}
       style={{
         position: "fixed",
@@ -26,7 +25,7 @@ const Modal = ({ show, onClose, children }) => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        zIndex: 999999,
+        zIndex: 9999,
       }}
     >
       {children}
@@ -46,13 +45,17 @@ const ManagerWorkProgressPage = () => {
   const [progressStatus, setProgressStatus] = useState("pending");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showEmployeeCards, setShowEmployeeCards] = useState(false);
+
+  // ⚡️ Thêm state mới để hiển thị danh sách Work Progress
+  const [workProgressList, setWorkProgressList] = useState([]);
+  const [showWorkProgressModal, setShowWorkProgressModal] = useState(false);
 
   // ========== Lấy danh sách hợp đồng ==========
   useEffect(() => {
     const fetchContracts = async () => {
       try {
         const res = await workProgressApi.getEligibleContracts();
-        console.log("✅ Eligible contracts:", res.data);
         setContracts(res.data || []);
       } catch (err) {
         console.error("❌ Lỗi lấy danh sách hợp đồng:", err);
@@ -61,11 +64,10 @@ const ManagerWorkProgressPage = () => {
     fetchContracts();
   }, []);
 
-  // ========== Lấy danh sách nhân viên cho từng hợp đồng ==========
+  // ========== Lấy danh sách nhân viên cho hợp đồng ==========
   const fetchEmployeesForContract = async (contractId) => {
     try {
       const res = await assignmentApi.getAssignmentsByContract(contractId);
-      console.log("✅ Assigned employees for contract", contractId, res.data);
       setEmployees(res.data || []);
       return res.data || [];
     } catch (err) {
@@ -75,6 +77,26 @@ const ManagerWorkProgressPage = () => {
     }
   };
 
+  // ✅ Xử lý khi nhấn "Xem Tiến Trình"
+  const handleViewWorkProgress = async (contractId) => {
+    setSelectedContract(contractId);
+    try {
+      const res = await workProgressApi.getWorkProgressByContract(contractId);
+      console.log("📋 Tiến trình công việc:", res.data);
+      setWorkProgressList(res.data || []);
+      setShowWorkProgressModal(true);
+    } catch (err) {
+      console.error("❌ Lỗi khi lấy tiến trình công việc:", err);
+      alert("Không thể tải tiến trình công việc cho hợp đồng này!");
+    }
+  };
+
+  // ✅ Đóng modal xem tiến trình
+  const handleCloseWorkProgressModal = () => {
+    setShowWorkProgressModal(false);
+    setWorkProgressList([]);
+  };
+
   // ========== Mở modal tạo Work Progress ==========
   const handleOpenCreateModal = async (contractId) => {
     setMessage("");
@@ -82,7 +104,8 @@ const ManagerWorkProgressPage = () => {
     setEmployees([]);
     setSelectedEmployee(null);
     setTaskDescription("");
-    setProgressStatus("pending");
+    setProgressStatus("pending"); // Luôn đặt về pending khi mở modal
+    setShowEmployeeCards(false);
 
     const loadedEmployees = await fetchEmployeesForContract(contractId);
     if (!loadedEmployees || loadedEmployees.length === 0) {
@@ -93,7 +116,7 @@ const ManagerWorkProgressPage = () => {
     setShowModal(true);
   };
 
-  // ========== Đóng modal ==========
+  // ========== Đóng modal tạo Work Progress ==========
   const handleCloseModal = () => {
     setShowModal(false);
     setMessage("");
@@ -115,27 +138,23 @@ const ManagerWorkProgressPage = () => {
 
     const payload = {
       contractId: selectedContract,
-      employeeId: selectedEmployee, // ✅ chỉ gửi employeeId
+      employeeId: selectedEmployee,
       taskDescription: taskDescription.trim(),
-      progressStatus,
+      progressStatus: "pending", // Luôn gửi "pending" khi tạo mới
     };
-
-    console.log("📤 Payload gửi đi:", payload);
 
     setLoading(true);
     setMessage("");
 
     try {
       const response = await workProgressApi.createForEmployee(payload);
-      console.log("✅ Success:", response);
-      setMessage("✅ Tạo Work Progress thành công!");
+      console.log("✅ Tạo Work Progress thành công:", response);
       alert("✅ Tạo Work Progress thành công!");
       setTimeout(() => handleCloseModal(), 1000);
     } catch (err) {
-      console.error("❌ Lỗi tạo Work Progress:", err);
       const errorMsg =
         err.response?.data?.message || err.message || "Lỗi không xác định";
-      setMessage("❌ Tạo Work Progress thất bại: " + errorMsg);
+      console.error("❌ Lỗi tạo Work Progress:", err);
       alert("❌ Tạo Work Progress thất bại: " + errorMsg);
     } finally {
       setLoading(false);
@@ -146,21 +165,6 @@ const ManagerWorkProgressPage = () => {
   return (
     <div className="manager-work-progress-container">
       <h2>📋 Quản lý tạo Work Progress</h2>
-
-      {/* Debug */}
-      <div
-        style={{
-          background: showModal ? "#ffeb3b" : "#e0e0e0",
-          padding: "10px",
-          marginBottom: "10px",
-          borderRadius: "4px",
-          fontSize: "12px",
-        }}
-      >
-        <strong>Debug:</strong> showModal = {showModal ? "TRUE ✅" : "FALSE ❌"} |{" "}
-        employees = {employees.length} | selectedContract ={" "}
-        {selectedContract || "none"}
-      </div>
 
       {/* Bảng hợp đồng */}
       <table className="contract-table">
@@ -184,7 +188,7 @@ const ManagerWorkProgressPage = () => {
                 <td>{c.endDate || "—"}</td>
                 <td>
                   {c.totalAmount
-                    ? `$${Number(c.totalAmount).toLocaleString()}`
+                    ? `${Number(c.totalAmount).toLocaleString()} VND`
                     : "—"}
                 </td>
                 <td>
@@ -194,12 +198,9 @@ const ManagerWorkProgressPage = () => {
                 <td>
                   <button
                     className="btn-view"
-                    onClick={() => {
-                      setSelectedContract(c.contractId);
-                      fetchEmployeesForContract(c.contractId);
-                    }}
+                    onClick={() => handleViewWorkProgress(c.contractId)}
                   >
-                    Xem nhân viên
+                    Xem Tiến Trình
                   </button>{" "}
                   <button
                     className="btn-create"
@@ -220,21 +221,113 @@ const ManagerWorkProgressPage = () => {
         </tbody>
       </table>
 
-      {/* Danh sách nhân viên */}
-      {selectedContract && !showModal && employees.length > 0 && (
-        <div className="employee-list">
-          <h3>👷 Nhân viên được gán cho hợp đồng #{selectedContract}</h3>
-          <ul>
-            {employees.map((e, i) => (
-              <li key={i}>
-                <strong>{e.username}</strong> — <i>{e.position}</i>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* ================== Modal Xem Tiến Trình ================== */}
+      <Modal show={showWorkProgressModal} onClose={handleCloseWorkProgressModal}>
+        <div
+          className="modal-content-box"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            backgroundColor: "white",
+            padding: "25px",
+            borderRadius: "10px",
+            minWidth: "550px",
+            maxWidth: "700px",
+            maxHeight: "80vh",
+            overflowY: "auto",
+          }}
+        >
+          <h3>🧱 Tiến Trình Công Việc cho Hợp Đồng #{selectedContract}</h3>
+          {/* Hiển thị danh sách tiến độ công việc */}
+          {workProgressList.length > 0 ? (
+            <Row gutter={[20, 20]}>
+              {workProgressList.map((wp) => (
+                <Col xs={24} sm={12} md={12} lg={12} key={wp.progressId}>
+                  <Card
+                    hoverable
+                    bordered={false}
+                    style={{
+                      borderRadius: 16,
+                      boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+                      background: "#ffffff",
+                      overflow: "hidden",
+                    }}
+                    title={
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 18 }}>🧱</span>
+                          {wp.serviceName}
+                        </span>
+                        <Tag
+                          color={
+                            wp.progressStatus === "completed"
+                              ? "success"
+                              : wp.progressStatus === "in_progress"
+                                ? "processing"
+                                : "warning"
+                          }
+                          style={{
+                            fontSize: "0.85rem",
+                            padding: "4px 10px",
+                            borderRadius: 8,
+                            textTransform: "capitalize",
+                          }}
+                        >
+                          {wp.progressStatus === "completed"
+                            ? "Hoàn thành"
+                            : wp.progressStatus === "in_progress"
+                              ? "Đang thực hiện"
+                              : "Đang chờ"}
+                        </Tag>
+                      </div>
+                    }
+                  >
+                    <div style={{ padding: "8px 4px", lineHeight: 1.8 }}>
+                      <p><strong>Mô tả công việc:</strong> {wp.taskDescription}</p>
+                      <p><strong>Nhân viên thực hiện:</strong> {wp.employeeName}</p>
+                      <p><strong>Khách hàng:</strong> {wp.customerName}</p>
+                      <p><strong>Dịch vụ:</strong> {wp.serviceName}</p>
+                      <p><strong>Ngày hợp đồng:</strong> {wp.startDate} → {wp.endDate}</p>
+                      <p><strong>Tổng tiền:</strong> <span style={{ color: "#fa8c16", fontWeight: 600 }}>{wp.totalAmount.toLocaleString()} VND</span></p>
+                    </div>
 
-      {/* Modal */}
+                    <div
+                      style={{
+                        borderTop: "1px solid #f0f0f0",
+                        marginTop: 10,
+                        paddingTop: 8,
+                        fontSize: "0.85rem",
+                        color: "#999",
+                        textAlign: "right",
+                      }}
+                    >
+                      Cập nhật lúc: {new Date(wp.updatedAt).toLocaleString()}
+                    </div>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          ) : (
+            <p style={{ textAlign: "center", color: "#999", marginTop: 20 }}>
+              Không có tiến trình nào cho hợp đồng này.
+            </p>
+          )}
+          <button
+            onClick={handleCloseWorkProgressModal}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#6c757d",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              marginTop: "10px",
+            }}
+          >
+            Đóng
+          </button>
+        </div>
+      </Modal>
+
+      {/* ================== Modal Tạo Work Progress ================== */}
       <Modal show={showModal} onClose={handleCloseModal}>
         <div
           className="modal-content-box"
@@ -249,7 +342,6 @@ const ManagerWorkProgressPage = () => {
         >
           <h3>🧱 Tạo Work Progress cho hợp đồng #{selectedContract}</h3>
 
-          {/* Chọn nhân viên */}
           <div style={{ marginBottom: "20px" }}>
             <label>Chọn nhân viên *</label>
             <select
@@ -272,7 +364,6 @@ const ManagerWorkProgressPage = () => {
             </select>
           </div>
 
-          {/* Mô tả công việc */}
           <div style={{ marginBottom: "20px" }}>
             <label>Mô tả công việc *</label>
             <textarea
@@ -289,45 +380,48 @@ const ManagerWorkProgressPage = () => {
             />
           </div>
 
-          {/* Trạng thái */}
+          {/* Hiển thị trạng thái mặc định (không cho thay đổi) */}
           <div style={{ marginBottom: "20px" }}>
             <label>Trạng thái</label>
-            <select
-              value={progressStatus}
-              onChange={(e) => setProgressStatus(e.target.value)}
-              disabled={loading}
+            <div
               style={{
                 width: "100%",
                 padding: "10px",
                 borderRadius: "6px",
-                border: "1px solid #ddd",
+                border: "1px solid #e0e0e0",
+                backgroundColor: "#f5f5f5",
+                color: "#666",
               }}
             >
-              <option value="pending">Đang chờ</option>
-              <option value="in_progress">Đang thực hiện</option>
-              <option value="completed">Hoàn thành</option>
-            </select>
+              <span style={{ 
+                display: "inline-block",
+                padding: "4px 12px",
+                borderRadius: "4px",
+                backgroundColor: "#fff7e6",
+                color: "#d48806",
+                fontWeight: 500
+              }}>
+                🕐 Đang chờ
+              </span>
+            </div>
+            <small style={{ color: "#999", fontSize: "0.85rem" }}>
+              Trạng thái mặc định khi tạo mới
+            </small>
           </div>
 
-          {/* Thông báo */}
           {message && (
-            <div
-              style={{
-                padding: "10px",
-                borderRadius: "6px",
-                marginBottom: "15px",
-                backgroundColor: message.includes("✅") ? "#d4edda" : "#f8d7da",
-                color: message.includes("✅") ? "#155724" : "#721c24",
-                border: `1px solid ${
-                  message.includes("✅") ? "#c3e6cb" : "#f5c6cb"
-                }`,
-              }}
-            >
+            <div style={{
+              padding: "10px",
+              marginBottom: "15px",
+              backgroundColor: "#fff2e8",
+              border: "1px solid #ffbb96",
+              borderRadius: "6px",
+              color: "#d4380d"
+            }}>
               {message}
             </div>
           )}
 
-          {/* Buttons */}
           <div style={{ display: "flex", gap: "10px" }}>
             <button
               onClick={handleCreateWorkProgress}
@@ -339,6 +433,8 @@ const ManagerWorkProgressPage = () => {
                 color: "white",
                 border: "none",
                 borderRadius: "6px",
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.6 : 1
               }}
             >
               {loading ? "Đang tạo..." : "Tạo"}
@@ -353,6 +449,8 @@ const ManagerWorkProgressPage = () => {
                 color: "white",
                 border: "none",
                 borderRadius: "6px",
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.6 : 1
               }}
             >
               Hủy
@@ -365,3 +463,4 @@ const ManagerWorkProgressPage = () => {
 };
 
 export default ManagerWorkProgressPage;
+//end

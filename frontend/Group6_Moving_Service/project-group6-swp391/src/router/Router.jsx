@@ -35,8 +35,7 @@ import AssignSurveyer from "../manager/AssignSurveyer";
 import QuotationAddServices from "../staff/QuotationAddServices";
 import QuotationContractList from "../manager/QuotationContractList";
 import ManagerWorkProgressPage from "../manager/ManagerWorkProgressPage";
-import ReviewQuotationManagement from "../manager/ReviewQuotationManagement";
-
+import WorkProgressList from "../manager/WorkProgressList";
 
 const Router = () => {
   const router = createBrowserRouter([
@@ -48,63 +47,63 @@ const Router = () => {
 
         {
           path: "",
-          element: <HomePage />
+          element: <HomePage/>
+        },
+//         {
+//   path: "contract-assignment",
+//   element: (
+   
+//       <ContractAssignment />
+   
+//   ),
+// },
+        {
+          path:"user-profile",
+          element: <ProfilePage/>
+        },
+           {
+          path:"assign-surveyer",
+          element: <AssignSurveyer/>
+        },
+       {
+  path:"survey-dashboard",
+  element: (
+    <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Surveyer">
+      <SurveyDashboard />
+    </ProtectedRoute>
+  ),
+},
+      
+      {
+          path:"price-service",
+          element: <PriceTable/>
+        },
+           {
+          path:"add-services",
+          element: <QuotationAddServices/>
         },
         {
-          path: "contract-assignment",
-          element: (
-
-            <ContractAssignment />
-
-          ),
+          path:"quotations-services",
+          element: <QuotationServiceManager/>
         },
         {
-          path: "user-profile",
-          element: <ProfilePage />
+          path:"quotations-services-list",
+          element: <QuotationServiceList/>
         },
-        {
-          path: "assign-surveyer",
-          element: <AssignSurveyer />
+         {
+          path:"review-quotations",
+          element: <ReviewQuotationManagement/>
         },
-        {
-          path: "survey-dashboard",
-          element: (
-            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Surveyer">
-              <SurveyDashboard />
-            </ProtectedRoute>
-          ),
-        },
-
-        {
-          path: "price-service",
-          element: <PriceTable />
-        },
-        {
-          path: "add-services",
-          element: <QuotationAddServices />
-        },
-        {
-          path: "quotations-services",
-          element: <QuotationServiceManager />
-        },
-        {
-          path: "quotations-services-list",
-          element: <QuotationServiceList />
-        },
-        {
-          path: "review-quotations",
-          element: <ReviewQuotationManagement />
-        },
-        {
+          {
           path: "quotation-for-customer",
-          element: <QuotationApproval />
+          element: <QuotationApproval/>
         },
-        {
+                {
           path: "contracts-list-manager",
-          element: <QuotationContractList />
+          element: <QuotationContractList/>
         },
 
-
+  
 
         {
           path: "login",
@@ -125,7 +124,7 @@ const Router = () => {
         },
 
         { path: "customer-page", element: <CustomerPage /> },
-
+  
         { path: "list-contract-unsigned", element: <UserContractsPage /> },
 
         // Admin routes
@@ -134,7 +133,7 @@ const Router = () => {
           element: (
             <ProtectedRoute allowedRoles={["admin"]}>
               <CreateAdminUser />
-            </ProtectedRoute>
+             </ProtectedRoute>
           ),
 
         },
@@ -144,7 +143,7 @@ const Router = () => {
           element: (
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminDashboard />
-            </ProtectedRoute>
+             </ProtectedRoute>
           ),
         },
 
@@ -166,13 +165,18 @@ const Router = () => {
           ),
         },
         {
-          path: "my-requests",
-          element: <UserRequestsPage />
+          path:"my-requests",
+          element:<UserRequestsPage/>
 
         },
         {
-          path: "manager/work-progress",
-          element: <ManagerWorkProgressPage />
+          path:"manager/work-progress",
+          element:<ManagerWorkProgressPage/>
+
+        },
+        {
+          path:"manager/work-progress-list",
+          element:< WorkProgressList/>
 
         },
 
@@ -180,16 +184,24 @@ const Router = () => {
         { path: "my-requests", element: <UserRequestsPage /> },
 
         { path: "access-denied", element: <AccessDeniedPage /> },
-        { path: "employee/work-progress", element: <WorkProgressPage /> },
-        { path: "customer/work-progress", element: <WorkProgressCustomerPage /> },
-        {
+        { path: "employee/work-progress", element: <WorkProgressPage />},
+         { path: "customer/work-progress", element: <WorkProgressCustomerPage />},
+         {
           path: "employee/dashboard",
           element: <EmployeeDashboard />,
           children: [
             // { index: true, element: <WorkProgressPage /> }, // mặc định khi vào /employee/dashboard
             { path: "work-progress", element: <WorkProgressPage /> },
-
+            
           ],
+        },
+         {
+          path: "contract-assignment",
+          element: (
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <ContractAssignment />
+            </ProtectedRoute>
+          ),
         },
         {
           path: "manager/dashboard",
@@ -198,9 +210,10 @@ const Router = () => {
             // { index: true, element: <ContractAssignment /> }, // mặc định khi vào /manager/dashboard
             { path: "contract-assignment", element: <ContractAssignment /> },
             { path: "manager/work-progress", element: <ManagerWorkProgressPage /> },
+             { path: "manager/work-progress-list", element: <WorkProgressList /> },
           ],
         },
-
+         
       ],
     },
   ]);

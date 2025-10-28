@@ -34,6 +34,7 @@ public enum ErrorCode {
     INVALID_EMPLOYEE_STATUS(1024,"Invalid employeeStatus",HttpStatus.BAD_REQUEST),
     WORK_PROGRESS_ALREADY_EXISTS(1025,"Work progress already exists",HttpStatus.BAD_REQUEST),
     MISSING_PARAMETER(1026,"Missing parameter",HttpStatus.BAD_REQUEST),
+    FORBIDDEN(1027,"Forbidden",HttpStatus.FORBIDDEN),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

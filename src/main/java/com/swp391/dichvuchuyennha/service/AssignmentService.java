@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +25,7 @@ public class AssignmentService {
     private final EmployeeRepository employeeRepo;
     private final ContractRepository contractRepo;
     private final WorkProgressRepository workProgressRepository;
+
     @Transactional
     public void assignEmployeeToContract(Integer contractId, Integer employeeId, LocalDate assignedDate) {
         // Lấy thông tin hợp đồng và nhân viên
@@ -33,9 +35,15 @@ public class AssignmentService {
         Employee employee = employeeRepo.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        // Kiểm tra trạng thái nhân viên
-        if (!"free".equalsIgnoreCase(employee.getStatus())) {
-            throw new RuntimeException("Employee is not free");
+        // Lấy ngày moving_day từ hợp đồng
+        LocalDate movingDay = contract.getQuotation().getRequest().getMovingDay().toInstant()
+                .atZone(ZoneId.systemDefault()).toLocalDate();
+
+        // Kiểm tra nếu nhân viên đã được gán vào hợp đồng khác trong ngày movingDay
+        List<AssignmentEmployee> existingAssignments = assignmentRepo.findAssignmentsByEmployeeAndDate(employeeId, movingDay);
+
+        if (!existingAssignments.isEmpty()) {
+            throw new RuntimeException("Employee is already assigned to another contract on this day");
         }
 
         // Gán nhân viên vào hợp đồng
@@ -43,13 +51,15 @@ public class AssignmentService {
         assignment.setContract(contract);
         assignment.setEmployee(employee);
         assignment.setAssignedTime(assignedDate);
+        assignment.setAssignDate(movingDay); // Lưu ngày gán vào bảng assignment_employee
 
         assignmentRepo.save(assignment);
 
         // Cập nhật trạng thái nhân viên thành 'busy'
-        employee.setStatus("busy");
-        employeeRepo.save(employee);
+//        employee.setStatus("busy");
+//        employeeRepo.save(employee);
     }
+
     /** ✅ Lấy danh sách nhân viên đã gán theo hợp đồng */
     @Transactional(readOnly = true)
     public List<EmployeeDTO> getAssignedEmployeesByContract(Integer contractId) {
@@ -77,4 +87,5 @@ public class AssignmentService {
         employee.setStatus("free");
         employeeRepo.save(employee);
     }
-}//fix đủ
+}
+//end

@@ -18,4 +18,6 @@ public class ContractRequest {
     private Double depositAmount;
     private Double totalAmount;
     private Integer signedById; // optional
+
+
 }

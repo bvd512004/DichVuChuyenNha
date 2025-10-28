@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Entity
@@ -63,5 +64,18 @@ public class Contract {
 
     @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<WorkProgress> workProgress;
+    public LocalDate getMovingDay() {
+        if (this.quotation == null
+                || this.quotation.getRequest() == null
+                || this.quotation.getRequest().getMovingDay() == null) {
+            return null; // tránh NullPointerException
+        }
+
+        return this.quotation.getRequest().getMovingDay()
+                .toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+    }
+
 
 }

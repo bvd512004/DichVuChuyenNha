@@ -23,6 +23,10 @@ public class Quotations {
     @JoinColumn(name = "survey_id")
     private Surveys survey;
 
+    @ManyToOne(fetch = FetchType.LAZY)  // Mối quan hệ giữa Quotation và Request
+    @JoinColumn(name = "request_id")  // Khóa ngoại đến bảng Requests
+    private Requests request;  // Thêm trường request liên kết với bảng Requests
+
     @Column(name = "total_price")
     private Double totalPrice;
 

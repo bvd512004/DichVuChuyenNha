@@ -11,7 +11,6 @@ import com.swp391.dichvuchuyennha.mapper.WorkProgressMapper;
 import com.swp391.dichvuchuyennha.repository.ContractRepository;
 import com.swp391.dichvuchuyennha.repository.EmployeeRepository;
 import com.swp391.dichvuchuyennha.repository.WorkProgressRepository;
-import com.swp391.dichvuchuyennha.service.WorkProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +34,7 @@ public class WorkProgressServiceImpl implements WorkProgressService {
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
-//k
+
     @Override
     public WorkProgressResponse createWorkProgress(Integer employeeId, WorkProgressRequest request) {
         Employee employee = employeeRepository.findById(employeeId)
@@ -43,6 +42,15 @@ public class WorkProgressServiceImpl implements WorkProgressService {
 
         Contract contract = contractRepository.findById(request.getContractId())
                 .orElseThrow(() -> new AppException(ErrorCode.CONTRACT_NOT_FOUND));
+
+        // ✅ Kiểm tra xem nhân viên này có được gán cho hợp đồng này không
+        boolean isAssigned = contract.getAssignmentEmployees()
+                .stream()
+                .anyMatch(ae -> ae.getEmployee().getEmployeeId().equals(employeeId));
+
+        if (!isAssigned) {
+            throw new AppException(ErrorCode.EMPLOYEE_NOT_ASSIGNED_TO_CONTRACT);
+        }
 
         WorkProgress progress = new WorkProgress();
         progress.setEmployee(employee);
@@ -81,9 +89,9 @@ public class WorkProgressServiceImpl implements WorkProgressService {
 
         workProgressRepository.delete(progress);
     }
+
     @Override
     public WorkProgressResponse createWorkProgressForEmployee(WorkProgressRequest request, Integer managerId) {
-        // 👉 Không dùng userId nữa, chỉ cần employeeId
         if (request.getEmployeeId() == null) {
             throw new AppException(ErrorCode.MISSING_PARAMETER);
         }
@@ -94,37 +102,26 @@ public class WorkProgressServiceImpl implements WorkProgressService {
         Contract contract = contractRepository.findById(request.getContractId())
                 .orElseThrow(() -> new AppException(ErrorCode.CONTRACT_NOT_FOUND));
 
-        // Kiểm tra trạng thái hợp đồng
         if (!"SIGNED".equalsIgnoreCase(contract.getStatus())) {
             throw new AppException(ErrorCode.INVALID_CONTRACT_STATUS);
         }
 
-        // Kiểm tra hợp đồng có nhân viên được gán chưa
-        if (contract.getAssignmentEmployees() == null || contract.getAssignmentEmployees().isEmpty()) {
-            throw new AppException(ErrorCode.NO_EMPLOYEES_ASSIGNED);
-        }
-
-        // Kiểm tra nhân viên có nằm trong danh sách được gán không
+        // ✅ Kiểm tra xem nhân viên có thực sự được gán vào hợp đồng không
         boolean isAssigned = contract.getAssignmentEmployees()
                 .stream()
                 .anyMatch(ae -> ae.getEmployee().getEmployeeId().equals(employee.getEmployeeId()));
+
         if (!isAssigned) {
             throw new AppException(ErrorCode.EMPLOYEE_NOT_ASSIGNED_TO_CONTRACT);
         }
 
-        // Kiểm tra trạng thái nhân viên
-        if (!"busy".equalsIgnoreCase(employee.getStatus())) {
-            throw new AppException(ErrorCode.INVALID_EMPLOYEE_STATUS);
-        }
-
-        // Kiểm tra trùng work progress
+        // ✅ Kiểm tra xem nhân viên đã có progress nào trong hợp đồng này chưa
         boolean exists = workProgressRepository
                 .existsByContract_ContractIdAndEmployee_EmployeeId(contract.getContractId(), employee.getEmployeeId());
         if (exists) {
             throw new AppException(ErrorCode.WORK_PROGRESS_ALREADY_EXISTS);
         }
 
-        // ✅ Tạo mới work progress
         WorkProgress progress = new WorkProgress();
         progress.setEmployee(employee);
         progress.setContract(contract);
@@ -134,4 +131,21 @@ public class WorkProgressServiceImpl implements WorkProgressService {
 
         return mapper.toResponse(workProgressRepository.save(progress));
     }
-}//fix
+
+    @Override
+    public List<WorkProgressResponse> getAllWorkProgress() {
+        return workProgressRepository.findAll()
+                .stream()
+                .map(mapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<WorkProgressResponse> getWorkProgressByContract(Integer contractId) {
+        return workProgressRepository.findByContract_ContractId(contractId)
+                .stream()
+                .map(mapper::toResponse)
+                .collect(Collectors.toList());
+    }
+}
+//end

@@ -17,12 +17,16 @@ export const assignmentApi = {
   getEmployees: () =>
     axios.get(`${API_BASE}/employees/status/free`, { headers: getAuthHeaders() }),
 
+  // Cập nhật để truyền thêm `assignDate` khi gán nhân viên vào hợp đồng
   assignEmployee: ({ contractId, employeeId, assignedDate }) =>
     axios.post(
       `${API_BASE}/assignments/assign`,
-      null,
       {
-        params: { contractId, employeeId, assignedDate },
+        contractId,     // Gửi contractId trong body
+        employeeId,     // Gửi employeeId trong body
+        assignedDate,   // Gửi assignedDate trong body
+      },
+      {
         headers: getAuthHeaders(),
       }
     ),
@@ -35,3 +39,4 @@ export const assignmentApi = {
 };
 
 export default assignmentApi;
+//final 

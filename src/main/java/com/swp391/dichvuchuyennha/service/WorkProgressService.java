@@ -11,5 +11,7 @@ public interface WorkProgressService {
     WorkProgressResponse updateWorkProgress(Integer progressId, Integer employeeId, WorkProgressRequest request);
     void deleteWorkProgress(Integer progressId, Integer employeeId);
     WorkProgressResponse createWorkProgressForEmployee(WorkProgressRequest request, Integer managerId);
+    List<WorkProgressResponse> getAllWorkProgress();
+    List<WorkProgressResponse> getWorkProgressByContract(Integer contractId);
 }
 //l
