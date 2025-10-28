@@ -59,6 +59,17 @@ public class ContractService {
                 .toList();
     }
 
+    /** ✅ Lấy danh sách hợp đồng đã ký của 1 user */
+    @Transactional(readOnly = true)
+    public List<ContractResponse> getSignedContracts(Integer userId) {
+        List<Contract> contracts =
+                contractRepository.findByQuotation_Survey_Request_User_UserIdAndStatus(userId, "SIGNED");
+
+        return contracts.stream()
+                .map(this::buildContractDetail)
+                .toList();
+    }
+
     /** ✅ Ký hợp đồng */
     @Transactional
     public ContractResponse signContract(Integer contractId, Integer userId) {

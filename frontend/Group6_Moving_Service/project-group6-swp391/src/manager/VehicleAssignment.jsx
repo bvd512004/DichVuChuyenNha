@@ -50,8 +50,10 @@ export default function VehicleAssignment() {
   const loadContracts = async () => {
     try {
       const res = await ContractAPI.getAll();
-      setContracts(res.data);
-    } catch {
+      console.log("Contracts loaded:", res.data);
+      setContracts(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error loading contracts:", err);
       message.error("Failed to load contracts");
     }
   };
@@ -238,6 +240,7 @@ export default function VehicleAssignment() {
           rowKey="contractId"
           pagination={{ pageSize: 10 }}
           loading={loading}
+          locale={{ emptyText: "Không có hợp đồng nào. Hãy tạo hợp đồng từ báo giá đã được duyệt." }}
         />
       </Card>
 

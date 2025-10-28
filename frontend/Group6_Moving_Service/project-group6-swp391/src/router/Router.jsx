@@ -38,6 +38,8 @@ import ManagerWorkProgressPage from "../manager/ManagerWorkProgressPage";
 import WorkProgressList from "../manager/WorkProgressList";
 import ReviewQuotationManagement from "../manager/ReviewQuotationManagement";
 import VehicleAssignment from "../manager/VehicleAssignment";
+import ManagerRequestList from "../manager/ManagerRequestList";
+import DriverDashboard from "../driver/DriverDashboard";
 
 const Router = () => {
   const router = createBrowserRouter([
@@ -65,7 +67,11 @@ const Router = () => {
         },
            {
           path:"assign-surveyer",
-          element: <AssignSurveyer/>
+          element: (
+            <ProtectedRoute allowedRoles={["manager", "admin"]}>
+              <AssignSurveyer/>
+            </ProtectedRoute>
+          )
         },
        {
   path:"survey-dashboard",
@@ -214,6 +220,14 @@ const Router = () => {
           ),
         },
         {
+          path: "manager-requests",
+          element: (
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <ManagerRequestList />
+            </ProtectedRoute>
+          ),
+        },
+        {
           path: "manager/dashboard",
           element: <ManagerDashboard />,
           children: [
@@ -221,8 +235,17 @@ const Router = () => {
             { path: "contract-assignment", element: <ContractAssignment /> },
             { path: "vehicle-assignment", element: <VehicleAssignment /> },
             { path: "manager/work-progress", element: <ManagerWorkProgressPage /> },
-             { path: "manager/work-progress-list", element: <WorkProgressList /> },
+            { path: "manager/work-progress-list", element: <WorkProgressList /> },
+            { path: "manager/requests", element: <ManagerRequestList /> },
           ],
+        },
+        {
+          path: "driver/dashboard",
+          element: (
+            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Driver">
+              <DriverDashboard />
+            </ProtectedRoute>
+          ),
         },
          
       ],

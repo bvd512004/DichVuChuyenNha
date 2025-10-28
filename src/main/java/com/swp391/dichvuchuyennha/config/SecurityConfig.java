@@ -59,82 +59,105 @@ public class SecurityConfig {
                         // ✅ Public endpoints - CHỈ NHỮNG ENDPOINT THỰC SỰ PUBLIC
                         .requestMatchers(PUBLIC_URL).permitAll()
 
-                        // ✅ Admin endpoints
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // ✅ admin endpoints
+                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "admin")
 
                         // ✅ User endpoints
-                        .requestMatchers(GET, "/api/users").hasRole("ADMIN")
-                        .requestMatchers(POST, "/api/users").hasRole("ADMIN")
+                        .requestMatchers(GET, "/api/users").hasAnyRole("ADMIN", "admin")
+                        .requestMatchers(POST, "/api/users").hasAnyRole("ADMIN", "admin")
                         .requestMatchers(POST, "/api/users/create").permitAll() // Customer registration - public access
-                        .requestMatchers(PUT, "/api/users/{userId}").hasRole("ADMIN")
-                        .requestMatchers(DELETE, "/api/users/{userId}").hasRole("ADMIN")
+                        .requestMatchers(PUT, "/api/users/{userId}").hasAnyRole("ADMIN", "admin")
+                        .requestMatchers(DELETE, "/api/users/{userId}").hasAnyRole("ADMIN", "admin")
+                        .requestMatchers(GET, "/api/users/{userId}/history").hasAnyRole("ADMIN", "admin")
                         .requestMatchers(GET, "/api/users/me").authenticated()
                         .requestMatchers(PUT, "/api/users/me").authenticated()
                         .requestMatchers(GET, "/api/users/roles").permitAll() // Customer roles for registration
 
-                        // ✅ Contract endpoints
+                        // ✅ Contract endpoints - Rule cụ thể phải đặt TRƯỚC rule tổng quát
                         .requestMatchers("/api/contracts/unsigned/me")
                         .hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
-                        .requestMatchers("/api/contracts/sign/{contractId}")
-                        .hasAnyRole("CUSTOMER", "customer_individual", "customer_company", "MANAGER")
-                        .requestMatchers("/api/contracts/**").hasRole("MANAGER")
+                        .requestMatchers("/api/contracts/my-signed")
+                        .hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
+                        .requestMatchers("/api/contracts/manager")
+                        .hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers("/api/contracts/eligible").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(PUT, "/api/contracts/sign/**").hasAnyRole("CUSTOMER", "customer_individual", "customer_company", "MANAGER", "manager")
+                        .requestMatchers(PUT, "/api/contracts/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(DELETE, "/api/contracts/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(POST, "/api/contracts").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(GET, "/api/contracts/**").hasAnyRole("CUSTOMER", "customer_individual", "customer_company", "EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers("/api/contracts/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
 
                         // ✅ Damages endpoints
-                        .requestMatchers(POST, "/api/damages").hasAnyRole("EMPLOYEE", "MANAGER")
+                        .requestMatchers(POST, "/api/damages").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager")
                         .requestMatchers(PUT, "/api/damages/{damageId}")
-                        .hasAnyRole("EMPLOYEE", "MANAGER")
-                        .requestMatchers(GET, "/api/damages").hasAnyRole("MANAGER", "ADMIN")
+                        .hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager")
+                        .requestMatchers(GET, "/api/damages").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
                         .requestMatchers(GET, "/api/damages/{damageId}")
-                        .hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
-                        .requestMatchers(DELETE, "/api/damages/{damageId}").hasRole("MANAGER")
+                        .hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(DELETE, "/api/damages/{damageId}").hasAnyRole("MANAGER", "manager")
 
-                        // ✅ Employee endpoints
-                        .requestMatchers("/api/employees/**").hasAnyRole("MANAGER", "ADMIN")
+                        // ✅ employee endpoints
+                        .requestMatchers("/api/employees/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
 
                         // ✅ Vehicle endpoints
-                        .requestMatchers("/api/vehicles/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers("/api/vehicles/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
 
                         // ✅ Assignment endpoints
-                        .requestMatchers("/api/assignments/**").hasRole("MANAGER")
-                        .requestMatchers("/api/vehicle-assignments/**").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers("/api/request-assignment/**").hasRole("MANAGER")
+                        .requestMatchers("/api/assignments/**").hasAnyRole("MANAGER", "manager")
+                        .requestMatchers("/api/vehicle-assignments/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers("/api/request-assignment/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+
+                        // ✅ Driver endpoints
+                        .requestMatchers("/api/driver/**").hasAnyRole("EMPLOYEE", "employee")
 
                         // ✅ Request endpoints
                         .requestMatchers(POST, "/api/requests/create")
                         .hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
                         .requestMatchers(GET, "/api/requests/my")
                         .hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
-                        .requestMatchers(GET, "/api/requests").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers("/api/requests/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(GET, "/api/requests/my-requests")
+                        .hasAnyRole("EMPLOYEE", "employee")
+                        .requestMatchers(GET, "/api/requests")
+                        .hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(PUT, "/api/requests/{id}/status")
+                        .hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(POST, "/api/requests/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(PUT, "/api/requests/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(DELETE, "/api/requests/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
 
-                        // ✅ Survey endpoints
-                        .requestMatchers(POST, "/api/surveys").hasRole("MANAGER")
-                        .requestMatchers(GET, "/api/surveys").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers("/api/surveys/my").hasRole("EMPLOYEE") // Surveyer only
-                        .requestMatchers("/api/surveys/**").hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
-                        .requestMatchers("/api/survey-floors/**").hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
-                        .requestMatchers("/api/survey-images/**").hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
+                        // ✅ Survey endpoints - Rule cụ thể phải đặt TRƯỚC rule tổng quát
+                        .requestMatchers(GET, "/api/surveys/my").hasAnyRole("EMPLOYEE", "employee")
+                        .requestMatchers(POST, "/api/surveys").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(GET, "/api/surveys").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(PUT, "/api/surveys/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(DELETE, "/api/surveys/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(GET, "/api/surveys/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers("/api/survey-floors/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers("/api/survey-images/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
 
-                        // ✅ Quotation endpoints
-                        .requestMatchers(POST, "/api/quotations").hasRole("MANAGER")
-                        .requestMatchers(GET, "/api/quotations/me").hasRole("EMPLOYEE") // Surveyer
-                        .requestMatchers(GET, "/api/quotations/pending/me").hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
-                        .requestMatchers(PUT, "/api/quotations/approve/{quotationId}").hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
-                        .requestMatchers("/api/quotations/**").hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
-                        .requestMatchers("/api/quotation-services/**").hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
+                        // ✅ Quotation endpoints - Rule cụ thể phải đặt TRƯỚC rule tổng quát
+                        .requestMatchers(GET, "/api/quotations/me").hasAnyRole("EMPLOYEE", "employee")
+                        .requestMatchers(GET, "/api/quotations/pending/me").hasAnyRole("customer_individual", "customer_company")
+                        .requestMatchers(PUT, "/api/quotations/approve/{quotationId}").hasAnyRole("customer_individual", "customer_company")
+                        .requestMatchers(POST, "/api/quotations").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(PUT, "/api/quotations/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(DELETE, "/api/quotations/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers(GET, "/api/quotations/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                        .requestMatchers("/api/quotation-services/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
 
                         // ✅ Price endpoints
                         .requestMatchers(GET, "/api/prices").permitAll() // Public pricing
-                        .requestMatchers("/api/prices/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers("/api/prices/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
 
                         // ✅ Work Progress endpoints
                         .requestMatchers("/api/work-progress/**")
-                        .hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
+                        .hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
                         .requestMatchers("/api/customer/work-progress/**")
                         .hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
 
-                        // ✅ Manager specific endpoints
-                        .requestMatchers("/api/manager/**").hasRole("MANAGER")
+                        // ✅ manager specific endpoints
+                        .requestMatchers("/api/manager/**").hasAnyRole("MANAGER", "manager")
 
                         // ✅ Chat AI endpoint
                          // Any authenticated user

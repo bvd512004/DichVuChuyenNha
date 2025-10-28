@@ -11,7 +11,7 @@ import {
   Input,
   Select,
 } from "antd";
-import axios from "axios";
+import axiosInstance from "../service/axiosInstance";
 import moment from "moment"; // Import moment để format date
 import CreateAdminUser from "./CreateAdminUser";
 import VehiclesCRUD from "../vehicles/VehiclesPage"; // Import VehiclesCRUD component
@@ -36,15 +36,11 @@ export default function AdminDashboard() {
   });
   const [selectedUser, setSelectedUser] = useState(null); // Để hiển thị tên user trong modal title
 
-  const token = localStorage.getItem("token");
-
   // Lấy danh sách user
   const fetchUsers = () => {
     setLoading(true);
-    axios
-      .get("http://localhost:8080/api/users", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
+    axiosInstance
+      .get("/users")
       .then((res) => {
         setUsers(res.data.result); // ✅ vì backend trả ApiResponse
       })
@@ -59,9 +55,7 @@ export default function AdminDashboard() {
   const fetchHistory = async (userId) => {
     setHistoryLoading(true);
     try {
-      const res = await axios.get(`http://localhost:8080/api/users/${userId}/history`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await axiosInstance.get(`/users/${userId}/history`);
       setUserHistory({
         requests: res.data.requests,
         contracts: res.data.contracts,
@@ -91,10 +85,8 @@ export default function AdminDashboard() {
   // Submit sửa user
   const handleUpdateUser = () => {
     form.validateFields().then((values) => {
-      axios
-        .put(`http://localhost:8080/api/users/${currentUser.userId}`, values, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        })
+      axiosInstance
+        .put(`/users/${currentUser.userId}`, values)
         .then(() => {
           message.success("Cập nhật người dùng thành công!");
           setIsEditModalVisible(false);
@@ -109,10 +101,8 @@ export default function AdminDashboard() {
 
   // Xóa user
   const handleDelete = (userId) => {
-    axios
-      .delete(`http://localhost:8080/api/users/${userId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
+    axiosInstance
+      .delete(`/users/${userId}`)
       .then(() => {
         message.success("Xóa người dùng thành công!");
         fetchUsers();

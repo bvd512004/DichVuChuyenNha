@@ -24,6 +24,12 @@ const ContractAPI = {
     });
     return res.data;
   },
+
+  // Lấy tất cả hợp đồng (cho manager)
+  getAll: async () => {
+    const res = await api.get(`/contracts/manager`);
+    return res; // Backend trả về List<ContractResponse> trực tiếp
+  },
   
 };
 export default ContractAPI;

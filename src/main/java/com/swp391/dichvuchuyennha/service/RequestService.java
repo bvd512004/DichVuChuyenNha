@@ -1,8 +1,10 @@
 package com.swp391.dichvuchuyennha.service;
 
 import com.swp391.dichvuchuyennha.dto.request.RequestCreateRequest;
+import com.swp391.dichvuchuyennha.dto.response.RequestDto;
 import com.swp391.dichvuchuyennha.dto.response.RequestResponse;
 import com.swp391.dichvuchuyennha.entity.Notification;
+import com.swp391.dichvuchuyennha.entity.RequestAssignment;
 import com.swp391.dichvuchuyennha.entity.Requests;
 import com.swp391.dichvuchuyennha.entity.Users;
 import com.swp391.dichvuchuyennha.repository.NotificationRepository;
@@ -79,9 +81,71 @@ public class RequestService {
                         .pickupAddress(r.getPickupAddress())
                         .destinationAddress(r.getDestinationAddress())
                         .movingDay(r.getMovingDay())
-                        .movingType(r.getMovingType()) // 👈 ĐÂY LÀ DÒNG BẠN CẦN THÊM
+                        .movingType(r.getMovingType())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    public List<RequestDto> getAllRequests() {
+        List<Requests> requests = requestRepository.findAllWithDetails();
+        System.out.println("Total requests found: " + requests.size()); // Debug log
+        
+        return requests.stream()
+                .map(r -> {
+                    // Lấy assignment gần nhất nếu có
+                    RequestAssignment assignment = 
+                            r.getAssignedEmployees() != null && !r.getAssignedEmployees().isEmpty()
+                                    ? r.getAssignedEmployees().get(0)
+                                    : null;
+
+                    // Debug log cho mỗi request
+                    System.out.println("Processing request ID: " + r.getRequestId());
+                    System.out.println("  - User: " + (r.getUser() != null ? r.getUser().getUsername() : "NULL"));
+                    System.out.println("  - Business: " + (r.getBusiness() != null ? r.getBusiness().getCompanyName() : "NULL"));
+                    
+                    return RequestDto.builder()
+                            .requestId(r.getRequestId())
+                            .username(r.getUser() != null ? r.getUser().getUsername() : "N/A")
+                            .companyName(r.getBusiness() != null ? r.getBusiness().getCompanyName() : "N/A")
+                            .requestTime(r.getRequestTime())
+                            .status(r.getStatus())
+                            .assignmentStatus(assignment != null ? assignment.getStatus() : "NOT_ASSIGNED")
+                            .pickupAddress(r.getPickupAddress())
+                            .destinationAddress(r.getDestinationAddress())
+                            .description(r.getDescription())
+                            .movingType(r.getMovingType())
+                            .movingDay(r.getMovingDay())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    public RequestDto updateRequestStatus(Integer requestId, String newStatus) {
+        Requests request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+        
+        request.setStatus(newStatus);
+        Requests updated = requestRepository.save(request);
+        
+        // Lấy assignment nếu có
+        RequestAssignment assignment = 
+                updated.getAssignedEmployees() != null && !updated.getAssignedEmployees().isEmpty()
+                        ? updated.getAssignedEmployees().get(0)
+                        : null;
+        
+        return RequestDto.builder()
+                .requestId(updated.getRequestId())
+                .username(updated.getUser() != null ? updated.getUser().getUsername() : "N/A")
+                .companyName(updated.getBusiness() != null ? updated.getBusiness().getCompanyName() : "N/A")
+                .requestTime(updated.getRequestTime())
+                .status(updated.getStatus())
+                .assignmentStatus(assignment != null ? assignment.getStatus() : "NOT_ASSIGNED")
+                .pickupAddress(updated.getPickupAddress())
+                .destinationAddress(updated.getDestinationAddress())
+                .description(updated.getDescription())
+                .movingType(updated.getMovingType())
+                .movingDay(updated.getMovingDay())
+                .build();
     }
 
 }

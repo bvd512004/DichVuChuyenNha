@@ -14,6 +14,7 @@ import {
   CarOutlined,
   FolderOpenOutlined,
   BarsOutlined,
+  ContainerOutlined,
 } from "@ant-design/icons";
 import "./style/ManagerDashboard.css";
 
@@ -26,6 +27,16 @@ const ManagerDashboard = () => {
 
   // Menu items
   const menuItems = [
+    {
+      key: "manager/requests",
+      icon: <ContainerOutlined />,
+      label: <Link to="manager/requests">Quản Lý Yêu Cầu</Link>,
+    },
+    {
+      key: "assign-surveyer",
+      icon: <UserAddOutlined />,
+      label: <Link to="/assign-surveyer">Gán Nhân Viên Khảo Sát</Link>,
+    },
     {
       key: "contract-assignment",
       icon: <FileTextOutlined />,

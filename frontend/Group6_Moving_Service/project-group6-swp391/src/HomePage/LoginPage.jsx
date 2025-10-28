@@ -60,6 +60,9 @@ localStorage.setItem("position", position);
       } else if (roleId === 3 && position === "Surveyer") {
         // EMPLOYEE - Surveyer
         navigate("/survey-dashboard");
+      } else if (roleId === 3 && position === "Driver") {
+        // EMPLOYEE - Driver
+        navigate("/driver/dashboard");
       } else if (roleId === 3) {
         // EMPLOYEE - other positions
         navigate("/employee/dashboard");

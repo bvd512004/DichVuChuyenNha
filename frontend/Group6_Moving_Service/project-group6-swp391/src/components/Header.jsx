@@ -120,6 +120,14 @@ const Header = () => {
         }
       },
       {
+        key: "manager-requests",
+        label: "Quản lý yêu cầu",
+        onClick: () => {
+          navigate("/manager-requests");
+          setIsDropdownVisible(false);
+        }
+      },
+      {
         key: "contract-assignment",
         label: "Phân công hợp đồng",
         onClick: () => {

@@ -16,6 +16,9 @@ public class RequestDto {
     private String pickupAddress;
     private String destinationAddress;
     private String assignmentStatus; // status của RequestAssignment
+    private String description;
+    private String movingType;
+    private java.util.Date movingDay;
 
 }
 

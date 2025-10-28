@@ -102,10 +102,14 @@ public class ContractController {
         return ResponseEntity.ok(contractService.getAllContracts());
     }
 
-//    @GetMapping("/my-signed")
-//    public List<ContractResponse> getMySignedContracts() {
-//        return contractService.getSignedContractsOfCurrentUser();
-//    }
+    @GetMapping("/my-signed")
+    public ResponseEntity<List<ContractResponse>> getMySignedContracts() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users user = userRepository.findByUsername(username).orElseThrow();
+        
+        List<ContractResponse> contracts = contractService.getSignedContracts(user.getUserId());
+        return ResponseEntity.ok(contracts);
+    }
 
 
     /** ✅ Lấy chi tiết hợp đồng theo ID (để hiển thị thông tin + nhân viên đã gán) */
