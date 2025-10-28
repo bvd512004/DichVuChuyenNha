@@ -89,21 +89,40 @@ const UserRequestsPage = ({ isEmbedded = false }) => {
             message.warning("Vui lòng đăng nhập để tạo yêu cầu");
             return;
         }
+        
+        // Debug: Kiểm tra token
+        try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            console.log("🔍 Token payload:", payload);
+            console.log("👥 Roles trong token:", payload.roles);
+            console.log("🆔 User ID:", payload.userId);
+        } catch (e) {
+            console.error("Không thể parse token:", e);
+        }
+        
         setCreateLoading(true);
         try {
+            // Chuyển đổi dayjs thành format mà Java Date có thể parse
+            let movingDayStr = null;
+            if (values.movingDay) {
+                // Format: yyyy-MM-dd
+                movingDayStr = values.movingDay.format('YYYY-MM-DD');
+            }
+            
+            const requestData = {
+                description: values.description,
+                pickupAddress: values.pickupAddress,
+                destinationAddress: values.destinationAddress,
+                movingType: values.movingType,
+                ...(values.businessId && { businessId: values.businessId }),
+                ...(movingDayStr && { movingDay: movingDayStr + 'T00:00:00.000Z' })
+            };
+            
+            console.log("Gửi request:", requestData);
+            
             const response = await api.post(
                 "/requests/create",
-                {
-                    description: values.description,
-                    businessId: values.businessId || null,
-                    pickupAddress: values.pickupAddress,
-                    destinationAddress: values.destinationAddress,
-                    movingType: values.movingType, // Đã thêm movingType
-                    estimatedDistance: values.estimatedDistance || null, // Đã thêm estimatedDistance
-                    // Chuyển đổi dayjs object sang ISO string hoặc null
-                    movingDay: values.movingDay ? values.movingDay.toISOString() : null,
-                },
-                { headers: { Authorization: `Bearer ${token}` } }
+                requestData
             );
 
             message.success("Tạo yêu cầu thành công!");
@@ -124,8 +143,22 @@ const UserRequestsPage = ({ isEmbedded = false }) => {
                 await fetchData(); // Fallback: tải lại toàn bộ
             }
         } catch (e) {
-            message.error("Tạo yêu cầu thất bại. Vui lòng thử lại.");
-            console.error(e);
+            console.error("Lỗi tạo yêu cầu:", e);
+            console.error("Response:", e.response);
+            console.error("Status:", e.response?.status);
+            console.error("Data:", e.response?.data);
+            
+            let errorMessage = "Không thể tạo yêu cầu. Vui lòng kiểm tra lại thông tin.";
+            
+            if (e.response?.data?.message) {
+                errorMessage = e.response.data.message;
+            } else if (e.response?.data?.error) {
+                errorMessage = e.response.data.error;
+            } else if (e.message) {
+                errorMessage = e.message;
+            }
+            
+            message.error(errorMessage);
         } finally {
             setCreateLoading(false);
         }

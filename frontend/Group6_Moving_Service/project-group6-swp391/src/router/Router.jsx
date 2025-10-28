@@ -36,6 +36,8 @@ import QuotationAddServices from "../staff/QuotationAddServices";
 import QuotationContractList from "../manager/QuotationContractList";
 import ManagerWorkProgressPage from "../manager/ManagerWorkProgressPage";
 import WorkProgressList from "../manager/WorkProgressList";
+import ReviewQuotationManagement from "../manager/ReviewQuotationManagement";
+import VehicleAssignment from "../manager/VehicleAssignment";
 
 const Router = () => {
   const router = createBrowserRouter([
@@ -43,11 +45,11 @@ const Router = () => {
       path: "/",
       element: <Layout />,
       children: [
-        { index: true, element: <LandingPage /> },
-
+        { index: true, element: <HomePage /> },
+        
         {
-          path: "",
-          element: <HomePage/>
+          path: "landing",
+          element: <LandingPage />
         },
 //         {
 //   path: "contract-assignment",
@@ -204,11 +206,20 @@ const Router = () => {
           ),
         },
         {
+          path: "vehicle-assignment",
+          element: (
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <VehicleAssignment />
+            </ProtectedRoute>
+          ),
+        },
+        {
           path: "manager/dashboard",
           element: <ManagerDashboard />,
           children: [
             // { index: true, element: <ContractAssignment /> }, // mặc định khi vào /manager/dashboard
             { path: "contract-assignment", element: <ContractAssignment /> },
+            { path: "vehicle-assignment", element: <VehicleAssignment /> },
             { path: "manager/work-progress", element: <ManagerWorkProgressPage /> },
              { path: "manager/work-progress-list", element: <WorkProgressList /> },
           ],

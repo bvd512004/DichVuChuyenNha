@@ -11,6 +11,9 @@ import {
   UserOutlined,
   LogoutOutlined,
   SettingOutlined,
+  CarOutlined,
+  FolderOpenOutlined,
+  BarsOutlined,
 } from "@ant-design/icons";
 import "./style/ManagerDashboard.css";
 
@@ -26,22 +29,22 @@ const ManagerDashboard = () => {
     {
       key: "contract-assignment",
       icon: <FileTextOutlined />,
-      label: <Link to="contract-assignment">AssignToContract</Link>,
+      label: <Link to="contract-assignment">Phân Công Hợp Đồng</Link>,
+    },
+    {
+      key: "vehicle-assignment",
+      icon: <CarOutlined />,
+      label: <Link to="vehicle-assignment">Phân Công Phương Tiện</Link>,
     },
     {
       key: "manager/work-progress",
-      icon: <UserAddOutlined />,
-      label: <Link to="manager/work-progress">CreateWorkProgress</Link>,
+      icon: <FolderOpenOutlined />,
+      label: <Link to="manager/work-progress">Tạo Tiến Độ Công Việc</Link>,
     },
     {
       key: "manager/work-progress-list",
-      icon: <DollarOutlined />,
-      label: <Link to="manager/work-progress-list">WorkProgressList</Link>,
-    },
-    {
-      key: "reports",
-      icon: <BarChartOutlined />,
-      label: <Link to="reports">Reports</Link>,
+      icon: <BarsOutlined />,
+      label: <Link to="manager/work-progress-list">Danh Sách Tiến Độ</Link>,
     },
   ];
 
@@ -110,7 +113,7 @@ const ManagerDashboard = () => {
               className="trigger-btn"
             />
             <Title level={4} className="page-title">
-              Manager Dashboard
+              Dashboard Quản Lý
             </Title>
           </div>
 

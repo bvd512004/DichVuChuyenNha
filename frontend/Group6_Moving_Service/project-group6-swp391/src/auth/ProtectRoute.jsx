@@ -11,10 +11,28 @@ const ProtectedRoute = ({ children, allowedRoles, requiredPosition }) => {
     const roles = payload.roles || [];
     const position = payload.position || ""; // cần backend gửi position trong token
 
-    const hasPermission = roles.some(role => allowedRoles.includes(role)) &&
-                          (!requiredPosition || position === requiredPosition);
+    console.log("Token payload:", payload);
+    console.log("Roles from token:", roles);
+    console.log("Position from token:", position);
+    console.log("Allowed roles:", allowedRoles);
+    console.log("Required position:", requiredPosition);
 
-    if (!hasPermission) return <Navigate to="/access-denied" replace />;
+    // Chuyển đổi roles thành lowercase để so sánh
+    const normalizedRoles = roles.map(role => role.toLowerCase());
+    const normalizedAllowedRoles = allowedRoles.map(role => role.toLowerCase());
+
+    const hasRolePermission = normalizedRoles.some(role => normalizedAllowedRoles.includes(role));
+    const hasPositionPermission = !requiredPosition || position === requiredPosition;
+
+    console.log("Has role permission:", hasRolePermission);
+    console.log("Has position permission:", hasPositionPermission);
+
+    const hasPermission = hasRolePermission && hasPositionPermission;
+
+    if (!hasPermission) {
+      console.log("Access denied - redirecting to access-denied page");
+      return <Navigate to="/access-denied" replace />;
+    }
 
     return children;
   } catch (err) {

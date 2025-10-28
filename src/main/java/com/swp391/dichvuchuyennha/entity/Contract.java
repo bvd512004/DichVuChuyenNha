@@ -64,6 +64,9 @@ public class Contract {
 
     @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<WorkProgress> workProgress;
+
+    @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<AssignmentVehicle> assignmentVehicles;
     public LocalDate getMovingDay() {
         if (this.quotation == null
                 || this.quotation.getRequest() == null

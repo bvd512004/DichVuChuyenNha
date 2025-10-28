@@ -25,22 +25,7 @@ const EmployeeDashboard = () => {
     {
       key: "work-progress",
       icon: <CheckCircleOutlined />,
-      label: <Link to="work-progress">Work Progress</Link>,
-    },
-    {
-      key: "contracts",
-      icon: <FileTextOutlined />,
-      label: <Link to="contracts">My Contracts</Link>,
-    },
-    {
-      key: "feedbacks",
-      icon: <CommentOutlined />,
-      label: <Link to="feedbacks">Feedbacks</Link>,
-    },
-    {
-      key: "profile",
-      icon: <UserOutlined />,
-      label: <Link to="profile">Profile</Link>,
+      label: <Link to="work-progress">Tiến Độ Công Việc</Link>,
     },
   ];
 
@@ -109,7 +94,7 @@ const EmployeeDashboard = () => {
               className="trigger-btn"
             />
             <Title level={4} className="page-title">
-              Employee Dashboard
+              Dashboard Nhân Viên
             </Title>
           </div>
 

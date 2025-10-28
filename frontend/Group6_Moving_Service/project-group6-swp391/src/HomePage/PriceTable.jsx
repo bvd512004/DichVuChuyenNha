@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Table, Card, Spin, message, Row, Col, Image } from "antd";
+import { Table, Card, Spin, message, Row, Col, Image, Button } from "antd";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeftOutlined } from "@ant-design/icons";
 import axios from "axios";
 
 const PriceTable = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,6 +26,15 @@ const PriceTable = () => {
 
   return (
     <div style={{ padding: "40px", background: "#fafafa", minHeight: "100vh" }}>
+      <Button
+        type="default"
+        icon={<ArrowLeftOutlined />}
+        onClick={() => navigate(-1)}
+        style={{ marginBottom: "20px" }}
+      >
+        Quay lại
+      </Button>
+      
       <h2
         style={{
           textAlign: "center",

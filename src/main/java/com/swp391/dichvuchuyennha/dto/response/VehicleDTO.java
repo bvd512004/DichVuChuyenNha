@@ -5,9 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class VehicleDTO {
-    private String vehicleName;
+    private Integer vehicleId;
+    private String vehicleType;
     private String licensePlate;
+    private Double capacity;
+    private String status;
+    private String driverName;
+    private String driverPosition;
 }

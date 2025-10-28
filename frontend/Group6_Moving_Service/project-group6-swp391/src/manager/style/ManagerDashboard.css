@@ -9,8 +9,8 @@
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   position: fixed;
   left: 0;
-  top: 0;
-  bottom: 0;
+  top: 80px; /* Bắt đầu từ dưới navbar (Header có height 80px) */
+  height: calc(100vh - 80px); /* Chiều cao = viewport - navbar height */
   z-index: 10;
 }
 
@@ -88,11 +88,13 @@
 /* Site Layout */
 .site-layout {
   margin-left: 250px;
+  margin-top: 80px; /* Để tránh bị navbar che */
   transition: all 0.2s;
 }
 
 .dashboard-sider.ant-layout-sider-collapsed + .site-layout {
   margin-left: 80px;
+  margin-top: 80px; /* Luôn giữ margin-top */
 }
 
 /* Header */
@@ -103,10 +105,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 9;
   height: 64px;
+  /* Removed sticky positioning since navbar already handles it */
 }
 
 .header-left {
@@ -167,7 +167,7 @@
 
 /* Content */
 .dashboard-content {
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - 80px); /* Chỉ trừ đi 80px navbar */
   background: #f0f2f5;
   padding: 24px;
 }
@@ -199,6 +199,7 @@
 @media (max-width: 768px) {
   .site-layout {
     margin-left: 0 !important;
+    margin-top: 80px !important; /* Giữ margin-top khi responsive */
   }
 
   .dashboard-sider {
@@ -206,6 +207,8 @@
     z-index: 1000;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
+    top: 80px; /* Vẫn bắt đầu từ dưới navbar */
+    height: calc(100vh - 80px); /* Chiều cao phù hợp */
   }
 
   .dashboard-sider.ant-layout-sider-collapsed {

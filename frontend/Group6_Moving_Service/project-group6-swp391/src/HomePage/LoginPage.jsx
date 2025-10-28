@@ -43,19 +43,33 @@ const LoginPage = () => {
 localStorage.setItem("position", position);
       alert("Login successful!");
       
- if (roleId === 3 && position === "Surveyer") {
-  navigate("/survey-dashboard");
-} else if (roleId === 3) {
-  navigate("/employee/dashboard");
-} else if (roleId === 4 || roleId === 5) {
-  navigate("/customer-page");
-} else if (roleId === 2) {
-  navigate("/manager/dashboard");
-} else if (roleId === 1) {
-  navigate("/admin-dashboard");
-} else {
-  navigate("/");
-}
+      // Theo bảng roles mới:
+      // roleId 1 = admin
+      // roleId 2 = manager
+      // roleId 3 = employee
+      // roleId 4 = customer_individual
+      // roleId 5 = customer_company
+      
+      // Điều hướng dựa trên roleId
+      if (roleId === 1) {
+        // ADMIN
+        navigate("/admin-dashboard");
+      } else if (roleId === 2) {
+        // MANAGER
+        navigate("/manager/dashboard");
+      } else if (roleId === 3 && position === "Surveyer") {
+        // EMPLOYEE - Surveyer
+        navigate("/survey-dashboard");
+      } else if (roleId === 3) {
+        // EMPLOYEE - other positions
+        navigate("/employee/dashboard");
+      } else if (roleId === 4 || roleId === 5) {
+        // CUSTOMER (individual hoặc company) - điều hướng về trang chủ
+        navigate("/");
+      } else {
+        // Fallback
+        navigate("/");
+      }
     } catch (error) {
       alert(error.response?.data?.message || "Login failed");
       setSubmitting(false);

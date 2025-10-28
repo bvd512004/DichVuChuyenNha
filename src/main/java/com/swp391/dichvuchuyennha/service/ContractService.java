@@ -132,10 +132,10 @@ public class ContractService {
             if (quotation != null) {
                 totalPrice = quotation.getTotalPrice();
 
-                if (quotation.getSurvey() != null) {
-                    startAddress = quotation.getSurvey().getAddressFrom();
-                    endAddress = quotation.getSurvey().getAddressTo();
-                }
+//                if (quotation.getSurvey() != null) {
+//                    startAddress = quotation.getSurvey().getAddressFrom();
+//                    endAddress = quotation.getSurvey().getAddressTo();
+//                }
 
                 if (quotation.getRequest() != null && quotation.getRequest().getMovingDay() != null) {
                     movingDay = quotation.getRequest().getMovingDay()
@@ -197,6 +197,8 @@ public class ContractService {
                 .map(c -> new ContractDTO(c.getContractId(), c.getStatus()))
                 .toList();
     }
+
+
 
     /** ✅ Lấy danh sách hợp đồng đủ điều kiện tạo WorkProgress */
     @Transactional(readOnly = true)

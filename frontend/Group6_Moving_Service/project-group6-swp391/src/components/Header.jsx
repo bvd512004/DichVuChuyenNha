@@ -92,6 +92,58 @@ const Header = () => {
           navigate("/admin-dashboard");
           setIsDropdownVisible(false);
         }
+      },
+      {
+        key: "employee-management",
+        label: "Quản lý nhân viên",
+        onClick: () => {
+          navigate("/employee-management");
+          setIsDropdownVisible(false);
+        }
+      },
+      {
+        key: "vehicle-management",
+        label: "Quản lý phương tiện",
+        onClick: () => {
+          navigate("/vehicle-management");
+          setIsDropdownVisible(false);
+        }
+      }
+    ] : []),
+    ...(roleName === "manager" ? [ // Thêm link cho manager
+      {
+        key: "manager-dashboard",
+        label: "Manager Dashboard",
+        onClick: () => {
+          navigate("/manager/dashboard");
+          setIsDropdownVisible(false);
+        }
+      },
+      {
+        key: "contract-assignment",
+        label: "Phân công hợp đồng",
+        onClick: () => {
+          navigate("/contract-assignment");
+          setIsDropdownVisible(false);
+        }
+      },
+      {
+        key: "vehicle-assignment",
+        label: "Phân công phương tiện",
+        onClick: () => {
+          navigate("/vehicle-assignment");
+          setIsDropdownVisible(false);
+        }
+      }
+    ] : []),
+    ...(roleName === "employee" || localStorage.getItem("position") === "Surveyer" ? [ // Thêm link cho employee
+      {
+        key: "employee-dashboard",
+        label: "Employee Dashboard",
+        onClick: () => {
+          navigate("/employee/dashboard");
+          setIsDropdownVisible(false);
+        }
       }
     ] : []),
     {
@@ -125,10 +177,39 @@ const Header = () => {
 
         {/* Navigation Links */}
         <nav className="navbar-nav">
-          <a onClick={() => navigate("/price-service")} className="nav-link" style={{ cursor: 'pointer' }}>Dịch Vụ</a>
-          <a href="#about" className="nav-link">Giới Thiệu</a>
-          <a href="#reviews" className="nav-link">Đánh Giá</a>
-          <a href="#contact" className="nav-link">Liên Hệ</a>
+          {isLoggedIn && roleName === "admin" && (
+            <>
+              <a onClick={() => navigate("/admin-dashboard")} className="nav-link" style={{ cursor: 'pointer' }}>Trang Chủ Admin</a>
+              <a onClick={() => navigate("/employee-management")} className="nav-link" style={{ cursor: 'pointer' }}>Quản Lý Nhân Viên</a>
+              <a onClick={() => navigate("/vehicle-management")} className="nav-link" style={{ cursor: 'pointer' }}>Quản Lý Phương Tiện</a>
+            </>
+          )}
+          {isLoggedIn && roleName === "manager" && (
+            <>
+              <a onClick={() => navigate("/manager/dashboard")} className="nav-link" style={{ cursor: 'pointer' }}>Trang Chủ Manager</a>
+              <a onClick={() => navigate("/contract-assignment")} className="nav-link" style={{ cursor: 'pointer' }}>Phân Công Hợp Đồng</a>
+              <a onClick={() => navigate("/vehicle-assignment")} className="nav-link" style={{ cursor: 'pointer' }}>Phân Công Phương Tiện</a>
+            </>
+          )}
+          {isLoggedIn && (roleName === "employee" || localStorage.getItem("position") === "Surveyer") && (
+            <>
+              <a onClick={() => navigate("/employee/dashboard")} className="nav-link" style={{ cursor: 'pointer' }}>Trang Chủ Nhân Viên</a>
+              <a onClick={() => navigate("/employee/work-progress")} className="nav-link" style={{ cursor: 'pointer' }}>Tiến Độ Công Việc</a>
+            </>
+          )}
+          {isLoggedIn && (roleName === "customer_individual" || roleName === "customer_company" || roleName === "customer") && (
+            <>
+              <a onClick={() => navigate("/my-requests")} className="nav-link" style={{ cursor: 'pointer' }}>Yêu Cầu Của Tôi</a>
+              <a onClick={() => navigate("/price-service")} className="nav-link" style={{ cursor: 'pointer' }}>Bảng Giá</a>
+            </>
+          )}
+          {!isLoggedIn && (
+            <>
+              <a onClick={() => navigate("/price-service")} className="nav-link" style={{ cursor: 'pointer' }}>Dịch Vụ</a>
+              <a href="#about" className="nav-link">Giới Thiệu</a>
+              <a href="#contact" className="nav-link">Liên Hệ</a>
+            </>
+          )}
         </nav>
 
         {/* Right Section */}
@@ -152,16 +233,6 @@ const Header = () => {
 
               {isDropdownVisible && (
                 <div className="user-dropdown">
-                  <button
-                    key="my-requests"
-                    className="dropdown-item"
-                    onClick={() => {
-                      navigate("/my-requests");
-                      setIsDropdownVisible(false);
-                    }}
-                  >
-                    Danh sách yêu cầu
-                  </button>
                   {userMenuItems.map((item) => (
                     <button
                       key={item.key}

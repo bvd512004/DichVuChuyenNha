@@ -3,7 +3,6 @@ package com.swp391.dichvuchuyennha.exception;
 import com.swp391.dichvuchuyennha.dto.request.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -27,17 +26,14 @@ public class GlobalException {
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse> handlingValidation(MethodArgumentNotValidException exception) {
-        String enumKey = exception.getFieldError().getDefaultMessage();
-        ErrorCode errorCode= ErrorCode.INVALID_KEY;
-        try{
-            errorCode = ErrorCode.valueOf(enumKey);
-
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        }
+        String errorMessage = exception.getBindingResult().getAllErrors().stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage())
+                .orElse("Validation failed");
+        
         ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setCode(errorCode.getCode());
-        apiResponse.setMessage(errorCode.getMessage());
+        apiResponse.setCode(ErrorCode.INVALID_KEY.getCode());
+        apiResponse.setMessage(errorMessage);
         return ResponseEntity.badRequest().body(apiResponse);
     }
 }

@@ -42,11 +42,19 @@ public class RequestsController {
     private final RequestAssignmentService requestAssignmentService;
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<RequestResponse>> create(@Valid @RequestBody RequestCreateRequest requestDto) {
-        String context = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            String context = SecurityContextHolder.getContext().getAuthentication().getName();
+            System.out.println("Creating request for user: " + context);
+            System.out.println("Request DTO: " + requestDto);
 
-        Users user = userRepository.findByUsername(context).orElseThrow();
-        RequestResponse data = requestService.createRequest(user, requestDto);
-        return ResponseEntity.ok(ApiResponse.<RequestResponse>builder().result(data).build());
+            Users user = userRepository.findByUsername(context).orElseThrow();
+            RequestResponse data = requestService.createRequest(user, requestDto);
+            return ResponseEntity.ok(ApiResponse.<RequestResponse>builder().result(data).build());
+        } catch (Exception e) {
+            System.err.println("Error creating request: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @GetMapping("/my")
