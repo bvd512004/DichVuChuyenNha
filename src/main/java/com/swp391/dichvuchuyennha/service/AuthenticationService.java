@@ -29,6 +29,7 @@ public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder; // inject bean từ config
+    private final BCryptPasswordEncoder bcryptEncoder = new BCryptPasswordEncoder(); // Để xử lý password BCrypt
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -41,12 +42,39 @@ public class AuthenticationService {
     private final EmailService emailService; // Inject EmailService
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        // Validate request
+        if (request == null || request.getEmail() == null || request.getPassword() == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
         Users user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
-        if (!authenticated)
+        if (user.getPassword() == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        // Kiểm tra xem password có phải BCrypt không (bắt đầu bằng $2a$, $2b$, hoặc $2y$)
+        boolean authenticated;
+        String storedPassword = user.getPassword();
+        String inputPassword = request.getPassword();
+        
+        if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
+            // Password được mã hóa bằng BCrypt
+            authenticated = bcryptEncoder.matches(inputPassword, storedPassword);
+        } else {
+            // Password plain text - so sánh trực tiếp hoặc dùng NoOpPasswordEncoder
+            authenticated = storedPassword.equals(inputPassword) || passwordEncoder.matches(inputPassword, storedPassword);
+        }
+        
+        if (!authenticated) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        // Check if user has role
+        if (user.getRole() == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
 
         String token = generateToken(user);
         return AuthenticationResponse.builder()
@@ -62,6 +90,10 @@ public class AuthenticationService {
 
     private String generateToken(Users user) {
         try {
+            if (user.getRole() == null) {
+                throw new RuntimeException("User role is null");
+            }
+            
             JWTClaimsSet claims = new JWTClaimsSet.Builder()
                     .subject(user.getUsername())
                     .issuer("moving-service.com")

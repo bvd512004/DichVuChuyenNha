@@ -25,13 +25,21 @@ const LoginPage = () => {
 
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
+      console.log("Sending login request:", values);
       const response = await axios.post(
         "http://localhost:8080/api/auth/login",
-        values
+        values,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
 
+      console.log("Login response:", response.data);
+
       // Lấy dữ liệu từ backend (AuthenticationResponse)
-      const { token, userId, username, roleId, roleName,position } =
+      const { token, userId, username, roleId, roleName, position } =
         response.data.result;
 
       // Lưu vào localStorage
@@ -74,7 +82,13 @@ localStorage.setItem("position", position);
         navigate("/");
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
+      console.error("Login error:", error);
+      console.error("Error response:", error.response?.data);
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        "Đăng nhập thất bại. Vui lòng kiểm tra email và mật khẩu.";
+      alert(errorMessage);
       setSubmitting(false);
     }
   };
