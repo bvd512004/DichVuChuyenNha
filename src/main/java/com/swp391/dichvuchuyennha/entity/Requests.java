@@ -51,5 +51,8 @@ public class Requests {
     private List<Surveys> surveys;
     @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<RequestAssignment> assignedEmployees;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_employee_id")
+    private Employee assignedEmployee;
 
 }

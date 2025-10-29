@@ -6,14 +6,27 @@ import {
     Button,
     Select,
     InputNumber,
-    message, // Sử dụng message của Antd
+    message,
     Tag,
     Typography,
     Divider,
     Space,
+    Badge,
+    Tooltip,
 } from "antd";
-import { DeleteOutlined, MinusOutlined, PlusOutlined, InfoCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
-// Giả định axios ở đây là axiosInstance đã được cấu hình
+import { 
+    DeleteOutlined, 
+    MinusOutlined, 
+    PlusOutlined, 
+    InfoCircleOutlined, 
+    CheckCircleOutlined,
+    UserOutlined,
+    PhoneOutlined,
+    EnvironmentOutlined,
+    CalendarOutlined,
+    DollarOutlined,
+    FileTextOutlined
+} from '@ant-design/icons';
 import axiosInstance from "../service/axiosInstance"; 
 import dayjs from "dayjs";
 
@@ -26,28 +39,28 @@ export const QuotationList = ({
     setSelectedQuotation,
 }) => {
 
-    // Thay thế notification tự tạo bằng message Antd
     const showMessage = (type, content) => {
         message[type](content);
     };
 
     const statusColors = {
-        APPROVED: "success", // green
-        SENT: "processing", // blue
-        DRAFT: "warning", // orange
-        REJECTED: "error",
+        APPROVED: "#52c41a",
+        SENT: "#1890ff",
+        DRAFT: "#faad14",
+        REVIEW: "#ff4d4f",
+        PENDING: "#722ed1",
+        CREATED: "#13c2c2"
     };
 
     const statusText = {
         APPROVED: "Đã chấp nhận",
-        PENDING: "Đang chờ", // Sửa từ 'Đã gửi' thành 'Đang chờ' cho trạng thái PENDING
+        PENDING: "Đang chờ sự chấp thuận từ khách hàng",
         SENT: "Đã gửi",
         DRAFT: "Bản nháp",
-        REJECTED: "Đã từ chối",
-        CREATED :"Đã được quản lí duyệt và tạo hợp đồng"
+        REVIEW: "Đang chờ sự xem xét từ quản lí bộ phận",
+        CREATED: "Đã được quản lí bộ phận tạo hợp đồng"
     };
 
-    // 🧩 Hiển thị chi tiết báo giá
     const renderQuotationDetails = (record) => {
         if (!record) {
             return (
@@ -58,17 +71,30 @@ export const QuotationList = ({
                         flexDirection: 'column',
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "#888",
-                        fontStyle: "italic",
                         background: "#fafafa",
-                        borderRadius: 12, // Tăng bo tròn
-                        border: "2px dashed #e0e0e0", // Viền dash hiện đại
-                        padding: 24,
+                        borderRadius: 12,
+                        border: "2px dashed #d9d9d9",
+                        padding: 48,
                     }}
                 >
-                    <InfoCircleOutlined style={{ fontSize: 40, marginBottom: 16, color: '#999' }} />
-                    <Title level={4} style={{ color: '#999' }}>Chưa có báo giá được chọn</Title>
-                    <Text type="secondary">Vui lòng chọn một báo giá từ danh sách bên trái để xem chi tiết.</Text>
+                    <div style={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        background: '#f0f0f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: 24
+                    }}>
+                        <InfoCircleOutlined style={{ fontSize: 40, color: '#bfbfbf' }} />
+                    </div>
+                    <Title level={4} style={{ color: '#595959', marginBottom: 8 }}>
+                        Chưa có báo giá được chọn
+                    </Title>
+                    <Text type="secondary" style={{ fontSize: 15 }}>
+                        Vui lòng chọn một báo giá từ danh sách để xem chi tiết
+                    </Text>
                 </div>
             );
         }
@@ -78,11 +104,10 @@ export const QuotationList = ({
         const handleUpdateQuantity = async (serviceId, newQuantity) => {
             if (newQuantity < 1) return;
             try {
-                // Sửa lại API call để sử dụng axiosInstance
                 await axiosInstance.put(
                     `/quotation-services/${serviceId}`,
-                    null, // Body rỗng hoặc null cho PUT/DELETE nếu API chỉ dùng query/path
-                    { params: { quantity: newQuantity } } // Truyền số lượng qua params
+                    null,
+                    { params: { quantity: newQuantity } }
                 );
                 showMessage("success", "Cập nhật số lượng thành công!");
                 fetchQuotations?.();
@@ -94,10 +119,7 @@ export const QuotationList = ({
 
         const handleDeleteService = async (serviceId) => {
             try {
-                // Sửa lại API call để sử dụng axiosInstance
-                await axiosInstance.delete(
-                    `/quotation-services/${serviceId}`
-                );
+                await axiosInstance.delete(`/quotation-services/${serviceId}`);
                 showMessage("success", "Xóa dịch vụ thành công!");
                 fetchQuotations?.();
             } catch (error) {
@@ -107,206 +129,405 @@ export const QuotationList = ({
         };
 
         return (
-            <Card
-                style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)', minHeight: '75vh' }}
-                title={
-                    <Space>
-                        <Text strong>Báo giá #{record.quotationId}</Text>
-                        <Tag color={statusColors[record.status]} style={{ fontWeight: 'bold' }}>
-                            {statusText[record.status] || record.status}
-                        </Tag>
-                    </Space>
-                }
-                extra={
-                     // Thêm nút hành động (ví dụ: Chỉnh sửa/Duyệt)
-                    <Button type="primary" size="small" style={{ borderRadius: 6 }}>
-                        Duyệt báo giá
-                    </Button>
-                }
-            >
-                <Row gutter={[16, 16]}>
-                    <Col span={12}>
-                        <Title level={5} style={{ color: '#1890ff' }}>Thông tin khách hàng</Title>
-                        <Text><strong>Tên:</strong> {record.username}</Text><br />
-                        <Text><strong>Điện thoại:</strong> {record.phone || "N/A"}</Text><br />
-                        <Text><strong>Ngày tạo:</strong> {dayjs(record.createdAt).format("DD/MM/YYYY HH:mm")}</Text>
-                    </Col>
-                    <Col span={12}>
-                        <Title level={5} style={{ color: '#1890ff' }}>Địa điểm & Thời gian</Title>
-                        <Text><strong>Từ:</strong> {record.addressFrom || "N/A"}</Text><br />
-                        <Text><strong>Đến:</strong> {record.addressTo || "N/A"}</Text><br />
-                        <Text><strong>Ngày chuyển:</strong> {dayjs(record.surveyDate).format("DD/MM/YYYY")}</Text>
-                    </Col>
-                </Row>
-                
-                <Divider orientation="left" style={{ margin: '20px 0' }}>
-                    <Title level={5} style={{ margin: 0 }}>Chi tiết Dịch vụ</Title>
-                </Divider>
-
-                {/* Dịch vụ đã thêm */}
-                <div style={{ maxHeight: '40vh', overflowY: 'auto', paddingRight: 8 }}>
-                    {added.length > 0 ? (
-                        added.map((s) => (
-                            <Card
-                                key={s?.id}
-                                size="small"
-                                style={{
-                                    marginBottom: 10,
-                                    borderRadius: 8,
-                                    // Tạo hiệu ứng đổ bóng cho từng dịch vụ
-                                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-                                    transition: 'all 0.2s',
-                                    backgroundColor: '#f9f9f9'
+            <div style={{ height: '75vh', display: 'flex', flexDirection: 'column' }}>
+                {/* Header Card */}
+                <Card
+                    style={{ 
+                        borderRadius: 12, 
+                        marginBottom: 16,
+                        background: '#262626',
+                        border: 'none'
+                    }}
+                    bodyStyle={{ padding: '20px 24px' }}
+                >
+                    <Row justify="space-between" align="middle">
+                        <Col>
+                            <Space size="middle">
+                                <Title level={4} style={{ margin: 0, color: '#fff' }}>
+                                    Báo giá #{record.quotationId}
+                                </Title>
+                                <Tag 
+                                    color={statusColors[record.status]}
+                                    style={{ 
+                                        fontWeight: 600,
+                                        fontSize: 13,
+                                        padding: '4px 12px',
+                                        borderRadius: 6,
+                                        border: 'none'
+                                    }}
+                                >
+                                    {statusText[record.status] || record.status}
+                                </Tag>
+                            </Space>
+                        </Col>
+                        <Col>
+                            <Button 
+                                type="primary" 
+                                style={{ 
+                                    borderRadius: 6,
+                                    background: '#fff',
+                                    color: '#262626',
+                                    border: 'none',
+                                    fontWeight: 600
                                 }}
                             >
-                                <Row justify="space-between" align="middle">
-                                    <Col span={12}>
-                                        <Text strong style={{ color: '#333' }}>{s?.serviceName}</Text><br />
-                                        <Text type="secondary" style={{ fontSize: 12 }}>({s?.priceType})</Text>
-                                    </Col>
-                                    <Col span={6} style={{ textAlign: 'center' }}>
-                                        <Text>
-                                            {s?.amount?.toLocaleString()} × {s.quantity}
-                                        </Text>
-                                    </Col>
-                                    <Col span={6} style={{ textAlign: 'right' }}>
-                                        <Space>
-                                            <Button
-                                                icon={<MinusOutlined />}
-                                                size="small"
-                                                onClick={() => handleUpdateQuantity(s.id, s.quantity - 1)}
-                                                disabled={s.quantity <= 1}
-                                            />
-                                            <InputNumber
-                                                min={1}
-                                                size="small"
-                                                value={s.quantity}
-                                                onChange={(value) => handleUpdateQuantity(s.id, value || 1)}
-                                                style={{ width: 50, textAlign: 'center' }}
-                                            />
-                                            <Button
-                                                icon={<PlusOutlined />}
-                                                size="small"
-                                                onClick={() => handleUpdateQuantity(s.id, s.quantity + 1)}
-                                            />
-                                            <Button
-                                                danger
-                                                type="text" // Dùng type="text" để nút xóa gọn gàng hơn
-                                                size="small"
-                                                icon={<DeleteOutlined />}
-                                                onClick={() => handleDeleteService(s.id)}
-                                                title="Xóa dịch vụ"
-                                            />
-                                        </Space>
-                                    </Col>
-                                </Row>
-                                <div style={{ textAlign: 'right', marginTop: 8, borderTop: '1px dashed #eee', paddingTop: 4 }}>
-                                    <Text strong type="success">
-                                        Thành tiền: {s.subtotal?.toLocaleString()} đ
-                                    </Text>
-                                </div>
-                            </Card>
-                        ))
-                    ) : (
-                        <p style={{ color: "#999", fontStyle: "italic", textAlign: 'center' }}>
-                            Chưa có dịch vụ nào được thêm vào báo giá này.
-                        </p>
-                    )}
-                </div>
+                                Duyệt báo giá
+                            </Button>
+                        </Col>
+                    </Row>
+                </Card>
 
-                {/* Tổng cộng */}
-                <div
-                    style={{
-                        background: "#e6f7ff", // Màu nền nhẹ nhàng
-                        padding: "16px",
-                        marginTop: 20,
-                        borderRadius: 8,
-                        textAlign: "right",
-                        border: '1px solid #91d5ff'
+                {/* Content Card - Scrollable */}
+                <Card
+                    style={{ 
+                        borderRadius: 12,
+                        border: '1px solid #e8e8e8',
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden'
+                    }}
+                    bodyStyle={{ 
+                        padding: 24,
+                        flex: 1,
+                        overflow: 'auto'
                     }}
                 >
-                    <Title level={4} style={{ margin: 0 }}>
-                        <Text strong>TỔNG CỘNG: </Text>
-                        <Text strong style={{ color: "#1890ff" }}>
+                    {/* Thông tin khách hàng */}
+                    <Row gutter={[24, 24]}>
+                        <Col xs={24} md={12}>
+                            <div style={{ 
+                                background: '#fafafa', 
+                                padding: 20, 
+                                borderRadius: 8,
+                                border: '1px solid #f0f0f0'
+                            }}>
+                                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        marginBottom: 8
+                                    }}>
+                                        <UserOutlined style={{ fontSize: 18, marginRight: 8, color: '#262626' }} />
+                                        <Text strong style={{ fontSize: 16 }}>Thông tin khách hàng</Text>
+                                    </div>
+                                    <Space direction="vertical" size="small">
+                                        <Text><strong>Tên:</strong> {record.username}</Text>
+                                        <Text><strong>Điện thoại:</strong> {record.phone || "N/A"}</Text>
+                                        <Text><strong>Ngày tạo:</strong> {dayjs(record.createdAt).format("DD/MM/YYYY HH:mm")}</Text>
+                                    </Space>
+                                </Space>
+                            </div>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <div style={{ 
+                                background: '#fafafa', 
+                                padding: 20, 
+                                borderRadius: 8,
+                                border: '1px solid #f0f0f0'
+                            }}>
+                                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        marginBottom: 8
+                                    }}>
+                                        <EnvironmentOutlined style={{ fontSize: 18, marginRight: 8, color: '#262626' }} />
+                                        <Text strong style={{ fontSize: 16 }}>Địa điểm & Thời gian</Text>
+                                    </div>
+                                    <Space direction="vertical" size="small">
+                                        <Text><strong>Từ:</strong> {record.addressFrom || "N/A"}</Text>
+                                        <Text><strong>Đến:</strong> {record.addressTo || "N/A"}</Text>
+                                        <Text><strong>Ngày chuyển:</strong> {dayjs(record.surveyDate).format("DD/MM/YYYY")}</Text>
+                                    </Space>
+                                </Space>
+                            </div>
+                        </Col>
+                    </Row>
+
+                    <Divider style={{ margin: '24px 0' }}>
+                        <Space>
+                            <FileTextOutlined style={{ color: '#262626' }} />
+                            <Text strong style={{ fontSize: 16 }}>Chi tiết Dịch vụ</Text>
+                        </Space>
+                    </Divider>
+
+                    {/* Danh sách dịch vụ */}
+                    <div>
+                        {added.length > 0 ? (
+                            added.map((s) => (
+                                <Card
+                                    key={s?.id}
+                                    size="small"
+                                    style={{
+                                        marginBottom: 12,
+                                        borderRadius: 8,
+                                        border: '1px solid #e8e8e8',
+                                        background: '#fff'
+                                    }}
+                                    bodyStyle={{ padding: 16 }}
+                                >
+                                    <Row justify="space-between" align="top" gutter={[16, 16]}>
+                                        <Col xs={24} sm={12}>
+                                            <Space direction="vertical" size={4}>
+                                                <Text strong style={{ fontSize: 15 }}>{s?.serviceName}</Text>
+                                                <Tag style={{ 
+                                                    background: '#f0f0f0', 
+                                                    color: '#595959',
+                                                    border: 'none',
+                                                    fontSize: 12
+                                                }}>
+                                                    {s?.priceType}
+                                                </Tag>
+                                            </Space>
+                                        </Col>
+                                        <Col xs={24} sm={12}>
+                                            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                                                <div style={{ 
+                                                    display: 'flex', 
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center'
+                                                }}>
+                                                    <Text type="secondary">Đơn giá:</Text>
+                                                    <Text strong>{s?.amount?.toLocaleString()} đ</Text>
+                                                </div>
+                                                <div style={{ 
+                                                    display: 'flex', 
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    gap: 8
+                                                }}>
+                                                    <Text type="secondary">Số lượng:</Text>
+                                                    <Space size={4}>
+                                                        <Button
+                                                            icon={<MinusOutlined />}
+                                                            size="small"
+                                                            onClick={() => handleUpdateQuantity(s.id, s.quantity - 1)}
+                                                            disabled={s.quantity <= 1}
+                                                            style={{ borderRadius: 4 }}
+                                                        />
+                                                        <InputNumber
+                                                            min={1}
+                                                            size="small"
+                                                            value={s.quantity}
+                                                            onChange={(value) => handleUpdateQuantity(s.id, value || 1)}
+                                                            style={{ width: 60, textAlign: 'center', borderRadius: 4 }}
+                                                        />
+                                                        <Button
+                                                            icon={<PlusOutlined />}
+                                                            size="small"
+                                                            onClick={() => handleUpdateQuantity(s.id, s.quantity + 1)}
+                                                            style={{ borderRadius: 4 }}
+                                                        />
+                                                        <Tooltip title="Xóa dịch vụ">
+                                                            <Button
+                                                                danger
+                                                                type="text"
+                                                                size="small"
+                                                                icon={<DeleteOutlined />}
+                                                                onClick={() => handleDeleteService(s.id)}
+                                                                style={{ borderRadius: 4 }}
+                                                            />
+                                                        </Tooltip>
+                                                    </Space>
+                                                </div>
+                                                <Divider style={{ margin: '8px 0' }} />
+                                                <div style={{ 
+                                                    display: 'flex', 
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center'
+                                                }}>
+                                                    <Text strong>Thành tiền:</Text>
+                                                    <Text strong style={{ fontSize: 16, color: '#262626' }}>
+                                                        {s.subtotal?.toLocaleString()} đ
+                                                    </Text>
+                                                </div>
+                                            </Space>
+                                        </Col>
+                                    </Row>
+                                </Card>
+                            ))
+                        ) : (
+                            <div style={{ 
+                                textAlign: 'center', 
+                                padding: 40,
+                                background: '#fafafa',
+                                borderRadius: 8,
+                                border: '1px dashed #d9d9d9'
+                            }}>
+                                <FileTextOutlined style={{ fontSize: 40, color: '#bfbfbf', marginBottom: 16 }} />
+                                <Text type="secondary" style={{ display: 'block' }}>
+                                    Chưa có dịch vụ nào được thêm vào báo giá này
+                                </Text>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Tổng cộng */}
+                    <div
+                        style={{
+                            background: "#262626",
+                            padding: "20px 24px",
+                            marginTop: 24,
+                            borderRadius: 8,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}
+                    >
+                        <Space>
+                            <DollarOutlined style={{ fontSize: 24, color: '#fff' }} />
+                            <Text strong style={{ fontSize: 18, color: '#fff' }}>TỔNG CỘNG</Text>
+                        </Space>
+                        <Text strong style={{ fontSize: 24, color: '#fff' }}>
                             {record.totalPrice?.toLocaleString() || 0} đ
                         </Text>
-                    </Title>
-                </div>
-            </Card>
+                    </div>
+                </Card>
+            </div>
         );
     };
 
-    // 🧱 Giao diện chính — 2 cột
     return (
-        <Row gutter={24}>
+        <Row gutter={24} style={{ height: '80vh' }}>
             {/* Cột trái: danh sách báo giá */}
-            <Col span={10}>
-                <Title level={4} style={{ marginBottom: 16, borderLeft: '4px solid #1890ff', paddingLeft: 12 }}>
-                    Danh Sách Báo Giá ({quotations.length})
-                </Title>
-                <div
+            <Col xs={24} lg={10} style={{ height: '100%' }}>
+                <Card
                     style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 12,
-                        maxHeight: "75vh",
-                        overflowY: "auto",
-                        paddingRight: 8 // Thêm padding để không che scrollbar
+                        height: '100%',
+                        borderRadius: 12,
+                        border: '1px solid #e8e8e8',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
+                    bodyStyle={{ 
+                        padding: 0, 
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden'
                     }}
                 >
-                    {quotations.map((q) => (
-                        <Card
-                            key={q.quotationId}
-                            hoverable
-                            onClick={() => setSelectedQuotation(q)}
-                            style={{
-                                borderRadius: 10,
-                                // Đổ bóng nhẹ khi chưa chọn, đổ bóng mạnh hơn khi chọn
-                                boxShadow: selectedQuotation?.quotationId === q.quotationId
-                                    ? "0 4px 10px rgba(24, 144, 255, 0.2)"
-                                    : "0 2px 5px rgba(0, 0, 0, 0.05)",
-                                border:
-                                    selectedQuotation?.quotationId === q.quotationId
-                                        ? "2px solid #1890ff"
-                                        : "1px solid #ddd",
-                                background:
-                                    selectedQuotation?.quotationId === q.quotationId
-                                        ? "#e6f7ff" // Nền xanh nhạt khi được chọn
-                                        : "white",
-                                transition: "all 0.2s ease",
-                            }}
-                        >
-                            <Space direction="vertical" style={{ width: '100%' }}>
-                                <Row justify="space-between" align="middle" style={{ width: '100%' }}>
-                                    <Text strong style={{ color: '#1890ff' }}>#{q.quotationId}</Text>
-                                    <Tag color={statusColors[q.status]} style={{ fontWeight: 'bold' }}>
-                                        {statusText[q.status] || q.status}
-                                    </Tag>
-                                </Row>
-                                <Text>{q.username} ({q.phone})</Text>
-                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                    <CheckCircleOutlined style={{ marginRight: 4 }} />
-                                    Ngày tạo: {dayjs(q.createdAt).format("DD/MM/YYYY")}
-                                </Text>
-                                <Divider style={{ margin: '8px 0' }} />
-                                <div style={{ textAlign: "right" }}>
-                                    <Text type="success" style={{ fontSize: 16, fontWeight: 'bold' }}>
-                                        Tổng: {q.totalPrice?.toLocaleString() || 0} đ
-                                    </Text>
-                                </div>
+                    {/* Header cố định */}
+                    <div style={{ 
+                        padding: '20px 24px',
+                        borderBottom: '1px solid #e8e8e8',
+                        background: '#fafafa'
+                    }}>
+                        <Space size="middle" style={{ width: '100%', justifyContent: 'space-between' }}>
+                            <Space>
+                                <FileTextOutlined style={{ fontSize: 20, color: '#262626' }} />
+                                <Title level={4} style={{ margin: 0 }}>
+                                    Danh Sách Báo Giá
+                                </Title>
                             </Space>
-                        </Card>
-                    ))}
-                    {quotations.length === 0 && (
-                        <Card style={{ textAlign: 'center', color: '#999', border: '1px dashed #ccc' }}>
-                            Không có báo giá nào.
-                        </Card>
-                    )}
-                </div>
+                            <Badge 
+                                count={quotations.length} 
+                                style={{ 
+                                    background: '#262626',
+                                    fontWeight: 600
+                                }} 
+                            />
+                        </Space>
+                    </div>
+                    
+                    {/* Danh sách scroll */}
+                    <div
+                        style={{
+                            flex: 1,
+                            overflowY: "auto",
+                            padding: 16
+                        }}
+                    >
+                        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                            {quotations.map((q) => (
+                                <Card
+                                    key={q.quotationId}
+                                    hoverable
+                                    onClick={() => setSelectedQuotation(q)}
+                                    style={{
+                                        borderRadius: 8,
+                                        border: selectedQuotation?.quotationId === q.quotationId
+                                            ? "2px solid #262626"
+                                            : "1px solid #e8e8e8",
+                                        background: selectedQuotation?.quotationId === q.quotationId
+                                            ? "#fafafa"
+                                            : "white",
+                                        transition: "all 0.2s ease",
+                                    }}
+                                    bodyStyle={{ padding: 16 }}
+                                >
+                                    <Space direction="vertical" style={{ width: '100%' }} size="small">
+                                        <Row justify="space-between" align="middle">
+                                            <Text strong style={{ fontSize: 16 }}>#{q.quotationId}</Text>
+                                            <Tag 
+                                                color={statusColors[q.status]}
+                                                style={{ 
+                                                    fontWeight: 600,
+                                                    fontSize: 12,
+                                                    padding: '2px 10px',
+                                                    borderRadius: 4,
+                                                    border: 'none'
+                                                }}
+                                            >
+                                                {statusText[q.status] || q.status}
+                                            </Tag>
+                                        </Row>
+                                        
+                                        <Space size={4}>
+                                            <UserOutlined style={{ color: '#8c8c8c' }} />
+                                            <Text>{q.username}</Text>
+                                        </Space>
+                                        
+                                        <Space size={4}>
+                                            <PhoneOutlined style={{ color: '#8c8c8c' }} />
+                                            <Text type="secondary">{q.phone}</Text>
+                                        </Space>
+                                        
+                                        <Space size={4}>
+                                            <CalendarOutlined style={{ color: '#8c8c8c' }} />
+                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                {dayjs(q.createdAt).format("DD/MM/YYYY")}
+                                            </Text>
+                                        </Space>
+                                        
+                                        <Divider style={{ margin: '8px 0' }} />
+                                        
+                                        <div style={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}>
+                                            <Text type="secondary">Tổng giá trị:</Text>
+                                            <Text strong style={{ fontSize: 16, color: '#262626' }}>
+                                                {q.totalPrice?.toLocaleString() || 0} đ
+                                            </Text>
+                                        </div>
+                                    </Space>
+                                </Card>
+                            ))}
+                            {quotations.length === 0 && (
+                                <Card 
+                                    style={{ 
+                                        textAlign: 'center', 
+                                        border: '1px dashed #d9d9d9',
+                                        background: '#fafafa'
+                                    }}
+                                    bodyStyle={{ padding: 40 }}
+                                >
+                                    <FileTextOutlined style={{ fontSize: 40, color: '#bfbfbf', marginBottom: 16 }} />
+                                    <Text type="secondary" style={{ display: 'block' }}>
+                                        Không có báo giá nào
+                                    </Text>
+                                </Card>
+                            )}
+                        </Space>
+                    </div>
+                </Card>
             </Col>
 
             {/* Cột phải: chi tiết báo giá */}
-            <Col span={14}>
+            <Col xs={24} lg={14} style={{ height: '100%' }}>
                 {renderQuotationDetails(selectedQuotation)}
             </Col>
         </Row>

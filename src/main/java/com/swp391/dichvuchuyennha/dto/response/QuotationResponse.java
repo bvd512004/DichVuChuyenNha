@@ -24,9 +24,13 @@ public class QuotationResponse {
     private String companyName;
     private String status;
     private String phone;
-
+ private String assignedEmployeeName;
+    private String email;
+    private String position;
     private List<QuotationServiceInfo> services;
-
+    private String employeeName;
+   private String employeePhone;
+   private String employeeEmail;
 
 }
 
