@@ -36,8 +36,11 @@ public enum ErrorCode {
     MISSING_PARAMETER(1026,"Missing parameter",HttpStatus.BAD_REQUEST),
     PRICING_NOT_FOUND (1027,"Pricing not found",HttpStatus.NOT_FOUND),
     FORBIDDEN(1027,"Forbidden",HttpStatus.FORBIDDEN),
+
     DATA_NOT_FOUND(1028,"Data not found",HttpStatus.NOT_FOUND),
-    VEHICLE_NOT_FOUND(1028, "Vehicle not found", HttpStatus.NOT_FOUND),
+
+
+
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
