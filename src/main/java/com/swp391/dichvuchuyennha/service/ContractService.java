@@ -148,15 +148,18 @@ public class ContractService {
 //                    endAddress = quotation.getSurvey().getAddressTo();
 //                }
 
-                if (quotation.getRequest() != null && quotation.getRequest().getMovingDay() != null) {
-                    movingDay = quotation.getRequest().getMovingDay()
-                            .toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                }
-                var user = quotation.getRequest().getUser();
-                if (user != null) {
-                    username = user.getUsername();
-                    if (user.getCustomerCompany() != null) {
-                        companyName = user.getCustomerCompany().getCompanyName();
+                if (quotation.getRequest() != null) {
+                    if (quotation.getRequest().getMovingDay() != null) {
+                        movingDay = quotation.getRequest().getMovingDay()
+                                .toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                    }
+                    
+                    var user = quotation.getRequest().getUser();
+                    if (user != null) {
+                        username = user.getUsername();
+                        if (user.getCustomerCompany() != null) {
+                            companyName = user.getCustomerCompany().getCompanyName();
+                        }
                     }
                 }
 

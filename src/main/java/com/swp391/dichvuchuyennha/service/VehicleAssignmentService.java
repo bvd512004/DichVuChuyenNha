@@ -34,6 +34,11 @@ public class VehicleAssignmentService {
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
 
         // Lấy ngày moving_day từ hợp đồng
+        if (contract.getQuotation() == null || contract.getQuotation().getRequest() == null 
+                || contract.getQuotation().getRequest().getMovingDay() == null) {
+            throw new RuntimeException("Contract missing quotation or moving day information");
+        }
+        
         LocalDate movingDay = contract.getQuotation().getRequest().getMovingDay().toInstant()
                 .atZone(ZoneId.systemDefault()).toLocalDate();
 

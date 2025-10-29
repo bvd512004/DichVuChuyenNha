@@ -1,24 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  Table,
-  Button,
-  message,
-  Modal,
-  Select,
-  Space,
-  Typography,
-  List,
-  Divider,
-  Descriptions,
-  Card,
-  Tag,
-} from "antd";
-import {
-  FileTextOutlined,
-  CarOutlined,
-  DeleteOutlined,
-  EyeOutlined,
-} from "@ant-design/icons";
+import { Table, Button, message, Modal, Select, Space, Typography, List, Divider, Descriptions, Card, Tag } from "antd";
+import { FileTextOutlined, CarOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons";
 import VehicleAssignmentAPI from "../service/vehicleAssignment";
 import ContractAPI from "../service/contract";
 import dayjs from "dayjs";
@@ -50,11 +32,10 @@ export default function VehicleAssignment() {
   const loadContracts = async () => {
     try {
       const res = await ContractAPI.getAll();
-      console.log("Contracts loaded:", res.data);
       setContracts(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error loading contracts:", err);
-      message.error("Failed to load contracts");
+      message.error("Không thể tải danh sách hợp đồng");
     }
   };
 
@@ -67,10 +48,10 @@ export default function VehicleAssignment() {
         VehicleAssignmentAPI.getAssignedVehicles(contractId),
       ]);
       setContractDetail(detailRes);
-      setAssignedVehicles(assignedRes.data);
+      setAssignedVehicles(assignedRes.data || []);
       setDetailModalVisible(true);
     } catch {
-      message.error("Failed to load contract details or assigned vehicles");
+      message.error("Không thể tải chi tiết hợp đồng hoặc danh sách xe đã gán");
     } finally {
       setLoading(false);
     }
@@ -79,61 +60,50 @@ export default function VehicleAssignment() {
   const handleOpenAssignModal = async () => {
     try {
       const res = await VehicleAssignmentAPI.getAvailableVehicles();
-      setAvailableVehicles(res.data);
+      setAvailableVehicles(res.data || []);
       setAssignModalVisible(true);
       setAssignError(null);
     } catch {
-      message.error("Failed to load available vehicles");
+      message.error("Không thể tải danh sách xe có sẵn");
     }
   };
 
   const handleAssign = async () => {
     if (!selectedVehicle) {
-      setAssignError("Please select a vehicle");
+      setAssignError("Vui lòng chọn xe");
       return;
     }
 
-    // Kiểm tra xem xe đã được gán vào hợp đồng này chưa
-    const isAlreadyAssigned = assignedVehicles.some(
-      (vehicle) => vehicle.vehicleId === selectedVehicle
-    );
+    const isAlreadyAssigned = assignedVehicles.some((vehicle) => vehicle.vehicleId === selectedVehicle);
 
     if (isAlreadyAssigned) {
-      setAssignError("This vehicle has already been assigned to this contract!");
+      setAssignError("Xe này đã được gán vào hợp đồng!");
       return;
     }
 
     setLoading(true);
     setAssignError(null);
     try {
-      // Lấy ngày movingDay từ contractDetail
       const assignedDate = dayjs(contractDetail.movingDay).format("YYYY-MM-DD");
 
-      // Gửi yêu cầu gán xe vào hợp đồng
-      await VehicleAssignmentAPI.assignVehicle(
-        selectedContract,
-        selectedVehicle,
-        assignedDate
-      );
+      await VehicleAssignmentAPI.assignVehicle(selectedContract, selectedVehicle, assignedDate);
 
-      message.success("Vehicle assigned successfully!");
+      message.success("Gán xe thành công!");
       setAssignModalVisible(false);
       setSelectedVehicle(null);
       setAssignError(null);
 
-      // Refresh assigned vehicles list
       const assignedRes = await VehicleAssignmentAPI.getAssignedVehicles(selectedContract);
-      setAssignedVehicles(assignedRes.data);
+      setAssignedVehicles(assignedRes.data || []);
     } catch (err) {
       const errorMessage = 
         err.response?.data?.message || 
         err.response?.data || 
         err.message || 
-        "Error assigning vehicle. The vehicle might be busy on this date.";
+        "Lỗi gán xe. Xe có thể đang bận vào ngày này.";
       
       setAssignError(errorMessage);
       message.error(errorMessage);
-      console.error("Vehicle assignment error details:", err.response?.data);
     } finally {
       setLoading(false);
     }
@@ -148,7 +118,7 @@ export default function VehicleAssignment() {
 
     try {
       await VehicleAssignmentAPI.unassignVehicle(selectedContract, vehicleToRemove);
-      message.success("Vehicle unassigned successfully!");
+      message.success("Bỏ gán xe thành công!");
 
       const [detailRes, assignedRes] = await Promise.all([
         ContractAPI.getById(selectedContract),
@@ -156,10 +126,10 @@ export default function VehicleAssignment() {
       ]);
 
       setContractDetail(detailRes);
-      setAssignedVehicles(assignedRes.data);
+      setAssignedVehicles(assignedRes.data || []);
       setVehicleToRemove(null);
     } catch (err) {
-      message.error(err.response?.data?.message || err.message || "Failed to unassign vehicle");
+      message.error(err.response?.data?.message || err.message || "Không thể bỏ gán xe");
       setVehicleToRemove(null);
     }
   };
@@ -173,55 +143,44 @@ export default function VehicleAssignment() {
 
   const columns = [
     {
-      title: "Contract ID",
+      title: "Mã Hợp Đồng",
       dataIndex: "contractId",
       key: "contractId",
       width: 150,
       render: (id) => <Tag color="blue">#{id}</Tag>,
     },
     {
-      title: "Status",
+      title: "Trạng thái",
       dataIndex: "status",
       key: "status",
       width: 150,
       render: (status) => {
-        const color =
-          status === "PENDING"
-            ? "orange"
-            : status === "SIGNED"
-            ? "green"
-            : status === "COMPLETED"
-            ? "blue"
-            : "default";
+        const color = status === "PENDING" ? "orange" : status === "SIGNED" ? "green" : status === "COMPLETED" ? "blue" : "default";
         return <Tag color={color}>{status}</Tag>;
       },
     },
     {
-      title: "Total Amount",
+      title: "Tổng giá",
       dataIndex: "totalAmount",
       key: "totalAmount",
       width: 150,
-      render: (amount) => `$${amount?.toLocaleString() || 0}`,
+      render: (amount) => `${amount?.toLocaleString() || 0} đ`,
     },
     {
-      title: "Moving Day",
+      title: "Ngày chuyển",
       dataIndex: "movingDay",
       key: "movingDay",
       width: 150,
       render: (date) => dayjs(date).format("DD/MM/YYYY"),
     },
     {
-      title: "Actions",
+      title: "Hành động",
       key: "actions",
       width: 200,
       render: (_, record) => (
         <Space>
-          <Button
-            type="primary"
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDetails(record.contractId)}
-          >
-            View Details
+          <Button type="primary" icon={<EyeOutlined />} onClick={() => handleViewDetails(record.contractId)}>
+            Xem chi tiết
           </Button>
         </Space>
       ),
@@ -232,7 +191,7 @@ export default function VehicleAssignment() {
     <div className="contract-assignment-container">
       <Card>
         <Title level={2}>
-          <CarOutlined /> Vehicle Assignment Management
+          <CarOutlined /> Phân Công Phương Tiện
         </Title>
         <Table
           columns={columns}
@@ -246,7 +205,7 @@ export default function VehicleAssignment() {
 
       {/* Contract Details Modal */}
       <Modal
-        title="Contract Details & Vehicle Assignment"
+        title="Chi Tiết Hợp Đồng & Phân Công Phương Tiện"
         open={detailModalVisible}
         onCancel={handleCloseDetailModal}
         width={1000}
@@ -254,28 +213,19 @@ export default function VehicleAssignment() {
       >
         {contractDetail && (
           <div>
-            <Descriptions
-              title="Contract Information"
-              bordered
-              column={2}
-              size="small"
-            >
-              <Descriptions.Item label="Contract ID">
-                #{contractDetail.contractId}
-              </Descriptions.Item>
-              <Descriptions.Item label="Status">
+            <Descriptions title="Thông Tin Hợp Đồng" bordered column={2} size="small">
+              <Descriptions.Item label="Mã Hợp Đồng">#{contractDetail.contractId}</Descriptions.Item>
+              <Descriptions.Item label="Trạng thái">
                 <Tag color="green">{contractDetail.status}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Total Amount">
-                ${contractDetail.totalAmount?.toLocaleString()}
-              </Descriptions.Item>
-              <Descriptions.Item label="Moving Day">
+              <Descriptions.Item label="Tổng giá">{contractDetail.totalAmount?.toLocaleString()} đ</Descriptions.Item>
+              <Descriptions.Item label="Ngày chuyển">
                 {dayjs(contractDetail.movingDay).format("DD/MM/YYYY")}
               </Descriptions.Item>
-              <Descriptions.Item label="Start Date">
+              <Descriptions.Item label="Ngày bắt đầu">
                 {dayjs(contractDetail.startDate).format("DD/MM/YYYY")}
               </Descriptions.Item>
-              <Descriptions.Item label="End Date">
+              <Descriptions.Item label="Ngày kết thúc">
                 {dayjs(contractDetail.endDate).format("DD/MM/YYYY")}
               </Descriptions.Item>
             </Descriptions>
@@ -284,17 +234,13 @@ export default function VehicleAssignment() {
 
             <div style={{ marginBottom: 16 }}>
               <Space>
-                <Button
-                  type="primary"
-                  icon={<CarOutlined />}
-                  onClick={handleOpenAssignModal}
-                >
-                  Assign Vehicle
+                <Button type="primary" icon={<CarOutlined />} onClick={handleOpenAssignModal}>
+                  Gán Xe
                 </Button>
               </Space>
             </div>
 
-            <Title level={4}>Assigned Vehicles</Title>
+            <Title level={4}>Xe Đã Được Gán</Title>
             <List
               dataSource={assignedVehicles}
               renderItem={(vehicle) => (
@@ -306,7 +252,7 @@ export default function VehicleAssignment() {
                       icon={<DeleteOutlined />}
                       onClick={() => handleUnassign(vehicle.vehicleId)}
                     >
-                      Unassign
+                      Bỏ gán
                     </Button>,
                   ]}
                 >
@@ -314,9 +260,9 @@ export default function VehicleAssignment() {
                     title={`${vehicle.vehicleType} - ${vehicle.licensePlate}`}
                     description={
                       <div>
-                        <div>Capacity: {vehicle.capacity} tons</div>
-                        <div>Driver: {vehicle.driverName} ({vehicle.driverPosition})</div>
-                        <div>Status: <Tag color="blue">{vehicle.status}</Tag></div>
+                        <div>Tải trọng: {vehicle.capacity} tấn</div>
+                        <div>Tài xế: {vehicle.driverName || "Chưa có"} ({vehicle.driverPosition})</div>
+                        <div>Trạng thái: <Tag color="blue">{vehicle.status}</Tag></div>
                       </div>
                     }
                   />
@@ -329,7 +275,7 @@ export default function VehicleAssignment() {
 
       {/* Assign Vehicle Modal */}
       <Modal
-        title="Assign Vehicle to Contract"
+        title="Gán Xe Vào Hợp Đồng"
         open={assignModalVisible}
         onOk={handleAssign}
         onCancel={() => {
@@ -338,43 +284,39 @@ export default function VehicleAssignment() {
           setAssignError(null);
         }}
         confirmLoading={loading}
-        okText="Assign Vehicle"
-        cancelText="Cancel"
+        okText="Gán Xe"
+        cancelText="Hủy"
       >
         <div style={{ marginBottom: 16 }}>
-          <label>Select Vehicle:</label>
+          <label>Chọn Xe:</label>
           <Select
             style={{ width: "100%", marginTop: 8 }}
-            placeholder="Choose a vehicle"
+            placeholder="Chọn xe"
             value={selectedVehicle}
             onChange={setSelectedVehicle}
           >
             {availableVehicles.map((vehicle) => (
               <Option key={vehicle.vehicleId} value={vehicle.vehicleId}>
-                {vehicle.vehicleType} - {vehicle.licensePlate} ({vehicle.capacity} tons)
-                {vehicle.driverName && ` - Driver: ${vehicle.driverName}`}
+                {vehicle.vehicleType} - {vehicle.licensePlate} ({vehicle.capacity} tấn)
+                {vehicle.driverName && ` - Tài xế: ${vehicle.driverName}`}
               </Option>
             ))}
           </Select>
         </div>
 
-        {assignError && (
-          <div style={{ color: "red", marginTop: 8 }}>
-            {assignError}
-          </div>
-        )}
+        {assignError && <div style={{ color: "red", marginTop: 8 }}>{assignError}</div>}
       </Modal>
 
       {/* Unassign Confirmation Modal */}
       <Modal
-        title="Confirm Unassign Vehicle"
+        title="Xác Nhận Bỏ Gán Xe"
         open={!!vehicleToRemove}
         onOk={confirmUnassign}
         onCancel={() => setVehicleToRemove(null)}
-        okText="Yes, Unassign"
-        cancelText="Cancel"
+        okText="Có, Bỏ Gán"
+        cancelText="Hủy"
       >
-        <p>Are you sure you want to unassign this vehicle from the contract?</p>
+        <p>Bạn có chắc muốn bỏ gán xe này khỏi hợp đồng không?</p>
       </Modal>
     </div>
   );

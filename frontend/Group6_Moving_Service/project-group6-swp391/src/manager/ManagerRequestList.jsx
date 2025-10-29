@@ -10,9 +10,11 @@ import {
     UserOutlined,
     EnvironmentOutlined,
     PlusOutlined,
-    EditOutlined
+    EditOutlined,
+    CalendarOutlined
 } from "@ant-design/icons";
 import axiosInstance from "../service/axiosInstance";
+import dayjs from "dayjs";
 
 const { Option } = Select;
 
@@ -381,6 +383,16 @@ export default function ManagerRequestList() {
                         </Descriptions.Item>
                         <Descriptions.Item label="Địa chỉ xuất phát">
                             <EnvironmentOutlined /> {selectedRequest.pickupAddress || "N/A"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Địa chỉ đến">
+                            <EnvironmentOutlined /> {selectedRequest.destinationAddress || "N/A"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Ngày chuyển">
+                            <CalendarOutlined style={{ marginRight: 8 }} />
+                            {selectedRequest.movingDay 
+                                ? dayjs(selectedRequest.movingDay).format("DD/MM/YYYY") 
+                                : "Chưa cập nhật"
+                            }
                         </Descriptions.Item>
                     </Descriptions>
                 )}

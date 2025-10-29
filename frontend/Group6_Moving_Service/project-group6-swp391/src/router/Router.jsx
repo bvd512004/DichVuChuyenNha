@@ -65,14 +65,6 @@ const Router = () => {
           path:"user-profile",
           element: <ProfilePage/>
         },
-           {
-          path:"assign-surveyer",
-          element: (
-            <ProtectedRoute allowedRoles={["manager", "admin"]}>
-              <AssignSurveyer/>
-            </ProtectedRoute>
-          )
-        },
        {
   path:"survey-dashboard",
   element: (
@@ -105,10 +97,6 @@ const Router = () => {
           {
           path: "quotation-for-customer",
           element: <QuotationApproval/>
-        },
-                {
-          path: "contracts-list-manager",
-          element: <QuotationContractList/>
         },
 
   
@@ -212,14 +200,6 @@ const Router = () => {
           ),
         },
         {
-          path: "vehicle-assignment",
-          element: (
-            <ProtectedRoute allowedRoles={["admin", "manager"]}>
-              <VehicleAssignment />
-            </ProtectedRoute>
-          ),
-        },
-        {
           path: "manager-requests",
           element: (
             <ProtectedRoute allowedRoles={["admin", "manager"]}>
@@ -232,6 +212,22 @@ const Router = () => {
           element: <ManagerDashboard />,
           children: [
             // { index: true, element: <ContractAssignment /> }, // mặc định khi vào /manager/dashboard
+            { 
+              path: "assign-surveyer", 
+              element: (
+                <ProtectedRoute allowedRoles={["manager", "admin"]}>
+                  <AssignSurveyer />
+                </ProtectedRoute>
+              )
+            },
+            { 
+              path: "contracts-list-manager", 
+              element: (
+                <ProtectedRoute allowedRoles={["manager", "admin"]}>
+                  <QuotationContractList />
+                </ProtectedRoute>
+              )
+            },
             { path: "contract-assignment", element: <ContractAssignment /> },
             { path: "vehicle-assignment", element: <VehicleAssignment /> },
             { path: "manager/work-progress", element: <ManagerWorkProgressPage /> },

@@ -35,7 +35,12 @@ const ManagerDashboard = () => {
     {
       key: "assign-surveyer",
       icon: <UserAddOutlined />,
-      label: <Link to="/assign-surveyer">Gán Nhân Viên Khảo Sát</Link>,
+      label: <Link to="assign-surveyer">Gán Nhân Viên Khảo Sát</Link>,
+    },
+    {
+      key: "contracts-list-manager",
+      icon: <FileTextOutlined />,
+      label: <Link to="contracts-list-manager">Quản Lý Hợp Đồng & Báo Giá</Link>,
     },
     {
       key: "contract-assignment",

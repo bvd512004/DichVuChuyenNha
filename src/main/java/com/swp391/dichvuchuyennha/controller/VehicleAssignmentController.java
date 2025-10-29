@@ -17,40 +17,36 @@ public class VehicleAssignmentController {
 
     private final VehicleAssignmentService vehicleAssignmentService;
 
-    // Endpoint để gán xe vào hợp đồng
+    // Gán xe vào hợp đồng
     @PostMapping("/assign")
-    public ResponseEntity<String> assignVehicle(
-            @RequestBody VehicleAssignmentRequest vehicleAssignmentRequest
-    ) {
+    public ResponseEntity<String> assignVehicle(@RequestBody VehicleAssignmentRequest request) {
         try {
-            // Gọi service để gán xe vào hợp đồng
             vehicleAssignmentService.assignVehicleToContract(
-                    vehicleAssignmentRequest.getContractId(),
-                    vehicleAssignmentRequest.getVehicleId(),
-                    vehicleAssignmentRequest.getAssignedDate()
+                request.getContractId(),
+                request.getVehicleId(),
+                request.getAssignedDate()
             );
             return ResponseEntity.ok("Gán xe thành công");
         } catch (RuntimeException e) {
-            // Trả về thông báo lỗi nếu gặp vấn đề khi gán xe
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // Endpoint để lấy danh sách xe đã được gán cho hợp đồng
+    // Lấy danh sách xe đã được gán cho hợp đồng
     @GetMapping("/{contractId}")
     public ResponseEntity<List<VehicleDTO>> getAssignedVehicles(@PathVariable Integer contractId) {
         List<VehicleDTO> vehicles = vehicleAssignmentService.getAssignedVehiclesByContract(contractId);
         return ResponseEntity.ok(vehicles);
     }
 
-    // Endpoint để lấy danh sách xe có sẵn
+    // Lấy danh sách xe có sẵn
     @GetMapping("/available")
     public ResponseEntity<List<VehicleDTO>> getAvailableVehicles() {
         List<VehicleDTO> vehicles = vehicleAssignmentService.getAvailableVehicles();
         return ResponseEntity.ok(vehicles);
     }
 
-    // Endpoint để bỏ gán xe khỏi hợp đồng
+    // Bỏ gán xe khỏi hợp đồng
     @DeleteMapping("/unassign")
     public ResponseEntity<String> unassignVehicle(
             @RequestParam Integer contractId,
