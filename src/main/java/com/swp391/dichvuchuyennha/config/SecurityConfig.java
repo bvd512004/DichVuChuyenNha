@@ -16,8 +16,10 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -36,193 +38,171 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+        @Value("${jwt.secret}")
+        private String jwtSecret;
+
+        private final String[] PUBLIC_URL = {
 
 
-    private final String[] PUBLIC_URL = {
-            "/api/auth/**",                    // Authentication endpoints
-            "/api/users/customer-company",     // Customer registration
-            "/api/public/**",                   // Public endpoints
-            "/api/test/public",                // Test endpoint
-            "/images/survey/**",
-            "/api/chat-ai"// Static images
-    };
+                "/api/auth/**", // Login/logout
+                "/api/users/customer-company",
+                "/api/auth/**",
+                "/api/public/**",
+                "/api/test/public",
+                "/api/users/**",
+                "/api/manager/contracts/**",
+                "/api/manager/view-contracts",
+                "/api/employees/**", // Employee endpoints - temporarily public for testing
+                "/api/vehicles/**", // Vehicle endpoints - temporarily public for testing
+                "/api/assignments/**",
+                "/api/contracts/**",
+                "/api/surveys/**",
+                "/api/requests/**",
+                "/api/prices/**",
+                "/api/quotations/**",
+                "/api/quotation-services/**",
+                "/api/admin/**",
+                "/api/request-assignment/**",
+                "/api/work-progress/**",
+                "/api/customer/work-progress/**",
+                "/api/survey-floors/**",
+                "/api/survey-images/**",
+                "/images/survey/**",
+                "/api/manager/quotations/**",
+                "/api/damages/**",
+                "/images/damages/**",
+                "/api/chat-ai"};
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> {
-                })
-                .authorizeHttpRequests(auth -> auth
-                        // ✅ Public endpoints - CHỈ NHỮNG ENDPOINT THỰC SỰ PUBLIC
-                        .requestMatchers(PUBLIC_URL).permitAll()
 
-                        // ✅ admin endpoints
-                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "admin")
 
-                        // ✅ User endpoints
-                        .requestMatchers(GET, "/api/users").hasAnyRole("ADMIN", "admin")
-                        .requestMatchers(POST, "/api/users").hasAnyRole("ADMIN", "admin")
-                        .requestMatchers(POST, "/api/users/create").permitAll() // Customer registration - public access
-                        .requestMatchers(PUT, "/api/users/{userId}").hasAnyRole("ADMIN", "admin")
-                        .requestMatchers(DELETE, "/api/users/{userId}").hasAnyRole("ADMIN", "admin")
-                        .requestMatchers(GET, "/api/users/{userId}/history").hasAnyRole("ADMIN", "admin")
-                        .requestMatchers(GET, "/api/users/me").authenticated()
-                        .requestMatchers(PUT, "/api/users/me").authenticated()
-                        .requestMatchers(GET, "/api/users/roles").permitAll() // Customer roles for registration
 
-                        // ✅ Contract endpoints - Rule cụ thể phải đặt TRƯỚC rule tổng quát
-                        .requestMatchers("/api/contracts/unsigned/me")
-                        .hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
-                        .requestMatchers("/api/contracts/my-signed")
-                        .hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
-                        .requestMatchers("/api/contracts/manager")
-                        .hasAnyRole("MANAGER", "Manager", "manager", "ADMIN", "Admin", "admin")
-                        .requestMatchers("/api/contracts/eligible").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "Manager", "manager", "ADMIN", "Admin", "admin")
-                        .requestMatchers(PUT, "/api/contracts/sign/**").hasAnyRole("CUSTOMER", "customer_individual", "customer_company", "MANAGER", "Manager", "manager")
-                        .requestMatchers(PUT, "/api/contracts/**").hasAnyRole("MANAGER", "Manager", "manager", "ADMIN", "Admin", "admin")
-                        .requestMatchers(DELETE, "/api/contracts/**").hasAnyRole("MANAGER", "Manager", "manager", "ADMIN", "Admin", "admin")
-                        .requestMatchers(POST, "/api/contracts").hasAnyRole("MANAGER", "Manager", "manager", "ADMIN", "Admin", "admin")
-                        .requestMatchers(GET, "/api/contracts/**").hasAnyRole("CUSTOMER", "customer_individual", "customer_company", "EMPLOYEE", "employee", "MANAGER", "Manager", "manager", "ADMIN", "Admin", "admin")
-                        .requestMatchers("/api/contracts/**").hasAnyRole("MANAGER", "Manager", "manager", "ADMIN", "Admin", "admin")
 
-                        // ✅ Damages endpoints
-                        .requestMatchers(POST, "/api/damages").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager")
-                        .requestMatchers(PUT, "/api/damages/{damageId}")
-                        .hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager")
-                        .requestMatchers(GET, "/api/damages").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(GET, "/api/damages/{damageId}")
-                        .hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(DELETE, "/api/damages/{damageId}").hasAnyRole("MANAGER", "manager")
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                                .csrf(csrf -> csrf.disable())
+                                .cors(cors -> {
+                                })
+                                .authorizeHttpRequests(auth -> auth
+                                                // Public endpoints
+                                                .requestMatchers(PUBLIC_URL).permitAll()
 
-                        // ✅ employee endpoints
-                        .requestMatchers("/api/employees/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                                                // Admin endpoints
+                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                                .requestMatchers("/api/users").hasRole("ADMIN") // GET all users
+                                                .requestMatchers("/api/users/{userId}").hasRole("ADMIN") // PUT/DELETE
+                                                .requestMatchers("/api/work-progress/**").hasRole("MANAGER")                                                      // user
+//                                                .requestMatchers("/api/assignments/**").hasRole("MANAGER") //moi
+                                                // Assignment endpoints
+//                                                .requestMatchers(POST, "/api/assignments/assign").hasRole("MANAGER")
 
-                        // ✅ Vehicle endpoints
-                        .requestMatchers("/api/vehicles/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+//                                                .requestMatchers("/api/assignments").hasRole("ADMIN")
 
-                        // ✅ Assignment endpoints
-                        .requestMatchers("/api/assignments/**").hasAnyRole("MANAGER", "manager")
-                        .requestMatchers("/api/vehicle-assignments/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers("/api/request-assignment/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                                                // Contract endpoints
+                                                .requestMatchers("/api/contracts/unsigned/me")
+                                                .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY")
+                                                .requestMatchers("/api/contracts/sign/{contractId}")
+                                                .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY", "MANAGER")
+                                                .requestMatchers("/api/contracts/**").hasRole("MANAGER")
 
-                        // ✅ Driver endpoints
-                        .requestMatchers("/api/driver/**").hasAnyRole("EMPLOYEE", "employee")
+                                                // Damages endpoints
+                                                .requestMatchers(POST, "/api/damages").hasAnyRole("EMPLOYEE", "MANAGER")
+                                                .requestMatchers(PUT, "/api/damages/{damageId}")
+                                                .hasAnyRole("EMPLOYEE", "MANAGER")
+                                                .requestMatchers(GET, "/api/damages").hasAnyRole("MANAGER", "ADMIN")
+                                                .requestMatchers(GET, "/api/damages/{damageId}")
+                                                .hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
+                                                .requestMatchers(DELETE, "/api/damages/{damageId}").hasRole("MANAGER")
 
-                        // ✅ Request endpoints
-                        .requestMatchers(POST, "/api/requests/create")
-                        .hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
-                        .requestMatchers(GET, "/api/requests/my")
-                        .hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
-                        .requestMatchers(GET, "/api/requests/my-requests")
-                        .hasAnyRole("EMPLOYEE", "employee")
-                        .requestMatchers(GET, "/api/requests")
-                        .hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(PUT, "/api/requests/{id}/status")
-                        .hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(POST, "/api/requests/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(PUT, "/api/requests/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(DELETE, "/api/requests/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                                                // Employee endpoints - temporarily disabled for testing
+                                                // .requestMatchers("/api/employees").hasAnyRole("MANAGER", "ADMIN")
 
-                        // ✅ Survey endpoints - Rule cụ thể phải đặt TRƯỚC rule tổng quát
-                        .requestMatchers(GET, "/api/surveys/my").hasAnyRole("EMPLOYEE", "employee")
-                        .requestMatchers(POST, "/api/surveys").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(GET, "/api/surveys").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(PUT, "/api/surveys/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(DELETE, "/api/surveys/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(GET, "/api/surveys/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers("/api/survey-floors/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers("/api/survey-images/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                                                // Request endpoints
+                                                .requestMatchers(POST, "/api/requests/create")
+                                                .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY")
+                                                .requestMatchers(GET, "/api/requests/my")
+                                                .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY")
+                                                .requestMatchers(GET, "/api/requests").hasAnyRole("MANAGER", "ADMIN")
 
-                        // ✅ Quotation endpoints - Rule cụ thể phải đặt TRƯỚC rule tổng quát
-                        .requestMatchers(GET, "/api/quotations/me").hasAnyRole("EMPLOYEE", "employee")
-                        .requestMatchers(GET, "/api/quotations/pending/me").hasAnyRole("customer_individual", "customer_company")
-                        .requestMatchers(PUT, "/api/quotations/approve/{quotationId}").hasAnyRole("customer_individual", "customer_company")
-                        .requestMatchers(POST, "/api/quotations").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(PUT, "/api/quotations/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(DELETE, "/api/quotations/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers(GET, "/api/quotations/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers("/api/quotation-services/**").hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
+                                                // Survey endpoints
+                                                .requestMatchers(POST, "/api/surveys").hasRole("MANAGER")
+                                                .requestMatchers(GET, "/api/surveys").hasAnyRole("MANAGER", "ADMIN")
 
-                        // ✅ Price endpoints
-                        .requestMatchers(GET, "/api/prices").permitAll() // Public pricing
-                        .requestMatchers("/api/prices/**").hasAnyRole("MANAGER", "manager", "ADMIN", "admin")
+                                                // User endpoints
+                                                .requestMatchers(GET, "/api/users/me").authenticated()
+                                                .requestMatchers(PUT, "/api/users/me").authenticated()
+                                                .requestMatchers(POST, "/api/users/create").hasRole("ADMIN")
 
-                        // ✅ Work Progress endpoints
-                        .requestMatchers("/api/work-progress/**")
-                        .hasAnyRole("EMPLOYEE", "employee", "MANAGER", "manager", "ADMIN", "admin")
-                        .requestMatchers("/api/customer/work-progress/**")
-                        .hasAnyRole("CUSTOMER", "customer_individual", "customer_company")
+                                                // Vehicles CRUD - temporarily disabled for testing
+                                                // .requestMatchers("/api/vehicles/**").hasAnyRole("MANAGER", "ADMIN")
 
-                        // ✅ manager specific endpoints
-                        .requestMatchers("/api/manager/**").hasAnyRole("MANAGER", "manager")
+                                                // WorkProgress (nếu có)
+                                                .requestMatchers("/api/work-progress/**")
+                                                .hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
 
-                        // ✅ Chat AI endpoint
-                         // Any authenticated user
+                                                // Default
+                                                )
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .oauth2ResourceServer(oauth2 -> oauth2
+                                                .jwt(jwt -> jwt
+                                                                .jwtAuthenticationConverter(
+                                                                                jwtAuthenticationConverter())));
+                return http.build();
+        }
 
-                        // ✅ Default - deny all other requests
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt
-                                .jwtAuthenticationConverter(
-                                        jwtAuthenticationConverter())));
-        return http.build();
-    }
+        @Bean
+        public JwtDecoder jwtDecoder() {
+                return NimbusJwtDecoder.withSecretKey(
+                                new SecretKeySpec(jwtSecret.getBytes(), "HmacSHA256")).build();
+        }
+
+        @Bean
+        public JwtAuthenticationConverter jwtAuthenticationConverter() {
+                JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+                grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+                grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+
+                JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+                jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+                return jwtAuthenticationConverter;
+        }
+
+
 
     @Bean
-    public JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withSecretKey(
-                new SecretKeySpec(jwtSecret.getBytes(), "HmacSHA256")).build();
-    }
+        public CorsFilter corsFilter() {
+                CorsConfiguration corsConfiguration = new CorsConfiguration();
+                corsConfiguration.addAllowedHeader("*");
+                corsConfiguration.addAllowedMethod("*");
+                corsConfiguration.addAllowedOrigin("http://localhost:5173");
+            corsConfiguration.setAllowCredentials(true); // quan trọng nếu gửi JWT qua cookie
 
-    @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", corsConfiguration);
+                return new CorsFilter(source);
+        }
 
-        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
-        return jwtAuthenticationConverter;
-    }
+        @Bean
+        public JavaMailSender javaMailSender() {
+                JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+                mailSender.setHost("smtp.gmail.com");
+                mailSender.setPort(587);
+                mailSender.setUsername("your-email@gmail.com");
+                mailSender.setPassword("your-app-password");
 
-    @Bean
-    public CorsFilter corsFilter() {
-        CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.addAllowedHeader("*");
-        corsConfiguration.addAllowedMethod("*");
-        corsConfiguration.addAllowedOrigin("http://localhost:5173");
-        corsConfiguration.setAllowCredentials(true);
+                Properties props = mailSender.getJavaMailProperties();
+                props.put("mail.transport.protocol", "smtp");
+                props.put("mail.smtp.auth", "true");
+                props.put("mail.smtp.starttls.enable", "true");
+                props.put("mail.debug", "true"); // để debug
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfiguration);
-        return new CorsFilter(source);
-    }
+                return mailSender;
+        }
 
-    @Bean
-    public JavaMailSender javaMailSender() {
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost("smtp.gmail.com");
-        mailSender.setPort(587);
-        mailSender.setUsername("your-email@gmail.com");
-        mailSender.setPassword("your-app-password");
-
-        Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.debug", "true");
-
-        return mailSender;
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+//                 return new BCryptPasswordEncoder(); // Đổi sang BCrypt
+        return NoOpPasswordEncoder.getInstance();
+        }
 }

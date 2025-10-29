@@ -95,6 +95,27 @@ public class ContractService {
         Contract saved = contractRepository.save(contract);
         return contractMapper.toResponse(saved);
     }
+    @Transactional(readOnly = true)
+    public List<ContractResponse> getSignedContractsOfCurrentUser() {
+        // Lấy thông tin user hiện tại từ Spring Security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            throw new RuntimeException("User not authenticated");
+        }
+
+        String username = auth.getName(); // giả sử username là unique
+        Users user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Lấy hợp đồng đã ký của user
+        List<Contract> contracts = contractRepository.findByQuotation_Survey_Request_User_UserIdAndStatus(
+                user.getUserId(), "SIGNED"
+        );
+
+        return contracts.stream()
+                .map(contractMapper::toResponse)
+                .toList();
+    }
 
     /** ✅ Cập nhật hợp đồng */
     public ContractResponse updateContract(Integer id, ContractRequest request) {

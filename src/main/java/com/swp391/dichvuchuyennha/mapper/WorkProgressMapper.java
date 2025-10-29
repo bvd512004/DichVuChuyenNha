@@ -1,10 +1,15 @@
 package com.swp391.dichvuchuyennha.mapper;
 
+import com.swp391.dichvuchuyennha.dto.response.DamageResponse;
 import com.swp391.dichvuchuyennha.dto.response.WorkProgressResponse;
+import com.swp391.dichvuchuyennha.entity.Damages;
 import com.swp391.dichvuchuyennha.entity.WorkProgress;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface WorkProgressMapper {
@@ -17,8 +22,8 @@ public interface WorkProgressMapper {
     @Mapping(source = "progressStatus", target = "progressStatus")
     @Mapping(source = "updatedAt", target = "updatedAt")
 
-    // 🔽 Các trường mở rộng
-    @Mapping(//h
+    // Các trường mở rộng
+    @Mapping(
             target = "customerName",
             expression = "java(entity.getContract() != null && " +
                     "entity.getContract().getQuotation() != null && " +
@@ -45,5 +50,23 @@ public interface WorkProgressMapper {
             expression = "java(entity.getEmployee() != null && entity.getEmployee().getUser() != null " +
                     "? entity.getEmployee().getUser().getUsername() : null)"
     )
+    @Mapping(target = "damages", expression = "java(mapDamages(entity.getContract().getDamages()))")
     WorkProgressResponse toResponse(WorkProgress entity);
+
+    // 🔽 Hàm convert danh sách Damages sang DamageResponse
+    default List<DamageResponse> mapDamages(List<Damages> damagesList) {
+        if (damagesList == null) return null;
+        return damagesList.stream().map(d -> DamageResponse.builder()
+                .damageId(d.getDamageId())
+                .contractId(d.getContract().getContractId())
+                .cause(d.getCause())
+                .cost(d.getCost())
+                .status(d.getStatus())
+                .imageUrl(d.getImageUrl())
+                .employeeName(d.getResponsibleEmployee() != null ?
+                        d.getResponsibleEmployee().getUser().getUsername() : null)
+                .customerFeedback(d.getCustomerFeedback())
+                .build()
+        ).collect(Collectors.toList());
+    }
 }

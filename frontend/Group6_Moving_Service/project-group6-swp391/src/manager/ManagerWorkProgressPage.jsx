@@ -2,11 +2,22 @@ import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { workProgressApi } from "../service/workprogress";
 import { assignmentApi } from "../service/assignment";
+import damageApi from "../service/damage";
 import "./style/ManagerWorkProgressPage.css";
-import { Card, Tag, Row, Col } from "antd";
+import { Card, Tag, Row, Col, Button, Modal, Input, message } from "antd";
+
+// ===================== Helper function để format ngày =====================
+const formatDate = (dateString) => {
+  if (!dateString) return "—";
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
 // ===================== Modal Component =====================
-const Modal = ({ show, onClose, children }) => {
+const ModalComponent = ({ show, onClose, children }) => {
   if (!show) return null;
 
   return ReactDOM.createPortal(
@@ -42,14 +53,15 @@ const ManagerWorkProgressPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [taskDescription, setTaskDescription] = useState("");
-  const [progressStatus, setProgressStatus] = useState("pending");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [showEmployeeCards, setShowEmployeeCards] = useState(false);
+  const [msgText, setMsgText] = useState("");
 
-  // ⚡️ Thêm state mới để hiển thị danh sách Work Progress
   const [workProgressList, setWorkProgressList] = useState([]);
   const [showWorkProgressModal, setShowWorkProgressModal] = useState(false);
+
+  const [damageList, setDamageList] = useState([]);
+  const [selectedDamage, setSelectedDamage] = useState(null);
+  const [rejectDescription, setRejectDescription] = useState("");
 
   // ========== Lấy danh sách hợp đồng ==========
   useEffect(() => {
@@ -64,7 +76,7 @@ const ManagerWorkProgressPage = () => {
     fetchContracts();
   }, []);
 
-  // ========== Lấy danh sách nhân viên cho hợp đồng ==========
+  // ========== Lấy danh sách nhân viên ==========
   const fetchEmployeesForContract = async (contractId) => {
     try {
       const res = await assignmentApi.getAssignmentsByContract(contractId);
@@ -77,35 +89,36 @@ const ManagerWorkProgressPage = () => {
     }
   };
 
-  // ✅ Xử lý khi nhấn "Xem Tiến Trình"
+  // ✅ Xem tiến trình + thiệt hại
   const handleViewWorkProgress = async (contractId) => {
     setSelectedContract(contractId);
     try {
       const res = await workProgressApi.getWorkProgressByContract(contractId);
-      console.log("📋 Tiến trình công việc:", res.data);
       setWorkProgressList(res.data || []);
+
+      const damageRes = await damageApi.getByContract(contractId);
+      setDamageList(damageRes.data || []);
+
       setShowWorkProgressModal(true);
     } catch (err) {
       console.error("❌ Lỗi khi lấy tiến trình công việc:", err);
-      alert("Không thể tải tiến trình công việc cho hợp đồng này!");
+      message.error("Không thể tải tiến trình công việc cho hợp đồng này!");
     }
   };
 
-  // ✅ Đóng modal xem tiến trình
   const handleCloseWorkProgressModal = () => {
     setShowWorkProgressModal(false);
     setWorkProgressList([]);
+    setDamageList([]);
   };
 
-  // ========== Mở modal tạo Work Progress ==========
+  // ========== Tạo Work Progress ==========
   const handleOpenCreateModal = async (contractId) => {
-    setMessage("");
+    setMsgText("");
     setSelectedContract(contractId);
     setEmployees([]);
     setSelectedEmployee(null);
     setTaskDescription("");
-    setProgressStatus("pending"); // Luôn đặt về pending khi mở modal
-    setShowEmployeeCards(false);
 
     const loadedEmployees = await fetchEmployeesForContract(contractId);
     if (!loadedEmployees || loadedEmployees.length === 0) {
@@ -116,55 +129,111 @@ const ManagerWorkProgressPage = () => {
     setShowModal(true);
   };
 
-  // ========== Đóng modal tạo Work Progress ==========
   const handleCloseModal = () => {
     setShowModal(false);
-    setMessage("");
+    setMsgText("");
     setSelectedEmployee(null);
     setTaskDescription("");
-    setProgressStatus("pending");
   };
 
-  // ========== Gửi request tạo Work Progress ==========
   const handleCreateWorkProgress = async () => {
     if (!selectedEmployee) {
-      setMessage("⚠️ Vui lòng chọn nhân viên!");
+      setMsgText("⚠️ Vui lòng chọn nhân viên!");
       return;
     }
     if (!taskDescription.trim()) {
-      setMessage("⚠️ Vui lòng nhập mô tả công việc!");
+      setMsgText("⚠️ Vui lòng nhập mô tả công việc!");
       return;
+    }
+
+    try {
+      const existingProgress = await workProgressApi.getWorkProgressByContract(selectedContract);
+      const isDuplicate = existingProgress.data?.some(
+        (wp) => wp.employeeId === selectedEmployee
+      );
+      if (isDuplicate) {
+        setMsgText("⚠️ Nhân viên này đã có Work Progress cho hợp đồng này!");
+        message.warning("⚠️ Nhân viên này đã có Work Progress cho hợp đồng này!");
+        return;
+      }
+    } catch (err) {
+      console.error("Error checking existing progress:", err);
     }
 
     const payload = {
       contractId: selectedContract,
       employeeId: selectedEmployee,
       taskDescription: taskDescription.trim(),
-      progressStatus: "pending", // Luôn gửi "pending" khi tạo mới
+      progressStatus: "pending",
     };
 
     setLoading(true);
-    setMessage("");
+    setMsgText("");
 
     try {
-      const response = await workProgressApi.createForEmployee(payload);
-      console.log("✅ Tạo Work Progress thành công:", response);
-      alert("✅ Tạo Work Progress thành công!");
+      await workProgressApi.createForEmployee(payload);
+      message.success("✅ Tạo Work Progress thành công!");
       setTimeout(() => handleCloseModal(), 1000);
     } catch (err) {
       const errorMsg =
         err.response?.data?.message || err.message || "Lỗi không xác định";
       console.error("❌ Lỗi tạo Work Progress:", err);
-      alert("❌ Tạo Work Progress thất bại: " + errorMsg);
+      setMsgText("❌ " + errorMsg);
+      message.error("❌ Tạo Work Progress thất bại: " + errorMsg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ Quản lý phản hồi thiệt hại
+  const handleDamageFeedback = async (damageId, action) => {
+    if (action === "reject" && !rejectDescription.trim()) {
+      message.warning("⚠️ Vui lòng nhập lý do từ chối!");
+      return;
+    }
+
+    try {
+      const feedback = {
+        action: action,
+        managerFeedback:
+          action === "reject" ? rejectDescription : "Đã duyệt thiệt hại",
+      };
+
+      await damageApi.sendManagerFeedback(damageId, feedback);
+
+      message.success(
+        action === "approve"
+          ? "✅ Đã duyệt thiệt hại"
+          : "❌ Đã từ chối thiệt hại"
+      );
+
+      setDamageList((prev) =>
+        prev.map((dmg) =>
+          dmg.damageId === damageId
+            ? {
+                ...dmg,
+                status: action === "approve" ? "approved" : "rejected",
+                managerFeedback:
+                  action === "reject"
+                    ? rejectDescription
+                    : "Đã duyệt thiệt hại",
+              }
+            : dmg
+        )
+      );
+
+      setSelectedDamage(null);
+      setRejectDescription("");
+    } catch (err) {
+      console.error("❌ Lỗi gửi phản hồi thiệt hại:", err);
+      message.error("Không thể gửi phản hồi");
     }
   };
 
   // ===================== Render =====================
   return (
     <div className="manager-work-progress-container">
-      <h2>📋 Quản lý tạo Work Progress</h2>
+      <h2>📋 Quản lý Work Progress</h2>
 
       {/* Bảng hợp đồng */}
       <table className="contract-table">
@@ -184,11 +253,11 @@ const ManagerWorkProgressPage = () => {
             contracts.map((c) => (
               <tr key={c.contractId}>
                 <td>#{c.contractId}</td>
-                <td>{c.startDate || "—"}</td>
-                <td>{c.endDate || "—"}</td>
+                <td>{formatDate(c.startDate)}</td>
+                <td>{formatDate(c.endDate)}</td>
                 <td>
                   {c.totalAmount
-                    ? `${Number(c.totalAmount).toLocaleString()} VND`
+                    ? `${Number(c.totalAmount).toLocaleString()} ₫`
                     : "—"}
                 </td>
                 <td>
@@ -221,114 +290,192 @@ const ManagerWorkProgressPage = () => {
         </tbody>
       </table>
 
-      {/* ================== Modal Xem Tiến Trình ================== */}
-      <Modal show={showWorkProgressModal} onClose={handleCloseWorkProgressModal}>
-        <div
-          className="modal-content-box"
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            backgroundColor: "white",
-            padding: "25px",
-            borderRadius: "10px",
-            minWidth: "550px",
-            maxWidth: "700px",
-            maxHeight: "80vh",
-            overflowY: "auto",
-          }}
-        >
-          <h3>🧱 Tiến Trình Công Việc cho Hợp Đồng #{selectedContract}</h3>
-          {/* Hiển thị danh sách tiến độ công việc */}
-          {workProgressList.length > 0 ? (
-            <Row gutter={[20, 20]}>
-              {workProgressList.map((wp) => (
-                <Col xs={24} sm={12} md={12} lg={12} key={wp.progressId}>
-                  <Card
-                    hoverable
-                    bordered={false}
-                    style={{
-                      borderRadius: 16,
-                      boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-                      background: "#ffffff",
-                      overflow: "hidden",
-                    }}
-                    title={
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 18 }}>🧱</span>
-                          {wp.serviceName}
-                        </span>
-                        <Tag
-                          color={
-                            wp.progressStatus === "completed"
-                              ? "success"
-                              : wp.progressStatus === "in_progress"
-                                ? "processing"
-                                : "warning"
-                          }
-                          style={{
-                            fontSize: "0.85rem",
-                            padding: "4px 10px",
-                            borderRadius: 8,
-                            textTransform: "capitalize",
-                          }}
-                        >
-                          {wp.progressStatus === "completed"
-                            ? "Hoàn thành"
-                            : wp.progressStatus === "in_progress"
-                              ? "Đang thực hiện"
-                              : "Đang chờ"}
-                        </Tag>
-                      </div>
-                    }
-                  >
-                    <div style={{ padding: "8px 4px", lineHeight: 1.8 }}>
-                      <p><strong>Mô tả công việc:</strong> {wp.taskDescription}</p>
-                      <p><strong>Nhân viên thực hiện:</strong> {wp.employeeName}</p>
-                      <p><strong>Khách hàng:</strong> {wp.customerName}</p>
-                      <p><strong>Dịch vụ:</strong> {wp.serviceName}</p>
-                      <p><strong>Ngày hợp đồng:</strong> {wp.startDate} → {wp.endDate}</p>
-                      <p><strong>Tổng tiền:</strong> <span style={{ color: "#fa8c16", fontWeight: 600 }}>{wp.totalAmount.toLocaleString()} VND</span></p>
-                    </div>
-
+      {/* Modal: Xem tiến trình và thiệt hại */}
+      <Modal
+        title={`🧱 Tiến Trình & Thiệt Hại - Hợp Đồng #${selectedContract}`}
+        open={showWorkProgressModal}
+        onCancel={handleCloseWorkProgressModal}
+        footer={[
+          <Button key="close" onClick={handleCloseWorkProgressModal}>
+            Đóng
+          </Button>,
+        ]}
+        width={800}
+      >
+        {/* Danh sách công việc */}
+        <h3>📋 Công việc</h3>
+        {workProgressList.length > 0 ? (
+          <Row gutter={[20, 20]} style={{ marginBottom: 24 }}>
+            {workProgressList.map((wp) => (
+              <Col xs={24} sm={12} key={wp.progressId}>
+                <Card
+                  hoverable
+                  bordered={false}
+                  style={{
+                    borderRadius: 16,
+                    boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+                  }}
+                  title={
                     <div
                       style={{
-                        borderTop: "1px solid #f0f0f0",
-                        marginTop: 10,
-                        paddingTop: 8,
-                        fontSize: "0.85rem",
-                        color: "#999",
-                        textAlign: "right",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
                       }}
                     >
-                      Cập nhật lúc: {new Date(wp.updatedAt).toLocaleString()}
+                      <span style={{ fontWeight: 600 }}>🧱 {wp.serviceName}</span>
+                      <Tag
+                        color={
+                          wp.progressStatus === "completed"
+                            ? "green"
+                            : wp.progressStatus === "in_progress"
+                            ? "blue"
+                            : "orange"
+                        }
+                      >
+                        {wp.progressStatus === "completed"
+                          ? "Hoàn thành"
+                          : wp.progressStatus === "in_progress"
+                          ? "Đang thực hiện"
+                          : "Đang chờ"}
+                      </Tag>
                     </div>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          ) : (
-            <p style={{ textAlign: "center", color: "#999", marginTop: 20 }}>
-              Không có tiến trình nào cho hợp đồng này.
-            </p>
-          )}
-          <button
-            onClick={handleCloseWorkProgressModal}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#6c757d",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              marginTop: "10px",
-            }}
-          >
-            Đóng
-          </button>
-        </div>
+                  }
+                >
+                  <p>
+                    <strong>Mô tả:</strong> {wp.taskDescription || "—"}
+                  </p>
+                  <p>
+                    <strong>Nhân viên:</strong> {wp.employeeName || "—"}
+                  </p>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <p style={{ color: "#999", marginBottom: 24 }}>
+            Không có công việc nào.
+          </p>
+        )}
+
+        {/* Danh sách thiệt hại */}
+        <h3>⚠️ Thiệt hại phát sinh</h3>
+        {damageList.length > 0 ? (
+          damageList.map((dmg) => {
+            const normalizedStatus = (dmg.status || "").toLowerCase();
+            return (
+              <Card key={dmg.damageId} style={{ marginBottom: 16 }}>
+                <p><strong>Nguyên nhân:</strong> {dmg.cause}</p>
+                <p><strong>Chi phí:</strong> {dmg.cost ? `${dmg.cost.toLocaleString()} ₫` : "—"}</p>
+                <p><strong>Nhân viên:</strong> {dmg.employeeName || "—"}</p>
+                <p>
+                  <strong>Trạng thái:</strong>{" "}
+                  <Tag
+                    color={
+                      normalizedStatus === "pending_customer"
+                        ? "gold"
+                        : normalizedStatus === "pending_manager"
+                        ? "blue"
+                        : normalizedStatus === "approved"
+                        ? "green"
+                        : normalizedStatus === "rejected"
+                        ? "red"
+                        : "default"
+                    }
+                  >
+                    {normalizedStatus === "pending_customer"
+                      ? "Chờ khách hàng"
+                      : normalizedStatus === "pending_manager"
+                      ? "Chờ quản lý"
+                      : normalizedStatus === "approved"
+                      ? "Đã duyệt"
+                      : normalizedStatus === "rejected"
+                      ? "Đã từ chối"
+                      : "Không xác định"}
+                  </Tag>
+                </p>
+
+                {/* Feedback hiển thị cho manager */}
+                {(dmg.customerFeedback || dmg.managerFeedback) && (
+                  <div
+                    style={{
+                      background: "#fafafa",
+                      padding: "10px",
+                      borderRadius: "6px",
+                      marginTop: "8px",
+                    }}
+                  >
+                    {dmg.customerFeedback && (
+                      <p>💬 <b>Phản hồi khách hàng:</b> {dmg.customerFeedback}</p>
+                    )}
+                    {dmg.managerFeedback && (
+                      <p>🧑‍💼 <b>Phản hồi quản lý:</b> {dmg.managerFeedback}</p>
+                    )}
+                  </div>
+                )}
+
+                {dmg.imageUrl && (
+                  <img
+                    src={dmg.imageUrl}
+                    alt="Damage"
+                    style={{
+                      width: 120,
+                      height: 120,
+                      objectFit: "cover",
+                      borderRadius: 8,
+                      marginTop: 8,
+                    }}
+                  />
+                )}
+
+                {/* Chỉ hiển thị nút phản hồi nếu đang chờ quản lý */}
+                {normalizedStatus === "pending_manager" && (
+                  <div style={{ marginTop: 12 }}>
+                    <Button
+                      type="primary"
+                      onClick={() => handleDamageFeedback(dmg.damageId, "approve")}
+                    >
+                      Đồng ý
+                    </Button>
+                    <Button
+                      danger
+                      onClick={() => setSelectedDamage(dmg.damageId)}
+                      style={{ marginLeft: 8 }}
+                    >
+                      Từ chối
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            );
+          })
+        ) : (
+          <p style={{ color: "#999" }}>Không có thiệt hại nào.</p>
+        )}
       </Modal>
 
-      {/* ================== Modal Tạo Work Progress ================== */}
-      <Modal show={showModal} onClose={handleCloseModal}>
+      {/* Modal từ chối thiệt hại */}
+      <Modal
+        title="Nhập lý do từ chối"
+        open={selectedDamage !== null}
+        onCancel={() => {
+          setSelectedDamage(null);
+          setRejectDescription("");
+        }}
+        onOk={() => handleDamageFeedback(selectedDamage, "reject")}
+        okText="Gửi"
+        cancelText="Hủy"
+      >
+        <Input.TextArea
+          rows={4}
+          value={rejectDescription}
+          onChange={(e) => setRejectDescription(e.target.value)}
+          placeholder="Nhập lý do từ chối..."
+        />
+      </Modal>
+
+      {/* Modal tạo Work Progress */}
+      <ModalComponent show={showModal} onClose={handleCloseModal}>
         <div
           className="modal-content-box"
           onClick={(e) => e.stopPropagation()}
@@ -380,45 +527,18 @@ const ManagerWorkProgressPage = () => {
             />
           </div>
 
-          {/* Hiển thị trạng thái mặc định (không cho thay đổi) */}
-          <div style={{ marginBottom: "20px" }}>
-            <label>Trạng thái</label>
+          {msgText && (
             <div
               style={{
-                width: "100%",
                 padding: "10px",
+                marginBottom: "15px",
+                backgroundColor: "#fff2e8",
+                border: "1px solid #ffbb96",
                 borderRadius: "6px",
-                border: "1px solid #e0e0e0",
-                backgroundColor: "#f5f5f5",
-                color: "#666",
+                color: "#d4380d",
               }}
             >
-              <span style={{ 
-                display: "inline-block",
-                padding: "4px 12px",
-                borderRadius: "4px",
-                backgroundColor: "#fff7e6",
-                color: "#d48806",
-                fontWeight: 500
-              }}>
-                🕐 Đang chờ
-              </span>
-            </div>
-            <small style={{ color: "#999", fontSize: "0.85rem" }}>
-              Trạng thái mặc định khi tạo mới
-            </small>
-          </div>
-
-          {message && (
-            <div style={{
-              padding: "10px",
-              marginBottom: "15px",
-              backgroundColor: "#fff2e8",
-              border: "1px solid #ffbb96",
-              borderRadius: "6px",
-              color: "#d4380d"
-            }}>
-              {message}
+              {msgText}
             </div>
           )}
 
@@ -434,7 +554,7 @@ const ManagerWorkProgressPage = () => {
                 border: "none",
                 borderRadius: "6px",
                 cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1
+                opacity: loading ? 0.6 : 1,
               }}
             >
               {loading ? "Đang tạo..." : "Tạo"}
@@ -450,17 +570,17 @@ const ManagerWorkProgressPage = () => {
                 border: "none",
                 borderRadius: "6px",
                 cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1
+                opacity: loading ? 0.6 : 1,
               }}
             >
               Hủy
             </button>
           </div>
         </div>
-      </Modal>
+      </ModalComponent>
     </div>
   );
 };
 
 export default ManagerWorkProgressPage;
-//end
+//fix end 

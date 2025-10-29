@@ -35,6 +35,7 @@ public enum ErrorCode {
     WORK_PROGRESS_ALREADY_EXISTS(1025,"Work progress already exists",HttpStatus.BAD_REQUEST),
     MISSING_PARAMETER(1026,"Missing parameter",HttpStatus.BAD_REQUEST),
     FORBIDDEN(1027,"Forbidden",HttpStatus.FORBIDDEN),
+    DATA_NOT_FOUND(1028,"Data not found",HttpStatus.NOT_FOUND),
     VEHICLE_NOT_FOUND(1028, "Vehicle not found", HttpStatus.NOT_FOUND),
     ;
 

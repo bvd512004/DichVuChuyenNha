@@ -90,10 +90,10 @@ const Router = () => {
           path:"quotations-services-list",
           element: <QuotationServiceList/>
         },
-         {
-          path:"review-quotations",
-          element: <ReviewQuotationManagement/>
-        },
+        //  {
+        //   path:"review-quotations",
+        //   element: <ReviewQuotationManagement/>
+        // },
           {
           path: "quotation-for-customer",
           element: <QuotationApproval/>

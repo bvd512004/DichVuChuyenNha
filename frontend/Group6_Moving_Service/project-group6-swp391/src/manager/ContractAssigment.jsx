@@ -79,7 +79,7 @@ export default function ContractAssignment() {
       const res = await assignmentApi.getEmployees();
       setFreeEmployees(res.data);
       setAssignModalVisible(true);
-      setAssignError(null); // Reset error khi mở modal
+      setAssignError(null);
     } catch {
       message.error("Failed to load employees");
     }
@@ -91,7 +91,6 @@ export default function ContractAssignment() {
       return;
     }
 
-    // Kiểm tra xem nhân viên đã được gán vào hợp đồng này chưa
     const isAlreadyAssigned = assignedEmployees.some(
       (emp) => emp.employeeId === selectedEmployee
     );
@@ -104,14 +103,12 @@ export default function ContractAssignment() {
     setLoading(true);
     setAssignError(null);
     try {
-      // Lấy ngày movingDay từ contractDetail
       const assignedDate = dayjs(contractDetail.movingDay).format("YYYY-MM-DD");
 
-      // Gửi yêu cầu gán nhân viên vào hợp đồng
       await assignmentApi.assignEmployee({
         contractId: selectedContract,
         employeeId: selectedEmployee,
-        assignedDate: assignedDate, // Gán ngày movingDay
+        assignedDate: assignedDate,
       });
 
       message.success("Employee assigned successfully!");
@@ -119,11 +116,9 @@ export default function ContractAssignment() {
       setSelectedEmployee(null);
       setAssignError(null);
 
-      // Refresh assigned employees list
       const assignedRes = await assignmentApi.getAssignmentsByContract(selectedContract);
       setAssignedEmployees(assignedRes.data);
     } catch (err) {
-      // Hiển thị lỗi TRONG modal thay vì message popup
       const errorMessage = 
         err.response?.data?.message || 
         err.response?.data || 
@@ -131,10 +126,7 @@ export default function ContractAssignment() {
         "Error assigning employee. The employee might be busy on this date.";
       
       setAssignError(errorMessage);
-      
-      // Vẫn giữ message.error để chắc chắn user thấy
       message.error(errorMessage);
-      
       console.error("Assignment error details:", err.response?.data);
     } finally {
       setLoading(false);
@@ -257,49 +249,45 @@ export default function ContractAssignment() {
       >
         {contractDetail && (
           <Space direction="vertical" size="large" style={{ width: "100%" }}>
-            <Card title="Contract Information" size="small">
+            <Card title="Thông Tin Hợp Đồng" size="small">
               <Descriptions bordered column={2} size="small">
-                <Descriptions.Item label="Start Date" span={1}>
-                  {contractDetail.startDate}
+                <Descriptions.Item label="Hợp Đồng Bắt Đầu" span={1}>
+                  {dayjs(contractDetail.startDate).format("DD/MM/YYYY")}
                 </Descriptions.Item>
-                <Descriptions.Item label="End Date" span={1}>
-                  {contractDetail.endDate}
+                <Descriptions.Item label="Hợp Đồng Kết thúc" span={1}>
+                  {dayjs(contractDetail.endDate).format("DD/MM/YYYY")}
                 </Descriptions.Item>
 
-                <Descriptions.Item label="Moving Day" span={2}>
+                <Descriptions.Item label="Ngày Chuyển" span={2}>
                   {contractDetail.movingDay
-                    ? dayjs(contractDetail.movingDay).format("YYYY-MM-DD")
+                    ? dayjs(contractDetail.movingDay).format("DD/MM/YYYY")
                     : "N/A"}
                 </Descriptions.Item>
 
-                <Descriptions.Item label="Deposit" span={1}>
-                  ${contractDetail.depositAmount}
+                <Descriptions.Item label="Tiền Đặt Cọc" span={1}>
+                  {contractDetail.depositAmount} VND
                 </Descriptions.Item>
-                <Descriptions.Item label="Total Amount" span={1}>
-                  ${contractDetail.totalAmount}
+                <Descriptions.Item label="Tổng Số Tiền" span={1}>
+                  {contractDetail.totalAmount} VND
                 </Descriptions.Item>
 
-                <Descriptions.Item label="Start Location" span={2}>
+                <Descriptions.Item label="Địa Điểm Bắt Đầu" span={2}>
                   {contractDetail.startLocation}
                 </Descriptions.Item>
-                <Descriptions.Item label="End Location" span={2}>
+                <Descriptions.Item label="Điểm Kết Thúc" span={2}>
                   {contractDetail.endLocation}
                 </Descriptions.Item>
 
-                <Descriptions.Item label="Customer Name" span={1}>
+                <Descriptions.Item label="Tên Khách Hàng" span={1}>
                   {contractDetail.username || "N/A"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Company Name" span={1}>
+                <Descriptions.Item label="Tên Công Ty" span={1}>
                   {contractDetail.companyName || "N/A"}
                 </Descriptions.Item>
 
-                <Descriptions.Item label="Status" span={1}>
-                  <Tag color="green">{contractDetail.status}</Tag>
-                </Descriptions.Item>
-
-                <Descriptions.Item label="Signed Date" span={2}>
+                <Descriptions.Item label="Ngày Kí" span={2}>
                   {contractDetail.signedDate
-                    ? dayjs(contractDetail.signedDate).format("YYYY-MM-DD HH:mm")
+                    ? dayjs(contractDetail.signedDate).format("DD/MM/YYYY HH:mm")
                     : "N/A"}
                 </Descriptions.Item>
               </Descriptions>
@@ -308,7 +296,7 @@ export default function ContractAssignment() {
             <Divider />
 
             <Card
-              title="Assigned Employees"
+              // title="Assigned Employees"
               size="small"
               extra={
                 <Button
@@ -317,7 +305,7 @@ export default function ContractAssignment() {
                   onClick={handleOpenAssignModal}
                   size="small"
                 >
-                  Assign Employee
+                  Gán Nhân Viên Vào hợp Đồng
                 </Button>
               }
             >
@@ -407,7 +395,7 @@ export default function ContractAssignment() {
               size="large"
               onChange={(value) => {
                 setSelectedEmployee(value);
-                setAssignError(null); // Xóa error khi chọn employee mới
+                setAssignError(null);
               }}
               style={{ width: "100%" }}
               value={selectedEmployee}
@@ -434,7 +422,7 @@ export default function ContractAssignment() {
               fontSize: '13px',
               color: '#666'
             }}>
-              <strong>📅 Assignment Date:</strong> {dayjs(contractDetail.movingDay).format("YYYY-MM-DD")}
+              <strong>📅 Assignment Date:</strong> {dayjs(contractDetail.movingDay).format("DD/MM/YYYY")}
             </div>
           )}
         </Space>
@@ -453,4 +441,4 @@ export default function ContractAssignment() {
       </Modal>
     </div>
   );
-}//end
+}

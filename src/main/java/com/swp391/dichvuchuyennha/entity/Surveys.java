@@ -25,6 +25,12 @@ public class Surveys {
     @Column(name = "survey_date")
     private LocalDateTime surveyDate;
 
+    //bo sung
+    @Column(name = "address_from")
+    private String addressFrom;
+
+    @Column(name = "address_to")
+    private String addressTo;
  // 'HOUSE' hoặc 'COMPANY'
 
     @Column(name = "total_area")
