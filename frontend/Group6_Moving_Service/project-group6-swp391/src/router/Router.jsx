@@ -8,9 +8,6 @@ import CustomerRegisterForm from "../customer/CustomerRegisterForm";
 import UserContractsPage from "../customer/UserContractPage";
 import UserRequestsPage from "../customer/UserRequestsPage";
 import CustomerPage from "../customer/CustomerPage";
-import CreateAdminUser from "../admin/CreateAdminUser";
-import EmployeeManagement from "../admin/EmployeeManagement";
-import VehicleManagement from "../vehicles/VehiclesPage";
 import AnimatedPage from "../components/AnimatedPage";
 
 
@@ -47,63 +44,63 @@ const Router = () => {
 
         {
           path: "",
-          element: <HomePage/>
+          element: <HomePage />
         },
-//         {
-//   path: "contract-assignment",
-//   element: (
-   
-//       <ContractAssignment />
-   
-//   ),
-// },
+        //         {
+        //   path: "contract-assignment",
+        //   element: (
+
+        //       <ContractAssignment />
+
+        //   ),
+        // },
         {
-          path:"user-profile",
-          element: <ProfilePage/>
-        },
-           {
-          path:"assign-surveyer",
-          element: <AssignSurveyer/>
-        },
-       {
-  path:"survey-dashboard",
-  element: (
-    <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Surveyer">
-      <SurveyDashboard />
-    </ProtectedRoute>
-  ),
-},
-      
-      {
-          path:"price-service",
-          element: <PriceTable/>
-        },
-           {
-          path:"add-services",
-          element: <QuotationAddServices/>
+          path: "user-profile",
+          element: <ProfilePage />
         },
         {
-          path:"quotations-services",
-          element: <QuotationServiceManager/>
+          path: "assign-surveyer",
+          element: <AssignSurveyer />
         },
         {
-          path:"quotations-services-list",
-          element: <QuotationServiceList/>
+          path: "survey-dashboard",
+          element: (
+            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Surveyer">
+              <SurveyDashboard />
+            </ProtectedRoute>
+          ),
+        },
+
+        {
+          path: "price-service",
+          element: <PriceTable />
+        },
+        {
+          path: "add-services",
+          element: <QuotationAddServices />
+        },
+        {
+          path: "quotations-services",
+          element: <QuotationServiceManager />
+        },
+        {
+          path: "quotations-services-list",
+          element: <QuotationServiceList />
         },
         //  {
         //   path:"review-quotations",
         //   element: <ReviewQuotationManagement/>
         // },
-          {
+        {
           path: "quotation-for-customer",
-          element: <QuotationApproval/>
+          element: <QuotationApproval />
         },
-                {
+        {
           path: "contracts-list-manager",
-          element: <QuotationContractList/>
+          element: <QuotationContractList />
         },
 
-  
+
 
         {
           path: "login",
@@ -124,59 +121,31 @@ const Router = () => {
         },
 
         { path: "customer-page", element: <CustomerPage /> },
-  
+
         { path: "list-contract-unsigned", element: <UserContractsPage /> },
 
         // Admin routes
-        {
-          path: "admin-create-user",
-          element: (
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <CreateAdminUser />
-             </ProtectedRoute>
-          ),
-
-        },
-
         {
           path: "admin-dashboard",
           element: (
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminDashboard />
-             </ProtectedRoute>
-          ),
-        },
-
-        {
-          path: "employee-management",
-          element: (
-            <ProtectedRoute allowedRoles={["admin", "manager"]}>
-              <EmployeeManagement />
-            </ProtectedRoute>
-          ),
-        },
-
-        {
-          path: "vehicle-management",
-          element: (
-            <ProtectedRoute allowedRoles={["admin", "manager"]}>
-              <VehicleManagement />
             </ProtectedRoute>
           ),
         },
         {
-          path:"my-requests",
-          element:<UserRequestsPage/>
+          path: "my-requests",
+          element: <UserRequestsPage />
 
         },
         {
-          path:"manager/work-progress",
-          element:<ManagerWorkProgressPage/>
+          path: "manager/work-progress",
+          element: <ManagerWorkProgressPage />
 
         },
         {
-          path:"manager/work-progress-list",
-          element:< WorkProgressList/>
+          path: "manager/work-progress-list",
+          element: < WorkProgressList />
 
         },
 
@@ -184,18 +153,18 @@ const Router = () => {
         { path: "my-requests", element: <UserRequestsPage /> },
 
         { path: "access-denied", element: <AccessDeniedPage /> },
-        { path: "employee/work-progress", element: <WorkProgressPage />},
-         { path: "customer/work-progress", element: <WorkProgressCustomerPage />},
-         {
+        { path: "employee/work-progress", element: <WorkProgressPage /> },
+        { path: "customer/work-progress", element: <WorkProgressCustomerPage /> },
+        {
           path: "employee/dashboard",
           element: <EmployeeDashboard />,
           children: [
             // { index: true, element: <WorkProgressPage /> }, // mặc định khi vào /employee/dashboard
             { path: "work-progress", element: <WorkProgressPage /> },
-            
+
           ],
         },
-         {
+        {
           path: "contract-assignment",
           element: (
             <ProtectedRoute allowedRoles={["admin", "manager"]}>
@@ -210,10 +179,10 @@ const Router = () => {
             // { index: true, element: <ContractAssignment /> }, // mặc định khi vào /manager/dashboard
             { path: "contract-assignment", element: <ContractAssignment /> },
             { path: "manager/work-progress", element: <ManagerWorkProgressPage /> },
-             { path: "manager/work-progress-list", element: <WorkProgressList /> },
+            { path: "manager/work-progress-list", element: <WorkProgressList /> },
           ],
         },
-         
+
       ],
     },
   ]);
