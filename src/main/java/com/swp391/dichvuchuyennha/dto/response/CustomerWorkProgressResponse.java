@@ -21,4 +21,5 @@ public class CustomerWorkProgressResponse {
     private String employeeName;
     private String vehicleInfo;
     private String note;
+
 }//h

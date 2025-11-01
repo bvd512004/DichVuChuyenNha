@@ -31,7 +31,7 @@ public class SurveyService {
     private final SurveyRepository surveyRepository;
     private final RequestRepository requestRepository;
     private final EmployeeRepository employeeRepository;
-//    private final RequestAssignmentRepository requestAssignmentRepository;
+    private final RequestAssignmentRepository requestAssignmentRepository;
     public Surveys createSurvey(SurveyRequest dto) {
         Surveys survey = surveyMapper.toEntity(dto);
 
@@ -48,15 +48,15 @@ public class SurveyService {
         survey.setEstimateWorkers(dto.getEstimateWorkers());
         requestRepository.save(request);
 
-//        List<RequestAssignment> assignments = requestAssignmentRepository.findByRequest(request);
-//
-//        for (RequestAssignment assignment : assignments) {
-//            Employee emp = assignment.getEmployee();
-//            if (emp != null) {
-//                emp.setStatus("FREE"); // chỉ nhân viên này được set FREE
-//                employeeRepository.save(emp);
-//            }
-//        }
+        List<RequestAssignment> assignments = requestAssignmentRepository.findByRequest(request);
+
+        for (RequestAssignment assignment : assignments) {
+            Employee emp = assignment.getEmployee();
+            if (emp != null) {
+                emp.setStatus("FREE"); // chỉ nhân viên này được set FREE
+                employeeRepository.save(emp);
+            }
+        }
 
         return surveyRepository.save(survey);
     }

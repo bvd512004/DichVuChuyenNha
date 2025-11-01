@@ -16,6 +16,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
         e.employeeId,
         u.username,
         e.position
+       
     )
     FROM Employee e
     LEFT JOIN e.user u
@@ -42,4 +43,4 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 """)
     List<EmployeeDTO> findFreeEmployeeDTO();
 
-}
+}//end

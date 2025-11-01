@@ -118,6 +118,37 @@ public class WorkProgressController {
 //        return ResponseEntity.ok(workProgressService.createWorkProgressForEmployee(request, manager.getEmployeeId()));
         return ResponseEntity.ok(workProgressService.createWorkProgressForEmployee(request, null));
     }
-//fix xong lỗi
+    @GetMapping("/all")
+    public ResponseEntity<List<WorkProgressResponse>> getAllWorkProgress(@RequestHeader("Authorization") String authHeader) {
+        Long userId = extractUserIdFromToken(authHeader);
+//
+//         //Kiểm tra quyền quản lý
+//        Employee employee = employeeRepository.findByUser_UserId(userId)
+//                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+//
+//        // Kiểm tra nếu người dùng có phải là quản lý hay không
+//        if (!"manager".equals(employee.getPosition())) {
+//            throw new AppException(ErrorCode.FORBIDDEN);
+//        }
 
+        // Lấy tất cả tiến độ công việc
+        List<WorkProgressResponse> workProgressList = workProgressService.getAllWorkProgress();
+        return ResponseEntity.ok(workProgressList);
+    }
+    @GetMapping("/contract/{contractId}")
+    public ResponseEntity<List<WorkProgressResponse>> getWorkProgressByContract(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Integer contractId) {
+
+        Long userId = extractUserIdFromToken(authHeader);
+//        Employee employee = employeeRepository.findByUser_UserId(userId)
+//                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        // Lấy work progress theo contractId
+        List<WorkProgressResponse> workProgressList = workProgressService.getWorkProgressByContract(contractId);
+        return ResponseEntity.ok(workProgressList);
+    }
+
+//fix xong lỗi
+//end
 }

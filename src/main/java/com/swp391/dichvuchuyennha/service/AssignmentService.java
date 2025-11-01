@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,33 +26,52 @@ public class AssignmentService {
     private final EmployeeRepository employeeRepo;
     private final ContractRepository contractRepo;
     private final WorkProgressRepository workProgressRepository;
+
+    /**
+     * ✅ Gán nhân viên vào hợp đồng
+     * - Lấy ngày moving_day qua custom query (JOIN 4 bảng)
+     * - Kiểm tra nhân viên có bị trùng ngày không
+     */
     @Transactional
     public void assignEmployeeToContract(Integer contractId, Integer employeeId, LocalDate assignedDate) {
-        // Lấy thông tin hợp đồng và nhân viên
+
+        // 🔹 Lấy thông tin hợp đồng và nhân viên
         Contract contract = contractRepo.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
-
         Employee employee = employeeRepo.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        // Kiểm tra trạng thái nhân viên
-        if (!"free".equalsIgnoreCase(employee.getStatus())) {
-            throw new RuntimeException("Employee is not free");
+        // 🔹 Lấy ngày moving_day thông qua native query (JOIN sâu)
+        Date movingDayRaw = contractRepo.findMovingDayByContractId(contractId);
+        if (movingDayRaw == null) {
+            throw new RuntimeException("Moving day not found for this contract");
         }
 
-        // Gán nhân viên vào hợp đồng
+        LocalDate movingDay = movingDayRaw.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+        // 🔹 Kiểm tra nếu nhân viên đã được gán hợp đồng khác trong ngày moving_day
+        List<AssignmentEmployee> existingAssignments =
+                assignmentRepo.findAssignmentsByEmployeeAndDate(employeeId, movingDay);
+
+        if (!existingAssignments.isEmpty()) {
+            throw new RuntimeException("Employee is already assigned to another contract on this day");
+        }
+
+        // 🔹 Gán nhân viên vào hợp đồng
         AssignmentEmployee assignment = new AssignmentEmployee();
         assignment.setContract(contract);
         assignment.setEmployee(employee);
         assignment.setAssignedTime(assignedDate);
+        assignment.setAssignDate(movingDay); // ngày làm việc thực tế (moving day)
 
         assignmentRepo.save(assignment);
-
-        // Cập nhật trạng thái nhân viên thành 'busy'
-        employee.setStatus("busy");
-        employeeRepo.save(employee);
     }
-    /** ✅ Lấy danh sách nhân viên đã gán theo hợp đồng */
+
+    /**
+     * ✅ Lấy danh sách nhân viên đã gán theo hợp đồng
+     */
     @Transactional(readOnly = true)
     public List<EmployeeDTO> getAssignedEmployeesByContract(Integer contractId) {
         List<AssignmentEmployee> assignments = assignmentRepo.findByContractContractId(contractId);
@@ -63,7 +84,9 @@ public class AssignmentService {
                 .collect(Collectors.toList());
     }
 
-    /** ✅ Bỏ gán nhân viên khỏi hợp đồng */
+    /**
+     * ✅ Bỏ gán nhân viên khỏi hợp đồng
+     */
     @Transactional
     public void unassignEmployee(Integer contractId, Integer employeeId) {
         AssignmentEmployee assignment = assignmentRepo.findByContractContractId(contractId).stream()
@@ -71,10 +94,11 @@ public class AssignmentService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Assignment not found"));
 
+        // Xóa bản ghi gán nhân viên
         assignmentRepo.delete(assignment);
+
+        // Xóa work progress của nhân viên trong hợp đồng đó (nếu có)
         workProgressRepository.deleteByEmployee_EmployeeIdAndContract_ContractId(employeeId, contractId);
-        Employee employee = assignment.getEmployee();
-        employee.setStatus("free");
-        employeeRepo.save(employee);
     }
-}//fix đủ
+}
+//fix sạch

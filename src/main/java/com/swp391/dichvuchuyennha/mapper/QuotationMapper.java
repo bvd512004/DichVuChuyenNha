@@ -20,6 +20,10 @@ public interface QuotationMapper {
     @Mapping(target = "companyName",source = "survey.request.user.customerCompany.companyName")
     @Mapping(target = "services", source = "quotationServices") //
     @Mapping(target = "phone",source = "survey.request.user.phone")
+    @Mapping(target = "employeeName", source = "survey.request.assignedEmployee.user.username")
+    @Mapping(target = "employeePhone", source = "survey.request.assignedEmployee.user.phone")
+    @Mapping(target = "employeeEmail", source = "survey.request.assignedEmployee.user.email")
+
     QuotationResponse toResponse(Quotations quotations);
 }
 

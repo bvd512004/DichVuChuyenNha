@@ -42,18 +42,23 @@ public class RequestAssignmentService {
         ra.setStatus("assigned");
         ra.setAssignedDate(LocalDateTime.now());
 
+        // ✅ Gán nhân viên phụ trách chính cho request (nếu dùng Cách 1)
+        request.setAssignedEmployee(employee);
+
         // ✅ Cập nhật trạng thái nhân viên về "busy"
         employee.setStatus("busy");
         employeeRepository.save(employee);
 
-        // ✅ Cập nhật trạng thái request thành "PENDING" (nếu muốn đảm bảo)
+        // ✅ Cập nhật trạng thái request thành "PENDING"
         if (!"PENDING".equalsIgnoreCase(request.getStatus())) {
             request.setStatus("PENDING");
-            requestsRepository.save(request);
         }
 
+        // ✅ Lưu cả request và assignment
+        requestsRepository.save(request);
         return requestAssignmentRepository.save(ra);
     }
+
 
     // ✅ Lấy danh sách surveyer đang "free"
     public List<EmployeeDTO> getFreeSurveyers() {

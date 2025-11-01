@@ -34,9 +34,9 @@ const ManagerDashboard = () => {
       label: <Link to="manager/work-progress">CreateWorkProgress</Link>,
     },
     {
-      key: "payments",
+      key: "manager/work-progress-list",
       icon: <DollarOutlined />,
-      label: <Link to="payments">Payments</Link>,
+      label: <Link to="manager/work-progress-list">WorkProgressList</Link>,
     },
     {
       key: "reports",

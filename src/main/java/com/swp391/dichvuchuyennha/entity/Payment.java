@@ -37,4 +37,9 @@ public class Payment {
 
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Invoices> invoices;
+
+    @Column(name = "payment_type")
+    private String paymentType; // deposit | final
+
 }
+//thêm trươờng

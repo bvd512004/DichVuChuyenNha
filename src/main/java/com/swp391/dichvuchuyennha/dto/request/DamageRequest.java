@@ -6,7 +6,6 @@ import lombok.Data;
 public class DamageRequest {
     private Integer contractId;
     private String cause;
-    private Integer responsibleEmployeeId;
     private Double cost;
-    private String status;
+    private String imageUrl;
 }

@@ -333,7 +333,7 @@ const handleOpenCreateQuotation = (survey) => {
                         {viewingSurvey.surveyDate ? dayjs(viewingSurvey.surveyDate).format("DD/MM/YYYY") : "N/A"}
                     </Descriptions.Item>
                     <Descriptions.Item label="Trạng Thái" span={2}>
-                        <Badge status={viewingSurvey.status === 'DONE' ? 'success' : 'processing'} text={viewingSurvey.status === 'DONE' ? 'Hoàn thành' : 'Đang xử lý'} />
+                        <Badge status={viewingSurvey.status === 'DONE' ? 'success' : 'processing'} text={viewingSurvey.status === 'DONE' ? 'Hoàn thành' : 'Đã được tạo báo giá'} />
                     </Descriptions.Item>
                     
                     <Descriptions.Item label="Địa chỉ đi" span={3}>{viewingSurvey.addressFrom}</Descriptions.Item>

@@ -13,5 +13,7 @@ public class WebConfig implements WebMvcConfigurer {
         // file:///C:/uploads/ là folder trên server chứa ảnh
         registry.addResourceHandler("/images/survey/**")
                 .addResourceLocations("file:///C:/SWP391/DichVuChuyenNha/uploads/survey/");
+        registry.addResourceHandler("/images/damages/**")
+                .addResourceLocations("file:///C:/Users/admin/Desktop/swp391/DichVuChuyenNha/uploads/damages/");
     }
 }

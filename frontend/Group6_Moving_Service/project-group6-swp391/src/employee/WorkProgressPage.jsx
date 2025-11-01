@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Table,
   Card,
-  Statistic,
-  Row,
-  Col,
-  Progress,
   Button,
-  Select,
   Input,
   Tag,
   Space,
@@ -15,6 +11,10 @@ import {
   Spin,
   Alert,
   message,
+  Modal,
+  Form,
+  Upload,
+  Image,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -22,30 +22,51 @@ import {
   ClockCircleOutlined,
   ReloadOutlined,
   TrophyOutlined,
+  PlusOutlined,
+  EyeOutlined,
+  EditOutlined,
+  WarningOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
+
 import workProgressApi from "../service/workprogress";
+import damageApi from "../service/damage";
 import "./style/WorkProgressPage.css";
 
 const { Title } = Typography;
-const { Option } = Select;
+
+// ===================== Helper function để format ngày =====================
+const formatDate = (dateString) => {
+  if (!dateString) return "—";
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
 const WorkProgressPage = () => {
   const [progressList, setProgressList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editingKey, setEditingKey] = useState("");
+  const [isDamageModalVisible, setIsDamageModalVisible] = useState(false);
+  const [isViewDamageVisible, setIsViewDamageVisible] = useState(false);
+  const [isEditDamageVisible, setIsEditDamageVisible] = useState(false);
+  const [selectedContractId, setSelectedContractId] = useState(null);
+  const [editingDamageId, setEditingDamageId] = useState(null);
+  const [damageList, setDamageList] = useState([]);
+  const [damageForm] = Form.useForm();
 
-  // Fetch danh sách tiến độ
+  // 🚀 Lấy danh sách tiến độ của nhân viên
   const fetchProgressList = async () => {
     try {
       setLoading(true);
-      setError(null);
       const res = await workProgressApi.getMyList();
       setProgressList(res.data);
     } catch (err) {
       console.error(err);
-      setError("Unable to load work progress. Please login again.");
-      message.error("Failed to load work progress");
+      setError("Không thể tải danh sách công việc.");
+      message.error("Lỗi tải tiến độ, vui lòng đăng nhập lại!");
     } finally {
       setLoading(false);
     }
@@ -55,57 +76,98 @@ const WorkProgressPage = () => {
     fetchProgressList();
   }, []);
 
-  // Cập nhật tiến độ
-  const updateWorkProgress = async (progressId, newStatus, newDesc) => {
+  // 📦 Lấy danh sách damage theo hợp đồng
+  const fetchDamagesByContract = async (contractId) => {
     try {
-      await workProgressApi.update(progressId, {
-        progressStatus: newStatus,
-        taskDescription: newDesc,
-      });
-      message.success("Progress updated successfully");
-      fetchProgressList();
+      const res = await damageApi.getByContract(contractId);
+      setDamageList(res.data || []);
     } catch (err) {
-      console.error("Error updating progress:", err);
-      message.error("Failed to update progress. Please try again.");
+      console.error("Error fetching damages:", err);
+      message.error("Không thể tải danh sách thiệt hại");
     }
   };
 
-  // Thay đổi trạng thái
-  const handleStatusChange = (progressId, newStatus) => {
-    const current = progressList.find((p) => p.progressId === progressId);
-    updateWorkProgress(progressId, newStatus, current.taskDescription);
+  // ➕ Tạo thiệt hại mới
+  const openDamageModal = (contractId) => {
+    setSelectedContractId(contractId);
+    setIsDamageModalVisible(true);
   };
 
-  // Thay đổi mô tả
-  const handleDescriptionChange = (progressId, newDesc) => {
-    const current = progressList.find((p) => p.progressId === progressId);
-    updateWorkProgress(progressId, current.progressStatus, newDesc);
-    setEditingKey("");
+  // ✅ Nhân viên tạo thiệt hại (bước 1)
+  const handleCreateDamage = async (values) => {
+    try {
+      const payload = {
+        contractId: selectedContractId,
+        cause: values.cause,
+        cost: parseFloat(values.cost),
+        imageUrl: values.imageUrl || null,
+        status: "pending_customer", // ✅ Bắt đầu quy trình
+        customerFeedback: null,
+        managerFeedback: null,
+      };
+
+      await damageApi.create(payload);
+      message.success("✅ Tạo thiệt hại thành công, chờ khách hàng phản hồi!");
+      setIsDamageModalVisible(false);
+      damageForm.resetFields();
+      fetchDamagesByContract(selectedContractId);
+    } catch (err) {
+      console.error("Error creating damage:", err);
+      message.error("Không thể tạo thiệt hại");
+    }
   };
 
-  // Thống kê
-  const total = progressList.length;
-  const completed = progressList.filter((p) => p.progressStatus === "completed").length;
-  const inProgress = progressList.filter((p) => p.progressStatus === "in_progress").length;
-  const pending = progressList.filter((p) => p.progressStatus === "pending").length;
-  const completionPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
+  // 👁️ Xem danh sách thiệt hại theo hợp đồng
+  const openViewDamageModal = async (contractId) => {
+    setSelectedContractId(contractId);
+    await fetchDamagesByContract(contractId);
+    setIsViewDamageVisible(true);
+  };
 
-  // Render trạng thái
+  // ✏️ Mở modal chỉnh sửa damage khi bị từ chối
+  const openEditDamageModal = (damage) => {
+    setEditingDamageId(damage.damageId);
+    damageForm.setFieldsValue({
+      cause: damage.cause,
+      cost: damage.cost,
+      imageUrl: damage.imageUrl,
+    });
+    setIsEditDamageVisible(true);
+  };
+
+  // ✅ Gửi cập nhật lại thiệt hại sau khi bị từ chối
+  const handleEditDamage = async (values) => {
+    try {
+      await damageApi.update(editingDamageId, {
+        ...values,
+        status: "pending_customer",
+        customerFeedback: null,
+        managerFeedback: null,
+      });
+      message.success("Đã cập nhật và gửi lại thiệt hại cho khách hàng duyệt!");
+      setIsEditDamageVisible(false);
+      fetchDamagesByContract(selectedContractId);
+    } catch (err) {
+      message.error("Không thể cập nhật thiệt hại");
+    }
+  };
+
+  // 🎨 Hiển thị trạng thái tiến độ công việc
   const renderStatus = (status) => {
-    const statusConfig = {
-      pending: { color: "orange", icon: <ClockCircleOutlined />, text: "Pending" },
-      in_progress: { color: "blue", icon: <SyncOutlined spin />, text: "In Progress" },
-      completed: { color: "green", icon: <CheckCircleOutlined />, text: "Completed" },
+    const statusMap = {
+      pending: { color: "orange", icon: <ClockCircleOutlined />, text: "Đang chờ" },
+      in_progress: { color: "blue", icon: <SyncOutlined spin />, text: "Đang thực hiện" },
+      completed: { color: "green", icon: <CheckCircleOutlined />, text: "Hoàn thành" },
     };
-    const config = statusConfig[status] || statusConfig.pending;
+    const s = statusMap[status] || statusMap.pending;
     return (
-      <Tag icon={config.icon} color={config.color}>
-        {config.text}
+      <Tag icon={s.icon} color={s.color}>
+        {s.text}
       </Tag>
     );
   };
 
-  // Columns cho table
+  // 🧾 Cột hiển thị bảng tiến độ
   const columns = [
     {
       title: "#",
@@ -114,151 +176,98 @@ const WorkProgressPage = () => {
       render: (_, __, index) => index + 1,
     },
     {
-      title: "Customer",
+      title: "Khách Hàng",
       dataIndex: "customerName",
       key: "customerName",
       width: 150,
-      render: (text) => text || "—",
     },
     {
-      title: "Service",
+      title: "Dịch Vụ",
       dataIndex: "serviceName",
       key: "serviceName",
       width: 150,
-      render: (text) => text || "—",
     },
     {
-      title: "Start Date",
+      title: "Ngày Bắt Đầu",
       dataIndex: "startDate",
       key: "startDate",
       width: 120,
-      render: (text) => text || "—",
+      render: (date) => formatDate(date),
     },
     {
-      title: "End Date",
+      title: "Ngày Kết Thúc",
       dataIndex: "endDate",
       key: "endDate",
       width: 120,
-      render: (text) => text || "—",
+      render: (date) => formatDate(date),
     },
     {
-      title: "Total Amount",
-      dataIndex: "totalAmount",
-      key: "totalAmount",
-      width: 130,
-      render: (amount) =>
-        amount ? (
-          <span style={{ fontWeight: 600, color: "#11998e" }}>
-            {amount.toLocaleString("vi-VN")} ₫
-          </span>
-        ) : (
-          "—"
-        ),
-    },
-    {
-      title: "Employee",
+      title: "Nhân Viên",
       dataIndex: "employeeName",
       key: "employeeName",
       width: 130,
-      render: (text) => text || "—",
     },
     {
-      title: "Task Description",
+      title: "Công Việc",
       dataIndex: "taskDescription",
       key: "taskDescription",
       width: 200,
-      render: (text, record) =>
-        editingKey === record.progressId ? (
-          <Input
-            defaultValue={text}
-            onPressEnter={(e) =>
-              handleDescriptionChange(record.progressId, e.target.value)
-            }
-            onBlur={(e) =>
-              handleDescriptionChange(record.progressId, e.target.value)
-            }
-            autoFocus
-          />
-        ) : (
-          <div
-            onClick={() => setEditingKey(record.progressId)}
-            style={{ cursor: "pointer", minHeight: 22 }}
-          >
-            {text || "Click to edit"}
-          </div>
-        ),
     },
     {
-      title: "Status",
+      title: "Trạng Thái",
       dataIndex: "progressStatus",
       key: "progressStatus",
       width: 150,
       render: (status) => renderStatus(status),
     },
     {
-      title: "Last Updated",
-      dataIndex: "updatedAt",
-      key: "updatedAt",
-      width: 170,
-      render: (date) =>
-        date ? new Date(date).toLocaleString("vi-VN") : "—",
-    },
-    {
-      title: "Action",
+      title: "Hành Động",
       key: "action",
-      width: 180,
-      fixed: "right",
+      width: 250,
       render: (_, record) => (
-        <Select
-          value={record.progressStatus}
-          onChange={(value) => handleStatusChange(record.progressId, value)}
-          style={{ width: 150 }}
-        >
-          <Option value="pending">
-            <Space>
-              <ClockCircleOutlined /> Pending
-            </Space>
-          </Option>
-          <Option value="in_progress">
-            <Space>
-              <SyncOutlined /> In Progress
-            </Space>
-          </Option>
-          <Option value="completed">
-            <Space>
-              <CheckCircleOutlined /> Completed
-            </Space>
-          </Option>
-        </Select>
+        <Space>
+          <Button
+            type="dashed"
+            icon={<PlusOutlined />}
+            onClick={() => openDamageModal(record.contractId)}
+          >
+            Tạo Thiệt Hại
+          </Button>
+          <Button
+            type="primary"
+            icon={<EyeOutlined />}
+            onClick={() => openViewDamageModal(record.contractId)}
+          >
+            Xem Thiệt Hại
+          </Button>
+        </Space>
       ),
     },
   ];
 
-  if (loading) {
+  if (loading)
     return (
       <div className="loading-container">
-        <Spin size="large" tip="Loading work progress..." />
+        <Spin size="large" tip="⏳ Đang tải dữ liệu..." />
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <Alert
-        message="Error"
+        message="Lỗi"
         description={error}
         type="error"
         showIcon
         style={{ margin: 24 }}
       />
     );
-  }
 
   return (
     <div className="work-progress-page">
       <div className="page-header">
         <Title level={2}>
-          <TrophyOutlined /> Work Progress
+          <TrophyOutlined /> Tiến Độ Công Việc
         </Title>
         <Button
           type="primary"
@@ -266,87 +275,242 @@ const WorkProgressPage = () => {
           onClick={fetchProgressList}
           loading={loading}
         >
-          Refresh
+          Làm Mới
         </Button>
       </div>
 
-      {/* Statistics Cards */}
-      <Row gutter={[16, 16]} className="stats-row">
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="stat-card">
-            <Statistic
-              title="Total Tasks"
-              value={total}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: "#1890ff" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="stat-card">
-            <Statistic
-              title="Completed"
-              value={completed}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: "#52c41a" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="stat-card">
-            <Statistic
-              title="In Progress"
-              value={inProgress}
-              prefix={<SyncOutlined spin />}
-              valueStyle={{ color: "#1890ff" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="stat-card">
-            <Statistic
-              title="Pending"
-              value={pending}
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: "#faad14" }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Progress Bar */}
-      <Card className="progress-card">
-        <div className="progress-header">
-          <span className="progress-label">Overall Completion</span>
-          <span className="progress-percent">{completionPercent}%</span>
-        </div>
-        <Progress
-          percent={completionPercent}
-          strokeColor={{
-            "0%": "#11998e",
-            "100%": "#38ef7d",
-          }}
-          status="active"
-        />
-      </Card>
-
-      {/* Task Table */}
+      {/* Bảng tiến độ */}
       <Card className="table-card">
-        <Title level={4}>Task Details</Title>
+        <Title level={4}>Chi Tiết Công Việc</Title>
         <Table
           dataSource={progressList}
           columns={columns}
           rowKey="progressId"
-          scroll={{ x: 1500 }}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Total ${total} tasks`,
-          }}
+          scroll={{ x: 1200 }}
         />
       </Card>
+
+      {/* ➕ Modal: Tạo thiệt hại */}
+      <Modal
+        title="Tạo Báo Cáo Thiệt Hại"
+        open={isDamageModalVisible}
+        onCancel={() => setIsDamageModalVisible(false)}
+        onOk={() => damageForm.submit()}
+        okText="Gửi"
+        cancelText="Hủy"
+      >
+        <Form layout="vertical" form={damageForm} onFinish={handleCreateDamage}>
+          <Form.Item name="imageUrl" hidden>
+            <Input type="hidden" />
+          </Form.Item>
+
+          <Form.Item
+            label="Nguyên Nhân"
+            name="cause"
+            rules={[{ required: true, message: "Vui lòng nhập nguyên nhân!" }]}
+          >
+            <Input.TextArea rows={3} placeholder="Miêu tả thiệt hại..." />
+          </Form.Item>
+
+          <Form.Item
+            label="Chi Phí Đền Bù (₫)"
+            name="cost"
+            rules={[{ required: true, message: "Vui lòng nhập chi phí!" }]}
+          >
+            <Input type="number" />
+          </Form.Item>
+
+          <Form.Item label="Hình Ảnh Minh Chứng">
+            <Upload
+              name="file"
+              listType="picture-card"
+              showUploadList={false}
+              beforeUpload={() => false}
+              onChange={async (info) => {
+                const file = info.file;
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append("file", file);
+
+                try {
+                  const res = await axios.post(
+                    "http://localhost:8080/api/damages/upload",
+                    formData,
+                    {
+                      headers: {
+                        "Content-Type": "multipart/form-data",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                      },
+                    }
+                  );
+
+                  damageForm.setFieldValue("imageUrl", res.data);
+                  message.success("Ảnh đã được tải lên thành công!");
+                } catch (err) {
+                  console.error("Error uploading:", err);
+                  message.error("Không thể tải ảnh lên!");
+                }
+              }}
+            >
+              <div>
+                <UploadOutlined />
+                <div style={{ marginTop: 8 }}>Tải Ảnh</div>
+              </div>
+            </Upload>
+
+            {damageForm.getFieldValue("imageUrl") && (
+              <div style={{ marginTop: 10 }}>
+                <Image
+                  src={damageForm.getFieldValue("imageUrl")}
+                  alt="Preview"
+                  width="100%"
+                  height={200}
+                  style={{ objectFit: "contain", borderRadius: 8 }}
+                />
+              </div>
+            )}
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 👁️ Modal: Xem Thiệt Hại */}
+      <Modal
+        title="Danh Sách Thiệt Hại"
+        open={isViewDamageVisible}
+        onCancel={() => setIsViewDamageVisible(false)}
+        footer={null}
+        width={700}
+      >
+        {damageList.length === 0 ? (
+          <Alert message="Không có thiệt hại nào cho hợp đồng này" type="info" showIcon />
+        ) : (
+          damageList.map((dmg) => (
+            <Card
+              key={dmg.damageId}
+              title={
+                <>
+                  <WarningOutlined /> {dmg.cause}
+                </>
+              }
+              style={{ marginBottom: "12px" }}
+              extra={
+                dmg.status === "rejected" && (
+                  <Button
+                    type="primary"
+                    icon={<EditOutlined />}
+                    onClick={() => openEditDamageModal(dmg)}
+                  >
+                    Chỉnh sửa
+                  </Button>
+                )
+              }
+            >
+              <p>💰 <b>Chi Phí:</b> {dmg.cost?.toLocaleString("vi-VN")} ₫</p>
+              <p>👷 <b>Nhân Viên:</b> {dmg.employeeName}</p>
+              <p>
+                🏷️ <b>Trạng Thái:</b>{" "}
+                <Tag
+                  color={
+                    dmg.status === "pending_customer"
+                      ? "gold"
+                      : dmg.status === "pending_manager"
+                        ? "blue"
+                        : dmg.status === "approved"
+                          ? "green"
+                          : dmg.status === "rejected"
+                            ? "red"
+                            : "default"
+                  }
+                >
+                  {dmg.status === "pending_customer"
+                    ? "Chờ khách hàng"
+                    : dmg.status === "pending_manager"
+                      ? "Chờ quản lý"
+                      : dmg.status === "approved"
+                        ? "Đã duyệt"
+                        : dmg.status === "rejected"
+                          ? "Đã từ chối"
+                          : dmg.status}
+                </Tag>
+              </p>
+
+              {/* Hiển thị feedback */}
+              {(dmg.customerFeedback || dmg.managerFeedback) && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    background: "#fafafa",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    border: "1px solid #eaeaea",
+                  }}
+                >
+                  {/* Hiển thị phản hồi của khách hàng */}
+                  {dmg.customerFeedback && (
+                    <p
+                      style={{
+                        color:
+                          dmg.status === "rejected"
+                            ? "#d4380d" // đỏ cảnh báo nếu khách từ chối
+                            : "#1677ff", // xanh nếu khách duyệt
+                        marginBottom: 6,
+                      }}
+                    >
+                      💬 <b>Phản hồi khách hàng:</b>{" "}
+                      {dmg.customerFeedback.includes("Approved")
+                        ? "✅ " + dmg.customerFeedback
+                        : "❌ " + dmg.customerFeedback}
+                    </p>
+                  )}
+
+                  {/* Hiển thị phản hồi của quản lý */}
+                  {dmg.managerFeedback && (
+                    <p
+                      style={{
+                        color:
+                          dmg.status === "rejected"
+                            ? "#cf1322" // đỏ nếu bị từ chối
+                            : "#52c41a", // xanh lá nếu được duyệt
+                        marginBottom: 0,
+                      }}
+                    >
+                      🧑‍💼 <b>Phản hồi quản lý:</b>{" "}
+                      {dmg.managerFeedback.includes("Approved")
+                        ? "✅ " + dmg.managerFeedback
+                        : "❌ " + dmg.managerFeedback}
+                    </p>
+                  )}
+                </div>
+              )}
+
+            </Card>
+          ))
+        )}
+      </Modal>
+
+      {/* ✏️ Modal: Chỉnh sửa thiệt hại */}
+      <Modal
+        title="Chỉnh Sửa Thiệt Hại"
+        open={isEditDamageVisible}
+        onCancel={() => setIsEditDamageVisible(false)}
+        onOk={() => damageForm.submit()}
+      >
+        <Form layout="vertical" form={damageForm} onFinish={handleEditDamage}>
+          <Form.Item label="Nguyên Nhân" name="cause" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Form.Item label="Chi Phí (₫)" name="cost" rules={[{ required: true }]}>
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item label="Link Ảnh" name="imageUrl">
+            <Input placeholder="URL hình ảnh (tùy chọn)" />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
 
 export default WorkProgressPage;
+//fix end

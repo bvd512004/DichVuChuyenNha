@@ -22,6 +22,12 @@ export const workProgressApi = {
     return axios.get(`${API_BASE}/api/work-progress`, {
       headers: getAuthHeaders(),
     });
+    
+  },
+   getAllWorkProgress: () => {
+    return axios.get(`${API_BASE}/api/work-progress/all`, {
+      headers: getAuthHeaders(),
+    });
   },
 
   // 📍 Tạo tiến độ mới
@@ -52,6 +58,13 @@ export const workProgressApi = {
       headers: getAuthHeaders(),
     });
   },
+  // 📍 Lấy tiến độ công việc theo ID hợp đồng
+getWorkProgressByContract: (contractId) => {
+  return axios.get(`${API_BASE}/api/work-progress/contract/${contractId}`, {
+    headers: getAuthHeaders(),
+  });
+},
+
 
   // ----------------- 👤 CUSTOMER -----------------
 
@@ -76,3 +89,4 @@ export const workProgressApi = {
 };
 
 export default workProgressApi;
+//finall

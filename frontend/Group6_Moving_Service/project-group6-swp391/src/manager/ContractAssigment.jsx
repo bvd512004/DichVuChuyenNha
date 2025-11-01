@@ -5,7 +5,6 @@ import {
   message,
   Modal,
   Select,
-  DatePicker,
   Space,
   Typography,
   List,
@@ -18,7 +17,6 @@ import {
   FileTextOutlined,
   UserAddOutlined,
   DeleteOutlined,
-  CalendarOutlined,
   EyeOutlined,
 } from "@ant-design/icons";
 import assignmentApi from "../service/assignment";
@@ -35,15 +33,15 @@ export default function ContractAssignment() {
   const [contractDetail, setContractDetail] = useState(null);
   const [assignedEmployees, setAssignedEmployees] = useState([]);
   const [freeEmployees, setFreeEmployees] = useState([]);
-  
+
   // Modal states
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [assignModalVisible, setAssignModalVisible] = useState(false);
-  
+
   const [loading, setLoading] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [assignedDate, setAssignedDate] = useState(null);
   const [employeeToRemove, setEmployeeToRemove] = useState(null);
+  const [assignError, setAssignError] = useState(null);
 
   useEffect(() => {
     loadContracts();
@@ -62,7 +60,6 @@ export default function ContractAssignment() {
     setSelectedContract(contractId);
     setLoading(true);
     try {
-      // Gọi cả API chi tiết hợp đồng và danh sách nhân viên
       const [detailRes, assignedRes] = await Promise.all([
         ContractAPI.getById(contractId),
         assignmentApi.getAssignmentsByContract(contractId),
@@ -82,67 +79,80 @@ export default function ContractAssignment() {
       const res = await assignmentApi.getEmployees();
       setFreeEmployees(res.data);
       setAssignModalVisible(true);
+      setAssignError(null);
     } catch {
       message.error("Failed to load employees");
     }
   };
 
   const handleAssign = async () => {
-    if (!selectedEmployee || !assignedDate) {
-      message.warning("Please select both employee and date");
+    if (!selectedEmployee) {
+      setAssignError("Please select an employee");
       return;
     }
+
+    const isAlreadyAssigned = assignedEmployees.some(
+      (emp) => emp.employeeId === selectedEmployee
+    );
+
+    if (isAlreadyAssigned) {
+      setAssignError("This employee has already been assigned to this contract!");
+      return;
+    }
+
     setLoading(true);
+    setAssignError(null);
     try {
+      const assignedDate = dayjs(contractDetail.movingDay).format("YYYY-MM-DD");
+
       await assignmentApi.assignEmployee({
         contractId: selectedContract,
         employeeId: selectedEmployee,
-        assignedDate: dayjs(assignedDate).format("YYYY-MM-DD"),
+        assignedDate: assignedDate,
       });
+
       message.success("Employee assigned successfully!");
       setAssignModalVisible(false);
       setSelectedEmployee(null);
-      setAssignedDate(null);
-      
-      // Refresh assigned employees list
+      setAssignError(null);
+
       const assignedRes = await assignmentApi.getAssignmentsByContract(selectedContract);
       setAssignedEmployees(assignedRes.data);
     } catch (err) {
-      message.error(err.response?.data || "Error assigning employee");
+      const errorMessage = 
+        err.response?.data?.message || 
+        err.response?.data || 
+        err.message || 
+        "Error assigning employee. The employee might be busy on this date.";
+      
+      setAssignError(errorMessage);
+      message.error(errorMessage);
+      console.error("Assignment error details:", err.response?.data);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUnassign = async (employeeId) => {
-    console.log("🔍 Attempting to remove employee:", employeeId, "from contract:", selectedContract);
+  const handleUnassign = (employeeId) => {
     setEmployeeToRemove(employeeId);
   };
 
   const confirmUnassign = async () => {
     if (!employeeToRemove) return;
-    
+
     try {
-      console.log("🚀 Calling removeAssignment API...");
-      const result = await assignmentApi.removeAssignment(selectedContract, employeeToRemove);
-      console.log("✅ API Response:", result);
-      
+      await assignmentApi.removeAssignment(selectedContract, employeeToRemove);
       message.success("Employee unassigned successfully!");
-      
-      // Refresh both contract details and assigned employees list
-      console.log("🔄 Refreshing data...");
+
       const [detailRes, assignedRes] = await Promise.all([
         ContractAPI.getById(selectedContract),
         assignmentApi.getAssignmentsByContract(selectedContract),
       ]);
-      console.log("📊 New assigned employees:", assignedRes.data);
-      
+
       setContractDetail(detailRes);
       setAssignedEmployees(assignedRes.data);
       setEmployeeToRemove(null);
     } catch (err) {
-      console.error("❌ Error removing employee:", err);
-      console.error("❌ Error details:", err.response);
       message.error(err.response?.data?.message || err.message || "Failed to unassign employee");
       setEmployeeToRemove(null);
     }
@@ -169,9 +179,14 @@ export default function ContractAssignment() {
       key: "status",
       width: 150,
       render: (status) => {
-        const color = status === "PENDING" ? "orange" : 
-                      status === "APPROVED" ? "green" : 
-                      status === "COMPLETED" ? "blue" : "default";
+        const color =
+          status === "PENDING"
+            ? "orange"
+            : status === "APPROVED"
+            ? "green"
+            : status === "COMPLETED"
+            ? "blue"
+            : "default";
         return <Tag color={color}>{status}</Tag>;
       },
     },
@@ -205,7 +220,6 @@ export default function ContractAssignment() {
 
           <Divider />
 
-          {/* Bảng hợp đồng */}
           <Table
             dataSource={contracts}
             rowKey="contractId"
@@ -220,7 +234,6 @@ export default function ContractAssignment() {
         </Space>
       </Card>
 
-      {/* Modal chi tiết hợp đồng */}
       <Modal
         title={
           <Space>
@@ -236,36 +249,45 @@ export default function ContractAssignment() {
       >
         {contractDetail && (
           <Space direction="vertical" size="large" style={{ width: "100%" }}>
-            {/* Chi tiết hợp đồng */}
-            <Card title="Contract Information" size="small">
+            <Card title="Thông Tin Hợp Đồng" size="small">
               <Descriptions bordered column={2} size="small">
-                <Descriptions.Item label="Start Date" span={1}>
-                  {contractDetail.startDate}
+                <Descriptions.Item label="Hợp Đồng Bắt Đầu" span={1}>
+                  {dayjs(contractDetail.startDate).format("DD/MM/YYYY")}
                 </Descriptions.Item>
-                <Descriptions.Item label="End Date" span={1}>
-                  {contractDetail.endDate}
+                <Descriptions.Item label="Hợp Đồng Kết thúc" span={1}>
+                  {dayjs(contractDetail.endDate).format("DD/MM/YYYY")}
                 </Descriptions.Item>
-                <Descriptions.Item label="Deposit" span={1}>
-                  ${contractDetail.depositAmount}
+
+                <Descriptions.Item label="Ngày Chuyển" span={2}>
+                  {contractDetail.movingDay
+                    ? dayjs(contractDetail.movingDay).format("DD/MM/YYYY")
+                    : "N/A"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Total Amount" span={1}>
-                  ${contractDetail.totalAmount}
+
+                <Descriptions.Item label="Tiền Đặt Cọc" span={1}>
+                  {contractDetail.depositAmount} VND
                 </Descriptions.Item>
-                <Descriptions.Item label="Start Location" span={2}>
+                <Descriptions.Item label="Tổng Số Tiền" span={1}>
+                  {contractDetail.totalAmount} VND
+                </Descriptions.Item>
+
+                <Descriptions.Item label="Địa Điểm Bắt Đầu" span={2}>
                   {contractDetail.startLocation}
                 </Descriptions.Item>
-                <Descriptions.Item label="End Location" span={2}>
+                <Descriptions.Item label="Điểm Kết Thúc" span={2}>
                   {contractDetail.endLocation}
                 </Descriptions.Item>
-                <Descriptions.Item label="Status" span={1}>
-                  <Tag color="green">{contractDetail.status}</Tag>
+
+                <Descriptions.Item label="Tên Khách Hàng" span={1}>
+                  {contractDetail.username || "N/A"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Signed By" span={1}>
-                  {contractDetail.signedByUsername || "N/A"}
+                <Descriptions.Item label="Tên Công Ty" span={1}>
+                  {contractDetail.companyName || "N/A"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Signed Date" span={2}>
+
+                <Descriptions.Item label="Ngày Kí" span={2}>
                   {contractDetail.signedDate
-                    ? dayjs(contractDetail.signedDate).format("YYYY-MM-DD HH:mm")
+                    ? dayjs(contractDetail.signedDate).format("DD/MM/YYYY HH:mm")
                     : "N/A"}
                 </Descriptions.Item>
               </Descriptions>
@@ -273,9 +295,8 @@ export default function ContractAssignment() {
 
             <Divider />
 
-            {/* Danh sách nhân viên được gán */}
-            <Card 
-              title="Assigned Employees" 
+            <Card
+              // title="Assigned Employees"
               size="small"
               extra={
                 <Button
@@ -284,16 +305,14 @@ export default function ContractAssignment() {
                   onClick={handleOpenAssignModal}
                   size="small"
                 >
-                  Assign Employee
+                  Gán Nhân Viên Vào hợp Đồng
                 </Button>
               }
             >
               {assignedEmployees.length === 0 ? (
                 <div className="empty-state">
                   <UserAddOutlined style={{ fontSize: 48, color: "#d9d9d9" }} />
-                  <p style={{ color: "#999", marginTop: 16 }}>
-                    No employees assigned yet
-                  </p>
+                  <p style={{ color: "#999", marginTop: 16 }}>No employees assigned yet</p>
                 </div>
               ) : (
                 <List
@@ -308,7 +327,6 @@ export default function ContractAssignment() {
                           icon={<DeleteOutlined />}
                           onClick={(e) => {
                             e.stopPropagation();
-                            console.log("🔴 Remove button clicked!", emp.employeeId);
                             handleUnassign(emp.employeeId);
                           }}
                         >
@@ -330,7 +348,6 @@ export default function ContractAssignment() {
         )}
       </Modal>
 
-      {/* Modal gán nhân viên */}
       <Modal
         title={
           <Space>
@@ -342,14 +359,33 @@ export default function ContractAssignment() {
         onCancel={() => {
           setAssignModalVisible(false);
           setSelectedEmployee(null);
-          setAssignedDate(null);
+          setAssignError(null);
         }}
         onOk={handleAssign}
         confirmLoading={loading}
         okText="Assign"
         cancelText="Cancel"
+        okButtonProps={{ disabled: loading || !!assignError }}
       >
         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          {assignError && (
+            <div style={{ 
+              padding: '12px 16px', 
+              background: '#fff2e8', 
+              border: '1px solid #ffbb96',
+              borderRadius: '6px',
+              color: '#d4380d',
+              marginBottom: '8px',
+              fontSize: '14px',
+              lineHeight: '1.5',
+              animation: 'shake 0.3s ease-in-out'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
+                <span style={{ flex: 1 }}>{assignError}</span>
+              </div>
+            </div>
+          )}
           <div>
             <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>
               Select Employee
@@ -357,11 +393,15 @@ export default function ContractAssignment() {
             <Select
               placeholder="Choose an employee"
               size="large"
-              onChange={(value) => setSelectedEmployee(value)}
+              onChange={(value) => {
+                setSelectedEmployee(value);
+                setAssignError(null);
+              }}
               style={{ width: "100%" }}
               value={selectedEmployee}
               showSearch
               optionFilterProp="children"
+              disabled={loading}
             >
               {freeEmployees.map((emp) => (
                 <Option key={emp.employeeId} value={emp.employeeId}>
@@ -373,24 +413,21 @@ export default function ContractAssignment() {
               ))}
             </Select>
           </div>
-
-          <div>
-            <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>
-              Assigned Date
-            </label>
-            <DatePicker
-              size="large"
-              style={{ width: "100%" }}
-              onChange={(date) => setAssignedDate(date)}
-              value={assignedDate}
-              suffixIcon={<CalendarOutlined />}
-              format="YYYY-MM-DD"
-            />
-          </div>
+          
+          {contractDetail && (
+            <div style={{ 
+              padding: '10px', 
+              background: '#f0f5ff', 
+              borderRadius: '4px',
+              fontSize: '13px',
+              color: '#666'
+            }}>
+              <strong>📅 Assignment Date:</strong> {dayjs(contractDetail.movingDay).format("DD/MM/YYYY")}
+            </div>
+          )}
         </Space>
       </Modal>
 
-      {/* Modal xác nhận xóa */}
       <Modal
         title="Confirm Unassign"
         open={employeeToRemove !== null}

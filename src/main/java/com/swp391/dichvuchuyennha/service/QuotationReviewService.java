@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 public class QuotationReviewService {
 
     private final QuotationRepository quotationRepository;
-    private final QuotationForCustomerMapper quotationForCustomerMapper;
     private final QuotationMapper quotationMapper;
 
+    // Lấy tất cả quotation để hiển thị cho quản lý duyệt
     public List<QuotationResponse> getReviewQuotations() {
         return quotationRepository.findAll()
                 .stream()
@@ -27,28 +27,23 @@ public class QuotationReviewService {
                 .collect(Collectors.toList());
     }
 
+    // Duyệt báo giá → khách hàng sẽ nhận được PENDING
     public QuotationResponse approveReviewQuotation(Integer quotationId) {
         Quotations quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy quotation với ID: " + quotationId));
 
-        if (!"REVIEW".equalsIgnoreCase(quotation.getStatus())) {
-            throw new IllegalStateException("Chỉ có quotation ở trạng thái REVIEW mới được xử lý");
-        }
-
-        quotation.setStatus("PENDING"); // Chuyển sang PENDING
+        quotation.setStatus("PENDING"); // chuyển sang PENDING
         quotationRepository.save(quotation);
 
         return quotationMapper.toResponse(quotation);
     }
+
+    // Từ chối báo giá → nhân viên khảo sát chỉnh sửa lại
     public QuotationResponse rejectReviewQuotation(Integer quotationId) {
         Quotations quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy quotation với ID: " + quotationId));
 
-        if (!"REVIEW".equalsIgnoreCase(quotation.getStatus())) {
-            throw new IllegalStateException("Chỉ có quotation ở trạng thái REVIEW mới được từ chối.");
-        }
-
-        quotation.setStatus("REJECTED"); // Chuyển sang REJECTED
+        quotation.setStatus("REVIEW"); // để nhân viên khảo sát chỉnh sửa
         quotationRepository.save(quotation);
 
         return quotationMapper.toResponse(quotation);

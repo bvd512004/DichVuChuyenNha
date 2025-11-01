@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -21,5 +22,6 @@ public class WorkProgressResponse {
     private LocalDate endDate;      // Ngày kết thúc dự kiến
     private Double totalAmount;     // Tổng tiền hợp đồng
     private String employeeName;    // Tên nhân viên phụ trách
+    private List<DamageResponse> damages;
 }
 //k

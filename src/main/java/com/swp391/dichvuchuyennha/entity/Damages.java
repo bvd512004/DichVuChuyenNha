@@ -32,4 +32,12 @@ public class Damages {
 
     @Column(name = "status")
     private String status;
+    @Column(name = "image_url")
+    private String imageUrl; // ảnh minh chứng thiệt hại
+
+    @Column(name = "customer_feedback")
+    private String customerFeedback; // lý do từ chối của khách
+
+    @Column(name = "manager_feedback")
+    private String managerFeedback; // Feedback từ quản lý
 }

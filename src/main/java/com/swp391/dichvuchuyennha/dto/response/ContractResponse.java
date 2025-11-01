@@ -25,7 +25,7 @@ public class ContractResponse {
     private String username;
     private String companyName;
     // Thông tin user owner
-
+    private LocalDate movingDay;
 
     // Thông tin người đã ký
     private Integer signedById;
@@ -39,4 +39,5 @@ public class ContractResponse {
 
 // địa chỉ đến
 }
+//thêm moving_day
 

@@ -28,4 +28,8 @@ public class AssignmentEmployee {
 
     @Column(name = "assigned_time")
     private LocalDate assignedTime;
+
+    @Column(name = "assign_date") // Thêm trường assign_date để lưu ngày gán
+    private LocalDate assignDate;  // Lưu ngày vận chuyển (moving_day) khi gán nhân viên
 }
+//end

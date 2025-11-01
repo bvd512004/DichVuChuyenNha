@@ -58,7 +58,6 @@ public class SecurityConfig {
                 "/api/contracts/**",
                 "/api/surveys/**",
                 "/api/requests/**",
-                "/api/admin/**",
                 "/api/prices/**",
                 "/api/quotations/**",
                 "/api/quotation-services/**",
@@ -70,7 +69,10 @@ public class SecurityConfig {
                 "/api/survey-images/**",
                 "/images/survey/**",
                 "/api/manager/quotations/**",
+                "/api/damages/**",
+                "/images/damages/**",
                 "/api/chat-ai"};
+
 
 
 
@@ -89,19 +91,19 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                                 .requestMatchers("/api/users").hasRole("ADMIN") // GET all users
                                                 .requestMatchers("/api/users/{userId}").hasRole("ADMIN") // PUT/DELETE
-                                                                                                         // user
-
+                                                .requestMatchers("/api/work-progress/**").hasRole("MANAGER")                                                      // user
+//                                                .requestMatchers("/api/assignments/**").hasRole("MANAGER") //moi
                                                 // Assignment endpoints
-                                                .requestMatchers(POST, "/api/assignments/assign").hasRole("MANAGER")
+//                                                .requestMatchers(POST, "/api/assignments/assign").hasRole("MANAGER")
 
-                                                .requestMatchers("/api/assignments").hasRole("MANAGER")
+//                                                .requestMatchers("/api/assignments").hasRole("ADMIN")
 
                                                 // Contract endpoints
                                                 .requestMatchers("/api/contracts/unsigned/me")
                                                 .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY")
                                                 .requestMatchers("/api/contracts/sign/{contractId}")
                                                 .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY", "MANAGER")
-                                                .requestMatchers("/api/contracts").hasAnyRole("MANAGER", "ADMIN")
+                                                .requestMatchers("/api/contracts/**").hasRole("MANAGER")
 
                                                 // Damages endpoints
                                                 .requestMatchers(POST, "/api/damages").hasAnyRole("EMPLOYEE", "MANAGER")
@@ -200,7 +202,7 @@ public class SecurityConfig {
 
         @Bean
         public PasswordEncoder passwordEncoder() {
-                 return new BCryptPasswordEncoder(); // Đổi sang BCrypt
-//                return NoOpPasswordEncoder.getInstance();
+//                 return new BCryptPasswordEncoder(); // Đổi sang BCrypt
+        return NoOpPasswordEncoder.getInstance();
         }
 }

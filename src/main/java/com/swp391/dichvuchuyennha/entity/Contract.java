@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Entity
@@ -64,4 +65,9 @@ public class Contract {
     @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<WorkProgress> workProgress;
 
+    @Column(name = "deposit_due_date")
+    private LocalDate depositDueDate;
+
+
 }
+//thêm trường
