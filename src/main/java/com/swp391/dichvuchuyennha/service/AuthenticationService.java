@@ -8,18 +8,24 @@ import com.nimbusds.jwt.SignedJWT;
 import com.swp391.dichvuchuyennha.dto.request.AuthenticationRequest;
 import com.swp391.dichvuchuyennha.dto.response.AuthenticationResponse;
 import com.swp391.dichvuchuyennha.dto.response.UserResponse;
+import com.swp391.dichvuchuyennha.entity.AuditLog;
+import com.swp391.dichvuchuyennha.entity.LoginHistory;
 import com.swp391.dichvuchuyennha.entity.Users;
 import com.swp391.dichvuchuyennha.exception.AppException;
 import com.swp391.dichvuchuyennha.exception.ErrorCode;
+import com.swp391.dichvuchuyennha.repository.AuditLogRepository;
+import com.swp391.dichvuchuyennha.repository.LoginHistoryRepository;
 import com.swp391.dichvuchuyennha.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,7 +34,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AuthenticationService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder; // inject bean từ config
+    private final LoginHistoryRepository loginHistoryRepository;
+    private final AuditLogRepository auditLogRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -38,17 +47,73 @@ public class AuthenticationService {
 
     private final Set<String> blacklistedTokens = ConcurrentHashMap.newKeySet();
     private final Map<String, Map<String, Object>> otpStore = new ConcurrentHashMap<>();
-    private final EmailService emailService; // Inject EmailService
 
+    // LẤY IP AN TOÀN
+    private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                var request = attributes.getRequest();
+                String ip = request.getHeader("X-Forwarded-For");
+                if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+                    ip = request.getHeader("X-Real-IP");
+                }
+                if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+                    ip = request.getRemoteAddr();
+                }
+                return ip != null ? ip.split(",")[0].trim() : "unknown";
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return "unknown";
+    }
+
+    // LẤY USER-AGENT AN TOÀN
+    private String getUserAgent() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                String ua = attributes.getRequest().getHeader("User-Agent");
+                return ua != null ? ua.length() > 500 ? ua.substring(0, 500) : ua : "unknown";
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return "unknown";
+    }
+
+    // === LOGIN CHÍNH ===
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         Users user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
-        if (!authenticated)
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            saveFailedLogin(user);
             throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
 
         String token = generateToken(user);
+
+        // GHI LOGIN THÀNH CÔNG
+        LoginHistory history = new LoginHistory();
+        history.setUser(user);
+        history.setLoginTime(LocalDateTime.now());
+        history.setIpAddress(getClientIp());
+        history.setUserAgent(getUserAgent());
+        history.setStatus("SUCCESS");
+        loginHistoryRepository.save(history);
+
+        // GHI AUDIT LOG
+        AuditLog auditLog = new AuditLog();
+        auditLog.setUser(user);
+        auditLog.setAction("LOGIN");
+        auditLog.setEntity("USER");
+        auditLog.setEntityId(user.getUserId());
+        auditLog.setDetails("User logged in: " + user.getUsername());
+        auditLog.setIpAddress(getClientIp());
+        auditLogRepository.save(auditLog);
+
         return AuthenticationResponse.builder()
                 .token(token)
                 .authenticated(true)
@@ -60,6 +125,18 @@ public class AuthenticationService {
                 .build();
     }
 
+    // GHI LỖI LOGIN (TÙY CHỌN)
+    private void saveFailedLogin(Users user) {
+        LoginHistory history = new LoginHistory();
+        history.setUser(user);
+        history.setLoginTime(LocalDateTime.now());
+        history.setIpAddress(getClientIp());
+        history.setUserAgent(getUserAgent());
+        history.setStatus("FAILED");
+        loginHistoryRepository.save(history);
+    }
+
+    // === GENERATE JWT ===
     private String generateToken(Users user) {
         try {
             JWTClaimsSet claims = new JWTClaimsSet.Builder()
@@ -76,30 +153,30 @@ public class AuthenticationService {
             JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
             SignedJWT signedJWT = new SignedJWT(header, claims);
             signedJWT.sign(new MACSigner(jwtSecret.getBytes()));
-
             return signedJWT.serialize();
         } catch (Exception e) {
             throw new RuntimeException("Cannot create JWT token", e);
         }
     }
 
-    /** Kiểm tra và parse token */
+    // === VERIFY TOKEN ===
     public Users verifyAndParseToken(String token) {
         try {
             if (blacklistedTokens.contains(token)) {
-                throw new AppException(ErrorCode.UNAUTHENTICATED); // token đã logout
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
             }
 
             SignedJWT signedJWT = SignedJWT.parse(token);
             JWSVerifier verifier = new MACVerifier(jwtSecret.getBytes());
 
-            boolean valid = signedJWT.verify(verifier);
-            if (!valid)
+            if (!signedJWT.verify(verifier)) {
                 throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
 
             Date expiry = signedJWT.getJWTClaimsSet().getExpirationTime();
-            if (expiry.before(new Date()))
+            if (expiry.before(new Date())) {
                 throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
 
             String username = signedJWT.getJWTClaimsSet().getSubject();
             return userRepository.findByUsername(username)
@@ -110,11 +187,12 @@ public class AuthenticationService {
         }
     }
 
-    /** Logout: đưa token vào blacklist */
+    // === LOGOUT ===
     public void logout(String token) {
         blacklistedTokens.add(token);
     }
 
+    // === GET USER FROM TOKEN ===
     public UserResponse getUserFromToken(String token) {
         Users user = verifyAndParseToken(token);
         return UserResponse.builder()
@@ -126,30 +204,25 @@ public class AuthenticationService {
                 .build();
     }
 
-    // : Gửi OTP khi quên mật khẩu
+    // === OTP METHODS (giữ nguyên) ===
     public void sendOtpForReset(String email) {
         Users user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        // Generate OTP 6 chữ số
         String otp = String.format("%06d", new Random().nextInt(999999));
-        long expiry = System.currentTimeMillis() + 300000; // 5 phút
+        long expiry = System.currentTimeMillis() + 300_000;
 
-        // Lưu vào store
         Map<String, Object> otpData = new HashMap<>();
         otpData.put("otp", otp);
         otpData.put("expiry", expiry);
         otpStore.put(email, otpData);
 
-        // Gửi email
         emailService.sendOtpEmail(email, otp);
     }
 
-    // : Verify OTP
     public boolean verifyOtp(String email, String otp) {
         Map<String, Object> otpData = otpStore.get(email);
-        if (otpData == null)
-            return false;
+        if (otpData == null) return false;
 
         String storedOtp = (String) otpData.get("otp");
         long expiry = (long) otpData.get("expiry");
@@ -160,15 +233,13 @@ public class AuthenticationService {
         }
 
         boolean valid = storedOtp.equals(otp);
-        if (valid)
-            otpStore.remove(email); // Xóa sau khi verify thành công
+        if (valid) otpStore.remove(email);
         return valid;
     }
 
-    // : Reset password sau khi verify OTP
     public void resetPassword(String email, String newPassword, String otp) {
         if (!verifyOtp(email, otp)) {
-            throw new AppException(ErrorCode.INVALID_KEY); // OTP invalid or expired
+            throw new AppException(ErrorCode.INVALID_KEY);
         }
 
         Users user = userRepository.findByEmail(email)
@@ -177,5 +248,4 @@ public class AuthenticationService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
-
 }

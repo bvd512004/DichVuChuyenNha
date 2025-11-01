@@ -3,14 +3,36 @@ package com.swp391.dichvuchuyennha.mapper;
 import com.swp391.dichvuchuyennha.dto.request.VehicleCreateRequest;
 import com.swp391.dichvuchuyennha.dto.response.VehicleResponse;
 import com.swp391.dichvuchuyennha.entity.Vehicles;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring")
-public interface VehicleMapper {
-    Vehicles toEntity(VehicleCreateRequest request);
+@Component
+public class VehicleMapper {
 
-    VehicleResponse toResponse(Vehicles vehicle);
+    public Vehicles toEntity(VehicleCreateRequest request) {
+        Vehicles vehicle = new Vehicles();
+        vehicle.setVehicleType(request.getVehicleType());
+        vehicle.setLicensePlate(request.getLicensePlate());
+        vehicle.setCapacity(request.getCapacity());
+        vehicle.setStatus(request.getStatus());
+        // Set driver nếu có
+        return vehicle;
+    }
 
-    void updateFromRequest(VehicleCreateRequest request, @MappingTarget Vehicles vehicle);
+    public void updateFromRequest(VehicleCreateRequest request, Vehicles vehicle) {
+        vehicle.setVehicleType(request.getVehicleType());
+        vehicle.setLicensePlate(request.getLicensePlate());
+        vehicle.setCapacity(request.getCapacity());
+        vehicle.setStatus(request.getStatus());
+    }
+
+    public VehicleResponse toResponse(Vehicles vehicle) {
+        VehicleResponse response = new VehicleResponse();
+        response.setVehicleId(vehicle.getVehicleId());
+        response.setVehicleType(vehicle.getVehicleType());
+        response.setLicensePlate(vehicle.getLicensePlate());
+        response.setCapacity(vehicle.getCapacity());
+        response.setStatus(vehicle.getStatus());
+        response.setDriverId(vehicle.getDriver() != null ? vehicle.getDriver().getEmployeeId() : null);
+        return response;
+    }
 }
