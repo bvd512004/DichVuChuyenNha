@@ -35,9 +35,10 @@ public class SurveyController {
     public ResponseEntity<List<SurveyResponse>> getMySurveys() {
         return ResponseEntity.ok(surveyService.getSurveysByCurrentEmployee());
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<SurveyResponse> updateSurvey(@PathVariable Integer id,
-                                                       @RequestBody SurveyRequest dto) {
+            @RequestBody SurveyRequest dto) {
         return ResponseEntity.ok(surveyService.updateSurvey(id, dto));
     }
 
