@@ -33,7 +33,8 @@ export default function CustomerRegisterForm() {
         setRoles(res.data.result || []);
       })
       .catch((err) => {
-        message.error("Không load được roles!");
+        console.error(err); // thêm log
+        message.error("Không load được roles! " + err.message);
       });
   }, []);
 

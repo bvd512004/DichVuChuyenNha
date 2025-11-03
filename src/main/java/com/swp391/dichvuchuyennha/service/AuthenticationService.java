@@ -86,11 +86,17 @@ public class AuthenticationService {
     // === LOGIN CHÍNH ===
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         Users user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+                .orElseGet(() -> userRepository.findByUsername(request.getEmail()) // fallback username nếu email fail
+                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             saveFailedLogin(user);
             throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        // Check role null
+        if (user.getRole() == null) {
+            throw new AppException(ErrorCode.ROLE_NOT_ASSIGNED); // Thêm ErrorCode mới nếu cần
         }
 
         String token = generateToken(user);
@@ -155,6 +161,7 @@ public class AuthenticationService {
             signedJWT.sign(new MACSigner(jwtSecret.getBytes()));
             return signedJWT.serialize();
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException("Cannot create JWT token", e);
         }
     }

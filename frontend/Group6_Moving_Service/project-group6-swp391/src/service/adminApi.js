@@ -1,18 +1,33 @@
-// src/services/adminApi.js
 import axios from "axios";
 
 const API_BASE = "http://localhost:8080/api/admin";
-const token = localStorage.getItem("token");
 
-const headers = {
-    Authorization: `Bearer ${token}`,
-};
-
-// Tạo instance để dễ config sau
+// Tạo instance
 const api = axios.create({
     baseURL: API_BASE,
-    headers,
 });
+
+// Interceptor để set token dynamic từ localStorage mỗi request
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+// Thêm interceptor xử lý error (ví dụ 401 logout)
+api.interceptors.response.use(
+    (res) => res,
+    (err) => {
+        if (err.response?.status === 401) {
+            // Có thể redirect to login
+            console.error("Unauthorized - Token expired");
+            localStorage.removeItem("token");
+        }
+        return Promise.reject(err);
+    }
+);
 
 export const adminApi = {
     // Users

@@ -1,9 +1,10 @@
 package com.swp391.dichvuchuyennha.mapper;
 
+import org.springframework.stereotype.Component;
+
 import com.swp391.dichvuchuyennha.dto.request.VehicleCreateRequest;
 import com.swp391.dichvuchuyennha.dto.response.VehicleResponse;
 import com.swp391.dichvuchuyennha.entity.Vehicles;
-import org.springframework.stereotype.Component;
 
 @Component
 public class VehicleMapper {
