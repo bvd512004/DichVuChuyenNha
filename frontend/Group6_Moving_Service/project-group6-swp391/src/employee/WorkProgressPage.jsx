@@ -151,6 +151,22 @@ const WorkProgressPage = () => {
       message.error("Không thể cập nhật thiệt hại");
     }
   };
+  // ⚙️ Cập nhật trạng thái tiến độ
+const handleUpdateStatus = async (progressId, nextStatus) => {
+  try {
+    await workProgressApi.updateStatus(progressId, nextStatus);
+    message.success(
+      nextStatus === "in_progress"
+        ? "🚀 Bắt đầu công việc!"
+        : "✅ Hoàn thành công việc!"
+    );
+    fetchProgressList(); // load lại danh sách
+  } catch (err) {
+    console.error("Error updating status:", err);
+    message.error("Không thể cập nhật trạng thái công việc!");
+  }
+};
+
 
   // 🎨 Hiển thị trạng thái tiến độ công việc
   const renderStatus = (status) => {
@@ -220,29 +236,59 @@ const WorkProgressPage = () => {
       width: 150,
       render: (status) => renderStatus(status),
     },
-    {
-      title: "Hành Động",
-      key: "action",
-      width: 250,
-      render: (_, record) => (
-        <Space>
+  {
+  title: "Hành Động",
+  key: "action",
+  width: 380,
+  render: (_, record) => {
+    const status = record.progressStatus;
+    return (
+      <Space>
+        {/* Nút tạo thiệt hại */}
+        <Button
+          type="dashed"
+          icon={<PlusOutlined />}
+          onClick={() => openDamageModal(record.contractId)}
+        >
+          Tạo Thiệt Hại
+        </Button>
+
+        {/* Nút xem thiệt hại */}
+        <Button
+          type="primary"
+          icon={<EyeOutlined />}
+          onClick={() => openViewDamageModal(record.contractId)}
+        >
+          Xem Thiệt Hại
+        </Button>
+
+        {/* ➕ Nút BẮT ĐẦU (từ đang chờ -> đang làm) */}
+        {status === "pending" && (
           <Button
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={() => openDamageModal(record.contractId)}
+            type="default"
+            icon={<SyncOutlined />}
+            onClick={() => handleUpdateStatus(record.progressId, "in_progress")}
           >
-            Tạo Thiệt Hại
+            Bắt đầu
           </Button>
+        )}
+
+        {/* ✅ Nút HOÀN THÀNH (từ đang làm -> hoàn thành) */}
+        {status === "in_progress" && (
           <Button
             type="primary"
-            icon={<EyeOutlined />}
-            onClick={() => openViewDamageModal(record.contractId)}
+            danger
+            icon={<CheckCircleOutlined />}
+            onClick={() => handleUpdateStatus(record.progressId, "completed")}
           >
-            Xem Thiệt Hại
+            Hoàn thành
           </Button>
-        </Space>
-      ),
-    },
+        )}
+      </Space>
+    );
+  },
+},
+
   ];
 
   if (loading)

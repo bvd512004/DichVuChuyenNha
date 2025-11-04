@@ -4,6 +4,8 @@ import * as Yup from "yup";
 import axios from "axios";
 import "./style/LoginPage.css";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 import { Input, Button, Form, Modal } from "antd";
 
 const LoginPage = () => {
@@ -13,6 +15,8 @@ const LoginPage = () => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1);
+  const { login } = useAuth(); // ✅ lấy login từ context
+
 
   const validationSchema = Yup.object({
     email: Yup.string().email("Invalid email").required("Email is required"),

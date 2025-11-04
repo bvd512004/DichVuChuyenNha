@@ -33,7 +33,12 @@ import QuotationAddServices from "../staff/QuotationAddServices";
 import QuotationContractList from "../manager/QuotationContractList";
 import ManagerWorkProgressPage from "../manager/ManagerWorkProgressPage";
 import WorkProgressList from "../manager/WorkProgressList";
-
+import ReviewQuotationManagement from "../manager/ReviewQuotationManagement";
+import PaymentSuccessPage from "../customer/PaymentSuccessPage";
+import PaymentCancelPage from "../customer/PaymentCancelPage";
+import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
+import ServicePrice from "../admin/ServicePrice";
+import ServiceDetail from "../admin/ServiceDetail";
 const Router = () => {
   const router = createBrowserRouter([
     {
@@ -53,6 +58,47 @@ const Router = () => {
         //       <ContractAssignment />
 
         //   ),
+
+        // },
+        {
+          path: "user-profile",
+          element: <ProfilePage />
+        },
+        {
+          path: "assign-surveyer",
+          element: <AssignSurveyer />
+        },
+        {
+          path: "survey-dashboard",
+          element: (
+            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Surveyer">
+              <SurveyDashboard />
+            </ProtectedRoute>
+          ),
+        },
+
+        {
+          path: "price-service",
+          element: <PriceTable />
+        },
+        {
+          path: "add-services",
+          element: <QuotationAddServices />
+        },
+        {
+          path: "quotations-services",
+          element: <QuotationServiceManager />
+        },
+        {
+          path: "quotations-services-list",
+          element: <QuotationServiceList />
+        },
+        {
+          path: "review-quotations",
+          element: <ReviewQuotationManagement />
+        },
+        
+
         // },
         {
           path: "user-profile",
@@ -92,13 +138,43 @@ const Router = () => {
         //   element: <ReviewQuotationManagement/>
         // },
         {
+
           path: "quotation-for-customer",
           element: <QuotationApproval />
         },
         {
           path: "contracts-list-manager",
           element: <QuotationContractList />
+
         },
+        //payment deposit routes
+        {
+          path: "/payment/success",
+          element: <PaymentSuccessPage />,
+
+
+        },
+        {
+          path: "/payment/cancel",
+          element: <PaymentCancelPage />,
+        },
+        
+         {
+          path: "/customer/final-payments",
+          element: <UserFinalPaymentPage />,
+        },
+          {
+          path: "service-admin",
+          element: <ServicePrice/>,
+        },
+        {
+          path:"services/:id",
+          element:<ServiceDetail/>
+        },
+
+
+
+
 
 
 
@@ -125,14 +201,46 @@ const Router = () => {
         { path: "list-contract-unsigned", element: <UserContractsPage /> },
 
         // Admin routes
-        {
-          path: "admin-dashboard",
-          element: (
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          ),
-        },
+        // {
+
+        //   path: "admin-create-user",
+        //   element: (
+        //     <ProtectedRoute allowedRoles={["admin"]}>
+        //       <CreateAdminUser />
+        //     </ProtectedRoute>
+        //   ),
+
+        // },
+
+        // {
+
+        //   path: "admin-dashboard",
+        //   element: (
+        //     <ProtectedRoute allowedRoles={["admin"]}>
+        //       <AdminDashboard />
+
+        //     </ProtectedRoute>
+        //   ),
+        // },
+
+        // {
+        //   path: "employee-management",
+        //   element: (
+        //     <ProtectedRoute allowedRoles={["admin", "manager"]}>
+        //       <EmployeeManagement />
+        //     </ProtectedRoute>
+        //   ),
+        // },
+
+        // {
+        //   path: "vehicle-management",
+        //   element: (
+        //     <ProtectedRoute allowedRoles={["admin", "manager"]}>
+        //       <VehicleManagement />
+
+        //     </ProtectedRoute>
+        //   ),
+        // },
         {
           path: "my-requests",
           element: <UserRequestsPage />

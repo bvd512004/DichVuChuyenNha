@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Card, Form, message, Menu, Row, Col, Statistic, Badge, Modal, Descriptions, Tabs } from "antd"; 
+import { Layout, Card, Form, message, Menu, Row, Col, Statistic, Badge, Modal, Descriptions, Tabs,App// ✅ Import đúng cách
+ } from "antd"; 
 import {
     DollarOutlined,
     FileAddOutlined,
@@ -15,9 +16,9 @@ import { SurveyList } from "./SurveyList";
 import { QuotationList } from "./QuotationList";
 import { CreateSurveyModal } from "./CreateSurveyModal";
 import { EditSurveyModal } from "./EditSurveyModal";
-import { CreateQuotationModal } from "./CreateQuotationModal";
 import QuotationAddServices from "./QuotationAddServices";
 import SurveyFloorList from "./SurveyFloorList";
+import { useAuth } from "../context/AuthContext";
 
 const { Content, Sider } = Layout;
 
@@ -27,6 +28,8 @@ const STAT_COLORS = {
     surveys: { color: '#52c41a', bg: '#f6ffed' },  // Green
     quotations: { color: '#faad14', bg: '#fffbe6' }, // Yellow/Orange
 };
+
+
 
 const SurveyDashboard = () => {
     const BACKEND_URL = "http://localhost:8080/images/survey/"; // đổi cho phù hợp môi trường
@@ -58,8 +61,11 @@ const SurveyDashboard = () => {
     const [selectedRequestForSurvey, setSelectedRequestForSurvey] = useState(null);
     const [editingSurvey, setEditingSurvey] = useState(null);
     const [selectedSurveyForQuotation, setSelectedSurveyForQuotation] = useState(null);
+      const { user,token } = useAuth(); // ✅ Lấy user đã decode từ JWT
 
-    
+        const { notification } = App.useApp();
+
+
     useEffect(() => {
         fetchRequests();
         fetchSurveys();
@@ -196,40 +202,53 @@ const SurveyDashboard = () => {
             message.error("Lỗi khi cập nhật khảo sát!");
         }
     };
-const handleOpenCreateQuotation = (survey) => {
-    if (survey.numFloors > 0 && (!survey.surveyFloors || survey.surveyFloors.length < survey.numFloors)) {
-        Modal.warning({
-            title: "Không thể tạo báo giá",
-            content: `Survey này có ${survey.numFloors} tầng. Vui lòng hoàn thành tất cả tầng trước khi tạo báo giá.`,
-            okText: "Đồng ý",
-        });
-        return;
-    }
+const handleCreateQuotation = async (survey) => {
+  // 1️⃣ Kiểm tra điều kiện tầng
+  if (
+    survey.numFloors > 0 &&
+    (!survey.surveyFloors || survey.surveyFloors.length < survey.numFloors)
+  ) {
+    notification.warning({
+      message: "Không thể tạo báo giá ⚠️",
+      description: `Khảo sát này có ${survey.numFloors} tầng, nhưng bạn chưa hoàn thành thông tin cho tất cả tầng. 
+      Vui lòng cập nhật đầy đủ trước khi tạo báo giá.`,
+      placement: "bottomRight",
+      duration: 5,
+    });
+    return;
+  }
 
-    setSelectedSurveyForQuotation(survey);
-    quoteForm.setFieldsValue({ createdDate: dayjs() });
-    setCreateQuotationModalVisible(true);
+  try {
+    // 2️⃣ Chuẩn bị dữ liệu gửi API
+    const payload = {
+      surveyId: survey.surveyId,
+      createdDate: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
+    };
+
+    // 3️⃣ Gọi API tạo báo giá
+    await axiosInstance.post("/quotations", payload);
+
+    // 4️⃣ Hiển thị thông báo thành công
+    notification.success({
+      message: "Tạo báo giá thành công 🎉",
+      description: `Báo giá cho khảo sát "${survey.addressFrom}" → "${survey.addressTo}" đã được tạo.`,
+      placement: "bottomRight",
+      duration: 4,
+    });
+
+    // 5️⃣ Reload danh sách (nếu cần)
+    fetchQuotations?.();
+
+  } catch (error) {
+    console.error(error);
+    notification.error({
+      message: "Tạo báo giá thất bại ❌",
+      description: "Đã xảy ra lỗi khi tạo báo giá. Vui lòng thử lại sau.",
+      placement: "bottomRight",
+    });
+  }
 };
 
-
-    const handleCreateQuotation = async (values) => {
-        try {
-            const payload = {
-                ...values,
-                surveyId: selectedSurveyForQuotation.surveyId,
-                createdDate: dayjs(values.createdDate).format("YYYY-MM-DDTHH:mm:ss"),
-            };
-            await axiosInstance.post("/quotations", payload);
-            message.success("Tạo báo giá thành công!");
-                                
-            quoteForm.resetFields();
-            setSelectedSurveyForQuotation(null);
-            setCreateQuotationModalVisible(false);
-            fetchQuotations();
-        } catch {
-            message.error("Tạo báo giá thất bại!");
-        }
-    };
 
     // HÀM XEM CHI TIẾT KHẢO SÁT (Giữ nguyên)
     const handleViewSurvey = (record) => {
@@ -496,7 +515,7 @@ const handleOpenCreateQuotation = (survey) => {
                 surveys={surveys}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
-                onCreateQuotation={handleOpenCreateQuotation}
+  onCreateQuotation={handleCreateQuotation} // ✅ GIỮ DÒNG NÀY
                 onViewSurvey={handleViewSurvey}
             />
         </Tabs.TabPane>
@@ -553,17 +572,7 @@ const handleOpenCreateQuotation = (survey) => {
                 onUpdate={handleUpdate}
             />
 
-            <CreateQuotationModal
-                visible={createQuotationModalVisible}
-                form={quoteForm}
-                selectedSurvey={selectedSurveyForQuotation}
-                onCancel={() => {
-                    setCreateQuotationModalVisible(false);
-                    setSelectedSurveyForQuotation(null);
-                    quoteForm.resetFields();
-                }}
-                onSubmit={handleCreateQuotation}
-            />
+        
         </Layout>
     );
 };
