@@ -37,8 +37,15 @@ public enum ErrorCode {
     PRICING_NOT_FOUND (1027,"Pricing not found",HttpStatus.NOT_FOUND),
     FORBIDDEN(1027,"Forbidden",HttpStatus.FORBIDDEN),
     DATA_NOT_FOUND(1028,"Data not found",HttpStatus.NOT_FOUND),
+
+    INVALID_PARAMETER(1029,"Invalid parameter",HttpStatus.BAD_REQUEST),
+    INVALID_STATUS_TRANSITION(1030,"Invalid status transition",HttpStatus.BAD_REQUEST),
+
+    ;
+
     VEHICLE_NOT_FOUND(1029,"Vehicle not found" , HttpStatus.NOT_FOUND),
     ROLE_NOT_ASSIGNED(1030,"Role not assigned" , HttpStatus.NOT_FOUND );
+
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

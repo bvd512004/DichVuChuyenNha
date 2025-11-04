@@ -39,7 +39,7 @@ export const workProgressApi = {
 
   // 📍 Cập nhật toàn bộ tiến độ
   update: (id, payload) => {
-    return axios.put(`${API_BASE}/api/work-progress/${id}`, payload, {
+    return axios.put(`${API_BASE}/api/work-progress/${id}/status`, payload, {
       headers: getAuthHeaders(),
     });
   },

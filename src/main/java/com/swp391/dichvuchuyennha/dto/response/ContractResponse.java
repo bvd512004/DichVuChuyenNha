@@ -36,6 +36,8 @@ public class ContractResponse {
     private String endLocation;
     private List<QuotationServiceInfo> services;
     private Double totalPrice;
+    private LocalDate depositDueDate;  // nếu cột của bạn trong DB là deposit_due_date
+    private PaymentResponse payment;
 
 // địa chỉ đến
 }

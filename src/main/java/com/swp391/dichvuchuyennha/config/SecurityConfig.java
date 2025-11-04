@@ -71,7 +71,9 @@ public class SecurityConfig {
                 "/api/manager/quotations/**",
                 "/api/damages/**",
                 "/images/damages/**",
+                "/api/payments/**",
                 "/api/chat-ai"};
+
 
 
 
@@ -95,8 +97,10 @@ public class SecurityConfig {
 //                                                .requestMatchers("/api/assignments/**").hasRole("MANAGER") //moi
                                                 // Assignment endpoints
 //                                                .requestMatchers(POST, "/api/assignments/assign").hasRole("MANAGER")
-
+                                                .requestMatchers("PATCH", "/api/work-progress/**/status").hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
 //                                                .requestMatchers("/api/assignments").hasRole("ADMIN")
+                                                // ✅ Customer có thể tạo payment
+
 
                                                 // Contract endpoints
                                                 .requestMatchers("/api/contracts/unsigned/me")

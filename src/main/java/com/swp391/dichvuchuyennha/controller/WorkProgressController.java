@@ -76,17 +76,20 @@ public class WorkProgressController {
         return ResponseEntity.ok(workProgressService.createWorkProgress(employee.getEmployeeId(), request));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}/status")
     public ResponseEntity<WorkProgressResponse> updateWorkProgress(
             @RequestHeader("Authorization") String authHeader,
             @PathVariable Integer id,
-            @RequestBody WorkProgressRequest request) {
+            @RequestParam String status
+           ) {
 
         Long userId = extractUserIdFromToken(authHeader);
         Employee employee = employeeRepository.findByUser_UserId(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        return ResponseEntity.ok(workProgressService.updateWorkProgress(id, employee.getEmployeeId(), request));
+        // gọi service để cập nhật chỉ mỗi status
+        WorkProgressResponse res = workProgressService.updateStatus(id, employee.getEmployeeId(), status);
+        return ResponseEntity.ok(res);
     }
 
     @DeleteMapping("/{id}")

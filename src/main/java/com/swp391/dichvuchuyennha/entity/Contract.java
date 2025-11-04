@@ -69,5 +69,6 @@ public class Contract {
     private LocalDate depositDueDate;
 
 
+
 }
 //thêm trường

@@ -5,6 +5,8 @@ import { assignmentApi } from "../service/assignment";
 import damageApi from "../service/damage";
 import "./style/ManagerWorkProgressPage.css";
 import { Card, Tag, Row, Col, Button, Modal, Input, message } from "antd";
+import QRCode from "react-qr-code";
+import PaymentAPI from "../service/payment"; // 🟢 thêm mới
 
 // ===================== Helper function để format ngày =====================
 const formatDate = (dateString) => {
@@ -60,8 +62,11 @@ const ManagerWorkProgressPage = () => {
   const [showWorkProgressModal, setShowWorkProgressModal] = useState(false);
 
   const [damageList, setDamageList] = useState([]);
+  const [paymentFinal, setPaymentFinal] = useState(null); // 🟢 Dữ liệu thanh toán cuối
+
   const [selectedDamage, setSelectedDamage] = useState(null);
   const [rejectDescription, setRejectDescription] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false); // 🟢 Modal xác nhận tạo thanh toán cuối
 
   // ========== Lấy danh sách hợp đồng ==========
   useEffect(() => {
@@ -211,13 +216,13 @@ const ManagerWorkProgressPage = () => {
         prev.map((dmg) =>
           dmg.damageId === damageId
             ? {
-                ...dmg,
-                status: action === "approve" ? "approved" : "rejected",
-                managerFeedback:
-                  action === "reject"
-                    ? rejectDescription
-                    : "Đã duyệt thiệt hại",
-              }
+              ...dmg,
+              status: action === "approve" ? "approved" : "rejected",
+              managerFeedback:
+                action === "reject"
+                  ? rejectDescription
+                  : "Đã duyệt thiệt hại",
+            }
             : dmg
         )
       );
@@ -227,6 +232,23 @@ const ManagerWorkProgressPage = () => {
     } catch (err) {
       console.error("❌ Lỗi gửi phản hồi thiệt hại:", err);
       message.error("Không thể gửi phản hồi");
+    }
+  };
+
+  // ✅ Xác nhận hợp đồng đã hoàn tất và tạo thanh toán cuối cùng
+  const handleCreateFinalPayment = async () => {
+    try {
+      console.log("🟢 Gọi API tạo thanh toán final...");
+      const res = await PaymentAPI.createFinalPayment(selectedContract);
+      message.success("✅ Đã tạo thanh toán cuối cùng!");
+      setPaymentFinal(res);
+      setShowConfirmModal(false);
+    } catch (err) {
+      console.error("❌ Lỗi tạo thanh toán final:", err);
+      message.error(
+        "❌ Lỗi khi tạo thanh toán cuối: " +
+          (err.response?.data?.message || err.message)
+      );
     }
   };
 
@@ -315,272 +337,314 @@ const ManagerWorkProgressPage = () => {
                     borderRadius: 16,
                     boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
                   }}
-                  title={
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <span style={{ fontWeight: 600 }}>🧱 {wp.serviceName}</span>
-                      <Tag
-                        color={
-                          wp.progressStatus === "completed"
-                            ? "green"
-                            : wp.progressStatus === "in_progress"
-                            ? "blue"
-                            : "orange"
-                        }
-                      >
-                        {wp.progressStatus === "completed"
-                          ? "Hoàn thành"
-                          : wp.progressStatus === "in_progress"
-                          ? "Đang thực hiện"
-                          : "Đang chờ"}
-                      </Tag>
-                    </div>
-                  }
+              title={
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
                 >
-                  <p>
-                    <strong>Mô tả:</strong> {wp.taskDescription || "—"}
-                  </p>
-                  <p>
-                    <strong>Nhân viên:</strong> {wp.employeeName || "—"}
-                  </p>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        ) : (
-          <p style={{ color: "#999", marginBottom: 24 }}>
-            Không có công việc nào.
-          </p>
-        )}
-
-        {/* Danh sách thiệt hại */}
-        <h3>⚠️ Thiệt hại phát sinh</h3>
-        {damageList.length > 0 ? (
-          damageList.map((dmg) => {
-            const normalizedStatus = (dmg.status || "").toLowerCase();
-            return (
-              <Card key={dmg.damageId} style={{ marginBottom: 16 }}>
-                <p><strong>Nguyên nhân:</strong> {dmg.cause}</p>
-                <p><strong>Chi phí:</strong> {dmg.cost ? `${dmg.cost.toLocaleString()} ₫` : "—"}</p>
-                <p><strong>Nhân viên:</strong> {dmg.employeeName || "—"}</p>
-                <p>
-                  <strong>Trạng thái:</strong>{" "}
+                  <span style={{ fontWeight: 600 }}>🧱 {wp.serviceName}</span>
                   <Tag
                     color={
-                      normalizedStatus === "pending_customer"
-                        ? "gold"
-                        : normalizedStatus === "pending_manager"
-                        ? "blue"
-                        : normalizedStatus === "approved"
+                      wp.progressStatus === "completed"
                         ? "green"
-                        : normalizedStatus === "rejected"
-                        ? "red"
-                        : "default"
+                        : wp.progressStatus === "in_progress"
+                        ? "blue"
+                        : "orange"
                     }
                   >
-                    {normalizedStatus === "pending_customer"
-                      ? "Chờ khách hàng"
-                      : normalizedStatus === "pending_manager"
-                      ? "Chờ quản lý"
-                      : normalizedStatus === "approved"
-                      ? "Đã duyệt"
-                      : normalizedStatus === "rejected"
-                      ? "Đã từ chối"
-                      : "Không xác định"}
+                    {wp.progressStatus === "completed"
+                      ? "Hoàn thành"
+                      : wp.progressStatus === "in_progress"
+                      ? "Đang thực hiện"
+                      : "Đang chờ"}
                   </Tag>
-                </p>
+                </div>
+              }
+            >
+              <p>
+                <strong>Mô tả:</strong> {wp.taskDescription || "—"}
+              </p>
+              <p>
+                <strong>Nhân viên:</strong> {wp.employeeName || "—"}
+              </p>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    ) : (
+      <p style={{ color: "#999", marginBottom: 24 }}>Không có công việc nào.</p>
+    )}
 
-                {/* Feedback hiển thị cho manager */}
-                {(dmg.customerFeedback || dmg.managerFeedback) && (
-                  <div
-                    style={{
-                      background: "#fafafa",
-                      padding: "10px",
-                      borderRadius: "6px",
-                      marginTop: "8px",
-                    }}
-                  >
-                    {dmg.customerFeedback && (
-                      <p>💬 <b>Phản hồi khách hàng:</b> {dmg.customerFeedback}</p>
-                    )}
-                    {dmg.managerFeedback && (
-                      <p>🧑‍💼 <b>Phản hồi quản lý:</b> {dmg.managerFeedback}</p>
-                    )}
-                  </div>
+    {/* Danh sách thiệt hại */}
+    <h3>⚠️ Thiệt hại phát sinh</h3>
+    {damageList.length > 0 ? (
+      damageList.map((dmg) => {
+        const normalizedStatus = (dmg.status || "").toLowerCase();
+        return (
+          <Card key={dmg.damageId} style={{ marginBottom: 16 }}>
+            <p><strong>Nguyên nhân:</strong> {dmg.cause}</p>
+            <p><strong>Chi phí:</strong> {dmg.cost ? `${dmg.cost.toLocaleString()} ₫` : "—"}</p>
+            <p><strong>Nhân viên:</strong> {dmg.employeeName || "—"}</p>
+            <p>
+              <strong>Trạng thái:</strong>{" "}
+              <Tag
+                color={
+                  normalizedStatus === "pending_customer"
+                    ? "gold"
+                    : normalizedStatus === "pending_manager"
+                    ? "blue"
+                    : normalizedStatus === "approved"
+                    ? "green"
+                    : normalizedStatus === "rejected"
+                    ? "red"
+                    : "default"
+                }
+              >
+                {normalizedStatus === "pending_customer"
+                  ? "Chờ khách hàng"
+                  : normalizedStatus === "pending_manager"
+                  ? "Chờ quản lý"
+                  : normalizedStatus === "approved"
+                  ? "Đã duyệt"
+                  : normalizedStatus === "rejected"
+                  ? "Đã từ chối"
+                  : "Không xác định"}
+              </Tag>
+            </p>
+
+            {(dmg.customerFeedback || dmg.managerFeedback) && (
+              <div
+                style={{
+                  background: "#fafafa",
+                  padding: "10px",
+                  borderRadius: "6px",
+                  marginTop: "8px",
+                }}
+              >
+                {dmg.customerFeedback && (
+                  <p>💬 <b>Phản hồi khách hàng:</b> {dmg.customerFeedback}</p>
                 )}
-
-                {dmg.imageUrl && (
-                  <img
-                    src={dmg.imageUrl}
-                    alt="Damage"
-                    style={{
-                      width: 120,
-                      height: 120,
-                      objectFit: "cover",
-                      borderRadius: 8,
-                      marginTop: 8,
-                    }}
-                  />
+                {dmg.managerFeedback && (
+                  <p>🧑‍💼 <b>Phản hồi quản lý:</b> {dmg.managerFeedback}</p>
                 )}
+              </div>
+            )}
 
-                {/* Chỉ hiển thị nút phản hồi nếu đang chờ quản lý */}
-                {normalizedStatus === "pending_manager" && (
-                  <div style={{ marginTop: 12 }}>
-                    <Button
-                      type="primary"
-                      onClick={() => handleDamageFeedback(dmg.damageId, "approve")}
-                    >
-                      Đồng ý
-                    </Button>
-                    <Button
-                      danger
-                      onClick={() => setSelectedDamage(dmg.damageId)}
-                      style={{ marginLeft: 8 }}
-                    >
-                      Từ chối
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            );
-          })
-        ) : (
-          <p style={{ color: "#999" }}>Không có thiệt hại nào.</p>
-        )}
-      </Modal>
+            {dmg.imageUrl && (
+              <img
+                src={dmg.imageUrl}
+                alt="Damage"
+                style={{
+                  width: 120,
+                  height: 120,
+                  objectFit: "cover",
+                  borderRadius: 8,
+                  marginTop: 8,
+                }}
+              />
+            )}
 
-      {/* Modal từ chối thiệt hại */}
-      <Modal
-        title="Nhập lý do từ chối"
-        open={selectedDamage !== null}
-        onCancel={() => {
-          setSelectedDamage(null);
-          setRejectDescription("");
+            {normalizedStatus === "pending_manager" && (
+              <div style={{ marginTop: 12 }}>
+                <Button
+                  type="primary"
+                  onClick={() => handleDamageFeedback(dmg.damageId, "approve")}
+                >
+                  Đồng ý
+                </Button>
+                <Button
+                  danger
+                  onClick={() => setSelectedDamage(dmg.damageId)}
+                  style={{ marginLeft: 8 }}
+                >
+                  Từ chối
+                </Button>
+              </div>
+            )}
+          </Card>
+        );
+      })
+    ) : (
+      <p style={{ color: "#999" }}>Không có thiệt hại nào.</p>
+    )}
+
+    {/* 🟢 Nút báo cáo hoàn tất */}
+    {workProgressList.length > 0 &&
+      workProgressList.every((wp) => wp.progressStatus === "completed") && (
+        <div style={{ textAlign: "center", marginTop: 24 }}>
+          <Button
+            type="primary"
+            danger
+            onClick={() => setShowConfirmModal(true)}
+          >
+            🚚 Báo cáo hợp đồng đã hoàn tất
+          </Button>
+        </div>
+      )}
+
+    {/* 🟢 Nếu có paymentFinal thì hiển thị QR */}
+    {paymentFinal && (
+      <Card
+        title="💳 Thanh toán cuối cùng cho khách hàng"
+        style={{
+          marginTop: 24,
+          border: "1px solid #ccc",
+          borderRadius: 12,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
-        onOk={() => handleDamageFeedback(selectedDamage, "reject")}
-        okText="Gửi"
-        cancelText="Hủy"
       >
-        <Input.TextArea
-          rows={4}
-          value={rejectDescription}
-          onChange={(e) => setRejectDescription(e.target.value)}
-          placeholder="Nhập lý do từ chối..."
-        />
-      </Modal>
+        <p>Số tiền: <strong>{paymentFinal.amount?.toLocaleString("vi-VN")} ₫</strong></p>
+        <p>Mã đơn hàng: <strong>{paymentFinal.orderCode}</strong></p>
 
-      {/* Modal tạo Work Progress */}
-      <ModalComponent show={showModal} onClose={handleCloseModal}>
-        <div
-          className="modal-content-box"
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            backgroundColor: "white",
-            padding: "30px",
-            borderRadius: "12px",
-            minWidth: "500px",
-            maxWidth: "600px",
-          }}
-        >
-          <h3>🧱 Tạo Work Progress cho hợp đồng #{selectedContract}</h3>
-
-          <div style={{ marginBottom: "20px" }}>
-            <label>Chọn nhân viên *</label>
-            <select
-              value={selectedEmployee ?? ""}
-              onChange={(e) => setSelectedEmployee(Number(e.target.value))}
-              disabled={loading}
-              style={{
-                width: "100%",
-                padding: "10px",
-                borderRadius: "6px",
-                border: "1px solid #ddd",
-              }}
-            >
-              <option value="">-- Chọn nhân viên --</option>
-              {employees.map((emp) => (
-                <option key={emp.employeeId} value={emp.employeeId}>
-                  {emp.username} - {emp.position}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ marginBottom: "20px" }}>
-            <label>Mô tả công việc *</label>
-            <textarea
-              value={taskDescription}
-              onChange={(e) => setTaskDescription(e.target.value)}
-              rows="4"
-              disabled={loading}
-              style={{
-                width: "100%",
-                padding: "10px",
-                borderRadius: "6px",
-                border: "1px solid #ddd",
-              }}
-            />
-          </div>
-
-          {msgText && (
-            <div
-              style={{
-                padding: "10px",
-                marginBottom: "15px",
-                backgroundColor: "#fff2e8",
-                border: "1px solid #ffbb96",
-                borderRadius: "6px",
-                color: "#d4380d",
-              }}
-            >
-              {msgText}
-            </div>
-          )}
-
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button
-              onClick={handleCreateWorkProgress}
-              disabled={loading}
-              style={{
-                flex: 1,
-                padding: "12px 20px",
-                backgroundColor: "#4a90e2",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-              }}
-            >
-              {loading ? "Đang tạo..." : "Tạo"}
-            </button>
-            <button
-              onClick={handleCloseModal}
-              disabled={loading}
-              style={{
-                flex: 1,
-                padding: "12px 20px",
-                backgroundColor: "#6c757d",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1,
-              }}
-            >
-              Hủy
-            </button>
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <QRCode value={paymentFinal.checkoutUrl} size={220} />
+          <div style={{ marginTop: 16 }}>
+            <Button type="primary" href={paymentFinal.checkoutUrl} target="_blank">
+              Mở link thanh toán
+            </Button>
           </div>
         </div>
-      </ModalComponent>
+      </Card>
+    )}
+
+    {/* Modal xác nhận tạo thanh toán cuối */}
+    <Modal
+      title="Xác nhận hoàn tất hợp đồng"
+      open={showConfirmModal}
+      onCancel={() => setShowConfirmModal(false)}
+      onOk={handleCreateFinalPayment}
+      okText="Tạo thanh toán"
+      cancelText="Hủy"
+    >
+      <p>Tất cả công việc đã hoàn thành. Bạn có muốn tạo thanh toán cuối cùng cho khách hàng?</p>
+    </Modal>
+  </Modal>
+
+  {/* Modal từ chối thiệt hại */}
+  <Modal
+    title="Nhập lý do từ chối"
+    open={selectedDamage !== null}
+    onCancel={() => {
+      setSelectedDamage(null);
+      setRejectDescription("");
+    }}
+    onOk={() => handleDamageFeedback(selectedDamage, "reject")}
+    okText="Gửi"
+    cancelText="Hủy"
+  >
+    <Input.TextArea
+      rows={4}
+      value={rejectDescription}
+      onChange={(e) => setRejectDescription(e.target.value)}
+      placeholder="Nhập lý do từ chối..."
+    />
+  </Modal>
+
+  {/* Modal tạo Work Progress */}
+  <ModalComponent show={showModal} onClose={handleCloseModal}>
+    <div
+      className="modal-content-box"
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        backgroundColor: "white",
+        padding: "30px",
+        borderRadius: "12px",
+        minWidth: "500px",
+        maxWidth: "600px",
+      }}
+    >
+      <h3>🧱 Tạo Work Progress cho hợp đồng #{selectedContract}</h3>
+      <div style={{ marginBottom: "20px" }}>
+        <label>Chọn nhân viên *</label>
+        <select
+          value={selectedEmployee ?? ""}
+          onChange={(e) => setSelectedEmployee(Number(e.target.value))}
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "10px",
+            borderRadius: "6px",
+            border: "1px solid #ddd",
+          }}
+        >
+          <option value="">-- Chọn nhân viên --</option>
+          {employees.map((emp) => (
+            <option key={emp.employeeId} value={emp.employeeId}>
+              {emp.username} - {emp.position}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div style={{ marginBottom: "20px" }}>
+        <label>Mô tả công việc *</label>
+        <textarea
+          value={taskDescription}
+          onChange={(e) => setTaskDescription(e.target.value)}
+          rows="4"
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "10px",
+            borderRadius: "6px",
+            border: "1px solid #ddd",
+          }}
+        />
+      </div>
+      {msgText && (
+        <div
+          style={{
+            padding: "10px",
+            marginBottom: "15px",
+            backgroundColor: "#fff2e8",
+            border: "1px solid #ffbb96",
+            borderRadius: "6px",
+            color: "#d4380d",
+          }}
+        >
+          {msgText}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: "10px" }}>
+        <button
+          onClick={handleCreateWorkProgress}
+          disabled={loading}
+          style={{
+            flex: 1,
+            padding: "12px 20px",
+            backgroundColor: "#4a90e2",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.6 : 1,
+          }}
+        >
+          {loading ? "Đang tạo..." : "Tạo"}
+        </button>
+        <button
+          onClick={handleCloseModal}
+          disabled={loading}
+          style={{
+            flex: 1,
+            padding: "12px 20px",
+            backgroundColor: "#6c757d",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.6 : 1,
+          }}
+        >
+          Hủy
+        </button>
+      </div>
     </div>
-  );
+  </ModalComponent>
+</div>
+);
 };
 
 export default ManagerWorkProgressPage;
-//fix end 
