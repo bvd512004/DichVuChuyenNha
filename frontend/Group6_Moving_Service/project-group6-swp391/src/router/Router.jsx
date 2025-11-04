@@ -37,6 +37,8 @@ import ReviewQuotationManagement from "../manager/ReviewQuotationManagement";
 import PaymentSuccessPage from "../customer/PaymentSuccessPage";
 import PaymentCancelPage from "../customer/PaymentCancelPage";
 import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
+import ServicePrice from "../admin/ServicePrice";
+import ServiceDetail from "../admin/ServiceDetail";
 const Router = () => {
   const router = createBrowserRouter([
     {
@@ -95,7 +97,7 @@ const Router = () => {
           path: "review-quotations",
           element: <ReviewQuotationManagement />
         },
-        {
+        
 
         // },
         {
@@ -161,6 +163,14 @@ const Router = () => {
           path: "/customer/final-payments",
           element: <UserFinalPaymentPage />,
         },
+          {
+          path: "service-admin",
+          element: <ServicePrice/>,
+        },
+        {
+          path:"services/:id",
+          element:<ServiceDetail/>
+        },
 
 
 
@@ -191,46 +201,46 @@ const Router = () => {
         { path: "list-contract-unsigned", element: <UserContractsPage /> },
 
         // Admin routes
-        {
+        // {
 
-          path: "admin-create-user",
-          element: (
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <CreateAdminUser />
-            </ProtectedRoute>
-          ),
+        //   path: "admin-create-user",
+        //   element: (
+        //     <ProtectedRoute allowedRoles={["admin"]}>
+        //       <CreateAdminUser />
+        //     </ProtectedRoute>
+        //   ),
 
-        },
+        // },
 
-        {
+        // {
 
-          path: "admin-dashboard",
-          element: (
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminDashboard />
+        //   path: "admin-dashboard",
+        //   element: (
+        //     <ProtectedRoute allowedRoles={["admin"]}>
+        //       <AdminDashboard />
 
-            </ProtectedRoute>
-          ),
-        },
+        //     </ProtectedRoute>
+        //   ),
+        // },
 
-        {
-          path: "employee-management",
-          element: (
-            <ProtectedRoute allowedRoles={["admin", "manager"]}>
-              <EmployeeManagement />
-            </ProtectedRoute>
-          ),
-        },
+        // {
+        //   path: "employee-management",
+        //   element: (
+        //     <ProtectedRoute allowedRoles={["admin", "manager"]}>
+        //       <EmployeeManagement />
+        //     </ProtectedRoute>
+        //   ),
+        // },
 
-        {
-          path: "vehicle-management",
-          element: (
-            <ProtectedRoute allowedRoles={["admin", "manager"]}>
-              <VehicleManagement />
+        // {
+        //   path: "vehicle-management",
+        //   element: (
+        //     <ProtectedRoute allowedRoles={["admin", "manager"]}>
+        //       <VehicleManagement />
 
-            </ProtectedRoute>
-          ),
-        },
+        //     </ProtectedRoute>
+        //   ),
+        // },
         {
           path: "my-requests",
           element: <UserRequestsPage />
