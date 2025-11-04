@@ -8,7 +8,8 @@ import java.util.List;
 public interface WorkProgressService {
     List<WorkProgressResponse> getByEmployeeId(Integer employeeId);
     WorkProgressResponse createWorkProgress(Integer employeeId, WorkProgressRequest request);
-    WorkProgressResponse updateWorkProgress(Integer progressId, Integer employeeId, WorkProgressRequest request);
+    WorkProgressResponse updateStatus(Integer progressId, Integer employeeId, String status);
+
     void deleteWorkProgress(Integer progressId, Integer employeeId);
     WorkProgressResponse createWorkProgressForEmployee(WorkProgressRequest request, Integer managerId);
     List<WorkProgressResponse> getAllWorkProgress();

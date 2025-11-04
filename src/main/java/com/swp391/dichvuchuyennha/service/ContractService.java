@@ -28,6 +28,7 @@ public class ContractService {
     private final UserRepository userRepository;
     private final ContractMapper contractMapper;
     private final QuotationRepository quotationRepository;
+    private final PaymentService paymentService;
 
     /** ✅ Tạo hợp đồng mới */
     public ContractResponse createContract(ContractRequest request) {
@@ -60,6 +61,7 @@ public class ContractService {
     }
 
     /** ✅ Ký hợp đồng */
+    /** ✅ Ký hợp đồng */
     @Transactional
     public ContractResponse signContract(Integer contractId, Integer userId) {
         Users user = userRepository.findById(userId)
@@ -68,10 +70,7 @@ public class ContractService {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
 
-        Users owner = contract.getQuotation()
-                .getSurvey()
-                .getRequest()
-                .getUser();
+        Users owner = contract.getQuotation().getSurvey().getRequest().getUser();
 
         if (!owner.getUserId().equals(userId)) {
             throw new RuntimeException("User not authorized to sign this contract");
@@ -84,10 +83,14 @@ public class ContractService {
         contract.setStatus("SIGNED");
         contract.setSignedBy(user);
         contract.setSignedDate(LocalDateTime.now());
-
         Contract saved = contractRepository.save(contract);
+
+        // ✅ Sau khi ký hợp đồng → tạo QR thanh toán đặt cọc
+//        paymentService.createDepositPayment(contractId);
+
         return contractMapper.toResponse(saved);
     }
+
 
     /** ✅ Lấy hợp đồng đã ký của user hiện tại */
     @Transactional(readOnly = true)
@@ -219,18 +222,18 @@ public class ContractService {
         }
     }
 
-    /** ✅ Lấy hợp đồng đã ký có nhân viên được gán */
+    /** ✅ Lấy hợp đồng đã ký có nhân viên được gán */ // fix status
     public List<ContractDTO> getContractsSignedWithEmployees() {
-        return contractRepository.findByStatus("SIGNED").stream()
+        return contractRepository.findByStatus("DEPOSIT_PAID").stream()
                 .filter(c -> c.getAssignmentEmployees() != null && !c.getAssignmentEmployees().isEmpty())
                 .map(c -> new ContractDTO(c.getContractId(), c.getStatus()))
                 .toList();
     }
 
-    /** ✅ Lấy danh sách hợp đồng đủ điều kiện tạo WorkProgress */
+    /** ✅ Lấy danh sách hợp đồng đủ điều kiện tạo WorkProgress */ //mới fix status
     @Transactional(readOnly = true)
     public List<ContractResponse> getEligibleContractsForWorkProgress() {
-        List<Contract> contracts = contractRepository.findByStatus("SIGNED");
+        List<Contract> contracts = contractRepository.findByStatus("DEPOSIT_PAID");
 
         return contracts.stream()
                 .filter(c -> c.getAssignmentEmployees() != null && !c.getAssignmentEmployees().isEmpty())
