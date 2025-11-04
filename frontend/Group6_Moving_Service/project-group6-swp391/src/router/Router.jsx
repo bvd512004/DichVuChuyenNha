@@ -8,9 +8,6 @@ import CustomerRegisterForm from "../customer/CustomerRegisterForm";
 import UserContractsPage from "../customer/UserContractPage";
 import UserRequestsPage from "../customer/UserRequestsPage";
 import CustomerPage from "../customer/CustomerPage";
-import CreateAdminUser from "../admin/CreateAdminUser";
-import EmployeeManagement from "../admin/EmployeeManagement";
-import VehicleManagement from "../vehicles/VehiclesPage";
 import AnimatedPage from "../components/AnimatedPage";
 
 
@@ -59,6 +56,7 @@ const Router = () => {
         //       <ContractAssignment />
 
         //   ),
+
         // },
         {
           path: "user-profile",
@@ -98,17 +96,61 @@ const Router = () => {
           element: <ReviewQuotationManagement />
         },
         {
+
+        // },
+        {
+          path: "user-profile",
+          element: <ProfilePage />
+        },
+        {
+          path: "assign-surveyer",
+          element: <AssignSurveyer />
+        },
+        {
+          path: "survey-dashboard",
+          element: (
+            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Surveyer">
+              <SurveyDashboard />
+            </ProtectedRoute>
+          ),
+        },
+
+        {
+          path: "price-service",
+          element: <PriceTable />
+        },
+        {
+          path: "add-services",
+          element: <QuotationAddServices />
+        },
+        {
+          path: "quotations-services",
+          element: <QuotationServiceManager />
+        },
+        {
+          path: "quotations-services-list",
+          element: <QuotationServiceList />
+        },
+        //  {
+        //   path:"review-quotations",
+        //   element: <ReviewQuotationManagement/>
+        // },
+        {
+
           path: "quotation-for-customer",
           element: <QuotationApproval />
         },
         {
           path: "contracts-list-manager",
           element: <QuotationContractList />
+
         },
         //payment deposit routes
         {
           path: "/payment/success",
           element: <PaymentSuccessPage />,
+
+
         },
         {
           path: "/payment/cancel",
@@ -119,6 +161,9 @@ const Router = () => {
           path: "/customer/final-payments",
           element: <UserFinalPaymentPage />,
         },
+
+
+
 
 
 
@@ -147,6 +192,7 @@ const Router = () => {
 
         // Admin routes
         {
+
           path: "admin-create-user",
           element: (
             <ProtectedRoute allowedRoles={["admin"]}>
@@ -157,10 +203,12 @@ const Router = () => {
         },
 
         {
+
           path: "admin-dashboard",
           element: (
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminDashboard />
+
             </ProtectedRoute>
           ),
         },
@@ -179,6 +227,7 @@ const Router = () => {
           element: (
             <ProtectedRoute allowedRoles={["admin", "manager"]}>
               <VehicleManagement />
+
             </ProtectedRoute>
           ),
         },
