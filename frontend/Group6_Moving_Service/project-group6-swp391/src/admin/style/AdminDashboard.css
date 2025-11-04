@@ -1,0 +1,85 @@
+/* src/style/AdminDashboard.css */
+
+/* Layout chính */
+.admin-dashboard {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Card style (nếu dùng) */
+.admin-dashboard .card {
+  border: 2px solid #000;
+  border-radius: 12px;
+}
+
+/* Nav tabs (nếu dùng) */
+.admin-dashboard .nav-tabs .nav-link {
+  color: #000;
+  font-weight: 600;
+  border: none;
+  padding: 12px 20px;
+}
+.admin-dashboard .nav-tabs .nav-link.active {
+  background-color: #000;
+  color: #fff;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Table & Badge */
+.admin-dashboard .table {
+  margin-bottom: 0;
+}
+.admin-dashboard .badge {
+  font-size: 0.8em;
+}
+
+/* ============================================================= */
+/* MODAL: Chỉ dùng .custom-modal để tránh ảnh hưởng modal khác */
+/* ============================================================= */
+.custom-modal .modal-dialog {
+  max-width: 520px !important;
+  margin: 8vh auto !important;
+}
+
+.custom-modal .modal-content {
+  border-radius: 16px !important;
+  padding: 24px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e0e0e0;
+  background-color: #fff;
+}
+
+/* Ant Design Form trong Modal */
+.custom-modal .ant-form {
+  width: 100%;
+}
+
+.custom-modal .ant-form-item {
+  margin-bottom: 16px !important;
+}
+
+.custom-modal .ant-form-item-label {
+  text-align: left !important;
+  font-weight: 500;
+}
+
+.custom-modal .ant-input,
+.custom-modal .ant-input-password,
+.custom-modal .ant-select-selector {
+  border-radius: 8px !important;
+  height: 40px;
+}
+
+.custom-modal .ant-btn-primary {
+  width: 100%;
+  height: 44px;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+/* Fix Input.Password icon alignment */
+.custom-modal .ant-input-password .ant-input {
+  height: 40px;
+}
