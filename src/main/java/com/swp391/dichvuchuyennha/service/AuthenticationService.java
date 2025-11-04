@@ -151,7 +151,7 @@ public class AuthenticationService {
                     .issueTime(new Date())
                     .expirationTime(Date.from(Instant.now().plusSeconds(jwtExpirationSec)))
                     .jwtID(UUID.randomUUID().toString())
-                    .claim("roles", List.of(user.getRole().getRoleName()))
+                    .claim("scope", List.of(user.getRole().getRoleName()))
                     .claim("position", user.getEmployee() != null ? user.getEmployee().getPosition() : null)
                     .claim("userId", user.getUserId())
                     .build();

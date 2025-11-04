@@ -26,31 +26,46 @@ const LoginPage = () => {
       formik.setSubmitting(true);
       try {
         const response = await axios.post("http://localhost:8080/api/auth/login", values);
-        const { token, userId, username, roleId, roleName, position } = response.data.result;
 
+        // ĐÚNG: response.data.result
+        const result = response.data.result;
+        const token = result.token;
+        const roleName = result.roleName?.toLowerCase(); // "admin"
+        const position = result.position;
+
+        // Lưu token
         localStorage.setItem("token", token);
-        localStorage.setItem("userId", userId);
-        localStorage.setItem("username", username);
-        localStorage.setItem("roleId", roleId);
-        localStorage.setItem("roleName", roleName);
-        localStorage.setItem("position", position);
 
-        alert("Login successful!");
+        // Đọc scope từ JWT (để xác nhận)
+        let roleFromJwt = "";
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          roleFromJwt = payload.scope?.toLowerCase();
+        } catch (err) {
+          console.error("Invalid JWT");
+        }
 
-        if (roleId === 3 && position === "Surveyer") {
-          navigate("/survey-dashboard");
-        } else if (roleId === 3) {
-          navigate("/employee/dashboard");
-        } else if (roleId === 4 || roleId === 5) {
-          navigate("/customer-page");
-        } else if (roleId === 2) {
-          navigate("/manager/dashboard");
-        } else if (roleId === 1) {
+        // Ưu tiên role từ JWT, fallback bằng roleName
+        const finalRole = roleFromJwt || roleName;
+
+        // CHUYỂN HƯỚNG
+        if (finalRole === "admin") {
           navigate("/admin-dashboard");
+        } else if (finalRole === "manager") {
+          navigate("/manager/dashboard");
+        } else if (finalRole === "employee") {
+          if (position === "Surveyer") {
+            navigate("/survey-dashboard");
+          } else {
+            navigate("/employee/dashboard");
+          }
+        } else if (finalRole === "customer_individual" || finalRole === "customer_company") {
+          navigate("/customer-page");
         } else {
           navigate("/");
         }
       } catch (error) {
+        console.error("Login error:", error);
         alert(error.response?.data?.message || "Login failed");
       } finally {
         formik.setSubmitting(false);

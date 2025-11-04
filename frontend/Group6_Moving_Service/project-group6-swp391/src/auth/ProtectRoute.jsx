@@ -8,13 +8,17 @@ const ProtectedRoute = ({ children, allowedRoles, requiredPosition }) => {
 
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
-    const roles = payload.roles || [];
-    const position = payload.position || ""; // cần backend gửi position trong token
 
-    const hasPermission = roles.some(role => allowedRoles.includes(role)) &&
-                          (!requiredPosition || position === requiredPosition);
+    const role = payload.scope || ""; // ← "admin", "manager",...
+    const position = payload.position || "";
 
-    if (!hasPermission) return <Navigate to="/access-denied" replace />;
+    // So sánh role (viết thường)
+    const hasRole = allowedRoles.some(r => r.toLowerCase() === role.toLowerCase());
+    const hasPosition = !requiredPosition || position === requiredPosition;
+
+    if (!hasRole || !hasPosition) {
+      return <Navigate to="/access-denied" replace />;
+    }
 
     return children;
   } catch (err) {
@@ -22,6 +26,5 @@ const ProtectedRoute = ({ children, allowedRoles, requiredPosition }) => {
     return <Navigate to="/login" replace />;
   }
 };
-
 
 export default ProtectedRoute;
