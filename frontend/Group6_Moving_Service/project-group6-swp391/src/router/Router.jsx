@@ -37,8 +37,8 @@ import ReviewQuotationManagement from "../manager/ReviewQuotationManagement";
 import PaymentSuccessPage from "../customer/PaymentSuccessPage";
 import PaymentCancelPage from "../customer/PaymentCancelPage";
 import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
-
-
+import ServicePrice from "../admin/ServicePrice";
+import ServiceDetail from "../admin/ServiceDetail";
 const Router = () => {
   const router = createBrowserRouter([
     {
@@ -163,6 +163,14 @@ const Router = () => {
           path: "/customer/final-payments",
           element: <UserFinalPaymentPage />,
         },
+          {
+          path: "service-admin",
+          element: <ServicePrice/>,
+        },
+        {
+          path:"services/:id",
+          element:<ServiceDetail/>
+        },
 
 
 
@@ -192,7 +200,7 @@ const Router = () => {
 
         { path: "list-contract-unsigned", element: <UserContractsPage /> },
 
-        // // Admin routes
+        // Admin routes
         // {
 
         //   path: "admin-create-user",

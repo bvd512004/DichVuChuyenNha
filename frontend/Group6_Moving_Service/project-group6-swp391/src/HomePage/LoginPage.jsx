@@ -4,6 +4,8 @@ import * as Yup from "yup";
 import axios from "axios";
 import "./style/LoginPage.css";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 import { Input, Button, Form, Modal } from "antd";
 
 const LoginPage = () => {
@@ -13,6 +15,8 @@ const LoginPage = () => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1);
+    const { login } = useAuth(); // ✅ lấy login từ context
+
 
   const validationSchema = Yup.object({
     email: Yup.string().email("Invalid email").required("Email is required"),
@@ -26,36 +30,32 @@ const LoginPage = () => {
       formik.setSubmitting(true);
       try {
         const response = await axios.post("http://localhost:8080/api/auth/login", values);
-        const { token, userId, username, roleId, roleName, position } = response.data.result;
+       const { token, roleId, position } = response.data.result;
+      // ✅ gọi context login
+      login(token);
 
-        localStorage.setItem("token", token);
-        localStorage.setItem("userId", userId);
-        localStorage.setItem("username", username);
-        localStorage.setItem("roleId", roleId);
-        localStorage.setItem("roleName", roleName);
-        localStorage.setItem("position", position);
-
-        alert("Login successful!");
-
-        if (roleId === 3 && position === "Surveyer") {
-          navigate("/survey-dashboard");
-        } else if (roleId === 3) {
-          navigate("/employee/dashboard");
-        } else if (roleId === 4 || roleId === 5) {
-          navigate("/customer-page");
-        } else if (roleId === 2) {
-          navigate("/manager/dashboard");
-        } else if (roleId === 1) {
-          navigate("/admin-dashboard");
-        } else {
-          navigate("/");
-        }
-      } catch (error) {
-        alert(error.response?.data?.message || "Login failed");
-      } finally {
-        formik.setSubmitting(false);
+      // Navigate tùy role
+   
+      if (roleId === 3 && position === "Surveyer") {
+        navigate("/survey-dashboard");
+      } else if (roleId === 3) {
+        navigate("/employee/dashboard");
+      } else if (roleId === 4 || roleId === 5) {
+        navigate("/customer-page");
+      } else if (roleId === 2) {
+        navigate("/manager/dashboard");
+      } else if (roleId === 1) {
+        navigate("/admin-dashboard");
+      } else {
+        navigate("/");
       }
-    },
+
+    } catch (error) {
+      alert(error.response?.data?.message || "Login failed");
+      setSubmitting(false);
+    }
+  },
+
   });
 
   const handleSendOtp = async () => {
