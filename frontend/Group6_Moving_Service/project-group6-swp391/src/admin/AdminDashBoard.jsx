@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Container, Row, Col, Nav, Alert } from "react-bootstrap";
-import { FiUserPlus, FiShield, FiTruck, FiClock } from "react-icons/fi";
+import { FiUserPlus, FiShield, FiTruck, FiClock, FiDollarSign, FiList } from "react-icons/fi";  // Thêm icons cho service
 import { message } from "antd";
-
 import { useAdminData } from "./hooks/useAdminData";
 import UserTable from "./components/UserTable";
 import RoleTable from "./components/RoleTable";
@@ -11,7 +10,8 @@ import AuditLogTable from "./components/AuditLogTable";
 import CreateUserModal from "./components/CreateUserModal";
 import EditUserModal from "./components/EditUserModal";
 import LoginHistoryModal from "./components/LoginHistoryModal";
-
+import ServicePrice from "./components/ServicePrice";
+import ServiceDetail from "./components/ServiceDetail";
 import "./style/AdminDashboard.css";
 
 export default function AdminDashboard() {
@@ -55,6 +55,12 @@ export default function AdminDashboard() {
             <Nav.Link onClick={() => setActiveTab("vehicles")} active={activeTab === "vehicles"}>
               <FiTruck className="me-2" /> Vehicles
             </Nav.Link>
+            <Nav.Link onClick={() => setActiveTab("serviceprices")} active={activeTab === "serviceprices"}>
+              <FiDollarSign className="me-2" /> Service Prices
+            </Nav.Link>
+            <Nav.Link onClick={() => setActiveTab("servicedetails")} active={activeTab === "servicedetails"}>
+              <FiList className="me-2" /> Service Details
+            </Nav.Link>
             <Nav.Link onClick={() => setActiveTab("logs")} active={activeTab === "logs"}>
               <FiClock className="me-2" /> Logs
             </Nav.Link>
@@ -75,6 +81,8 @@ export default function AdminDashboard() {
               )}
               {activeTab === "roles" && <RoleTable roles={roles} />}
               {activeTab === "vehicles" && <VehicleTable vehicles={vehicles} />}
+              {activeTab === "serviceprices" && <ServicePrice />}
+              {activeTab === "servicedetails" && <ServiceDetail />}
               {activeTab === "logs" && <AuditLogTable logs={auditLogs} />}
             </>
           )}

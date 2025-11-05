@@ -34,36 +34,33 @@ const LoginPage = () => {
         // ĐÚNG: response.data.result
         const result = response.data.result;
         const token = result.token;
-        const roleName = result.roleName?.toLowerCase(); // "admin"
+        const roleId = result.roleId; // Sử dụng roleId để check
         const position = result.position;
 
         // Lưu token
         localStorage.setItem("token", token);
 
-        // Đọc scope từ JWT (để xác nhận)
-        let roleFromJwt = "";
+        // Đọc scope từ JWT (để xác nhận) - giữ để debug nhưng không dùng cho redirect
         try {
           const payload = JSON.parse(atob(token.split(".")[1]));
-          roleFromJwt = payload.scope?.toLowerCase();
+          console.log("JWT payload:", payload);  // Log để debug
+          const roleFromJwt = payload.roles?.[0]?.toLowerCase() || "";  // Sửa claim thành "roles"
         } catch (err) {
-          console.error("Invalid JWT");
+          console.error("Invalid JWT format:", err);  // Sửa message
         }
 
-        // Ưu tiên role từ JWT, fallback bằng roleName
-        const finalRole = roleFromJwt || roleName;
-
-        // CHUYỂN HƯỚNG
-        if (finalRole === "admin") {
+        // CHUYỂN HƯỚNG dựa trên roleId (an toàn hơn, vì id không đổi case)
+        if (roleId === 1) { // admin
           navigate("/admin-dashboard");
-        } else if (finalRole === "manager") {
+        } else if (roleId === 2) { // manager
           navigate("/manager/dashboard");
-        } else if (finalRole === "employee") {
+        } else if (roleId === 3) { // employee
           if (position === "Surveyer") {
             navigate("/survey-dashboard");
           } else {
             navigate("/employee/dashboard");
           }
-        } else if (finalRole === "customer_individual" || finalRole === "customer_company") {
+        } else if (roleId === 4 || roleId === 5) { // customer_individual hoặc customer_company
           navigate("/customer-page");
         } else {
           navigate("/");

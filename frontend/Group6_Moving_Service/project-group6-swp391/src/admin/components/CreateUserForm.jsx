@@ -84,6 +84,7 @@ export default function CreateUserForm({ roles, onSuccess }) {
                     placeholder={roles.length === 0 ? "Đang tải roles..." : "Chọn role"}
                     onChange={onRoleChange}
                     disabled={roles.length === 0}
+                    getPopupContainer={(triggerNode) => triggerNode.parentNode}  // ✅ Fix: Render dropdown inside modal
                 >
                     {roles.map(r => (
                         <Select.Option key={r.roleId} value={r.roleId}>
@@ -100,7 +101,10 @@ export default function CreateUserForm({ roles, onSuccess }) {
                     label="Vị trí công việc"
                     rules={[{ required: true, message: "Vui lòng chọn vị trí" }]}
                 >
-                    <Select placeholder="Chọn vị trí">
+                    <Select
+                        placeholder="Chọn vị trí"
+                        getPopupContainer={(triggerNode) => triggerNode.parentNode}  // ✅ Fix: Same for this Select
+                    >
                         {EMPLOYEE_POSITIONS.map(p => (
                             <Select.Option key={p} value={p}>{p}</Select.Option>
                         ))}

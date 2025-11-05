@@ -69,7 +69,10 @@ export default function EditUserModal({ user, roles, onHide, onSuccess }) {
                         label="Vai trò"
                         rules={[{ required: true, message: "Vui lòng chọn vai trò" }]}
                     >
-                        <Select placeholder="Chọn vai trò">
+                        <Select
+                            placeholder="Chọn vai trò"
+                            getPopupContainer={(triggerNode) => triggerNode.parentNode}  // ✅ Fix: Render dropdown inside modal
+                        >
                             {roles.map((r) => (
                                 <Select.Option key={r.roleId} value={r.roleId}>
                                     {r.roleName}

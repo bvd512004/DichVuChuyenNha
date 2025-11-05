@@ -8,11 +8,12 @@ const ProtectedRoute = ({ children, allowedRoles, requiredPosition }) => {
 
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
-
-    const role = payload.scope || ""; // ← "admin", "manager",...
+    let role = payload.roles || "";
+    if (Array.isArray(role)) role = role[0] || ""; // Fix nếu scope là array
     const position = payload.position || "";
 
-    // So sánh role (viết thường)
+    console.log("ProtectedRoute: role=", role, "position=", position); // Debug
+
     const hasRole = allowedRoles.some(r => r.toLowerCase() === role.toLowerCase());
     const hasPosition = !requiredPosition || position === requiredPosition;
 
