@@ -13,6 +13,7 @@ import {
     Space,
     Badge,
     Tooltip,
+    Alert,
 } from "antd";
 import { 
     DeleteOutlined, 
@@ -25,7 +26,9 @@ import {
     EnvironmentOutlined,
     CalendarOutlined,
     DollarOutlined,
-    FileTextOutlined
+    FileTextOutlined,
+    LockOutlined,
+    WarningOutlined,
 } from '@ant-design/icons';
 import axiosInstance from "../service/axiosInstance"; 
 import dayjs from "dayjs";
@@ -46,19 +49,20 @@ export const QuotationList = ({
     const statusColors = {
         APPROVED: "#52c41a",
         SENT: "#1890ff",
-        DRAFT: "#faad14",
-        REVIEW: "#ff4d4f",
+        REVIEW: "#faad14",
+        
         PENDING: "#722ed1",
-        CREATED: "#13c2c2"
+        CREATED: "#13c2c2",
+        REJECTED: "#ff4d4f", // ✅ Thêm màu cho REJECTED
     };
 
     const statusText = {
         APPROVED: "Đã chấp nhận",
         PENDING: "Đang chờ sự chấp thuận từ khách hàng",
         SENT: "Đã gửi",
-        DRAFT: "Bản nháp",
         REVIEW: "Đang chờ sự xem xét từ quản lí bộ phận",
-        CREATED: "Đã được quản lí bộ phận tạo hợp đồng"
+        CREATED: "Đã được quản lí bộ phận tạo hợp đồng",
+        REJECTED: "Đã bị từ chối", // ✅ Thêm text cho REJECTED
     };
 
     const renderQuotationDetails = (record) => {
@@ -100,31 +104,46 @@ export const QuotationList = ({
         }
 
         const added = record.services || [];
+        // ✅ KIỂM TRA TRẠNG THÁI ĐỂ CHO PHÉP CHỈNH SỬA
+        const isEditable = record.status === "REJECTED";
 
         const handleUpdateQuantity = async (serviceId, newQuantity) => {
+            // ✅ KIỂM TRA QUYỀN TRƯỚC KHI CẬP NHẬT
+            if (!isEditable) {
+                message.warning("⚠️ Chỉ có thể chỉnh sửa báo giá ở trạng thái 'Đã bị từ chối'!");
+                return;
+            }
+
             if (newQuantity < 1) return;
+            
             try {
                 await axiosInstance.put(
                     `/quotation-services/${serviceId}`,
                     null,
                     { params: { quantity: newQuantity } }
                 );
-                showMessage("success", "Cập nhật số lượng thành công!");
+                showMessage("success", "✅ Cập nhật số lượng thành công!");
                 fetchQuotations?.();
             } catch (error) {
                 console.error("Lỗi cập nhật số lượng:", error);
-                showMessage("error", "Cập nhật thất bại!");
+                showMessage("error", "❌ Cập nhật thất bại!");
             }
         };
 
         const handleDeleteService = async (serviceId) => {
+            // ✅ KIỂM TRA QUYỀN TRƯỚC KHI XÓA
+            if (!isEditable) {
+                message.warning("⚠️ Chỉ có thể xóa dịch vụ trong báo giá ở trạng thái 'Đã bị từ chối'!");
+                return;
+            }
+
             try {
                 await axiosInstance.delete(`/quotation-services/${serviceId}`);
-                showMessage("success", "Xóa dịch vụ thành công!");
+                showMessage("success", "✅ Xóa dịch vụ thành công!");
                 fetchQuotations?.();
             } catch (error) {
                 console.error("Lỗi xóa dịch vụ:", error);
-                showMessage("error", "Xóa thất bại!");
+                showMessage("error", "❌ Xóa thất bại!");
             }
         };
 
@@ -193,6 +212,29 @@ export const QuotationList = ({
                         overflow: 'auto'
                     }}
                 >
+                    {/* ✅ THÔNG BÁO TRẠNG THÁI CHỈNH SỬA */}
+                    {!isEditable && (
+                        <Alert
+                            message="🔒 Báo giá đã bị khóa"
+                            description="Báo giá này không thể chỉnh sửa. Chỉ các báo giá ở trạng thái 'Đã bị từ chối' mới có thể chỉnh sửa số lượng và xóa dịch vụ."
+                            type="info"
+                            icon={<LockOutlined />}
+                            showIcon
+                            style={{ marginBottom: 24 }}
+                        />
+                    )}
+
+                    {isEditable && (
+                        <Alert
+                            message="✏️ Có thể chỉnh sửa"
+                            description="Báo giá này đang ở trạng thái 'Đã bị từ chối'. Bạn có thể chỉnh sửa số lượng và xóa dịch vụ để gửi lại báo giá mới."
+                            type="warning"
+                            icon={<WarningOutlined />}
+                            showIcon
+                            style={{ marginBottom: 24 }}
+                        />
+                    )}
+
                     {/* Thông tin khách hàng */}
                     <Row gutter={[24, 24]}>
                         <Col xs={24} md={12}>
@@ -263,7 +305,8 @@ export const QuotationList = ({
                                         marginBottom: 12,
                                         borderRadius: 8,
                                         border: '1px solid #e8e8e8',
-                                        background: '#fff'
+                                        background: '#fff',
+                                        opacity: isEditable ? 1 : 0.85, // ✅ Giảm opacity khi không edit được
                                     }}
                                     bodyStyle={{ padding: 16 }}
                                 >
@@ -299,33 +342,52 @@ export const QuotationList = ({
                                                 }}>
                                                     <Text type="secondary">Số lượng:</Text>
                                                     <Space size={4}>
-                                                        <Button
-                                                            icon={<MinusOutlined />}
-                                                            size="small"
-                                                            onClick={() => handleUpdateQuantity(s.id, s.quantity - 1)}
-                                                            disabled={s.quantity <= 1}
-                                                            style={{ borderRadius: 4 }}
-                                                        />
+                                                        {/* ✅ DISABLE NÚT TRỪ NẾU KHÔNG EDITABLE */}
+                                                        <Tooltip title={!isEditable ? "Không thể chỉnh sửa" : "Giảm số lượng"}>
+                                                            <Button
+                                                                icon={isEditable ? <MinusOutlined /> : <LockOutlined />}
+                                                                size="small"
+                                                                onClick={() => handleUpdateQuantity(s.id, s.quantity - 1)}
+                                                                disabled={!isEditable || s.quantity <= 1}
+                                                                style={{ borderRadius: 4 }}
+                                                            />
+                                                        </Tooltip>
+                                                        
+                                                        {/* ✅ DISABLE INPUT NẾU KHÔNG EDITABLE */}
                                                         <InputNumber
                                                             min={1}
                                                             size="small"
                                                             value={s.quantity}
                                                             onChange={(value) => handleUpdateQuantity(s.id, value || 1)}
-                                                            style={{ width: 60, textAlign: 'center', borderRadius: 4 }}
+                                                            disabled={!isEditable}
+                                                            style={{ 
+                                                                width: 60, 
+                                                                textAlign: 'center', 
+                                                                borderRadius: 4,
+                                                                cursor: !isEditable ? 'not-allowed' : 'text'
+                                                            }}
                                                         />
-                                                        <Button
-                                                            icon={<PlusOutlined />}
-                                                            size="small"
-                                                            onClick={() => handleUpdateQuantity(s.id, s.quantity + 1)}
-                                                            style={{ borderRadius: 4 }}
-                                                        />
-                                                        <Tooltip title="Xóa dịch vụ">
+                                                        
+                                                        {/* ✅ DISABLE NÚT CỘNG NẾU KHÔNG EDITABLE */}
+                                                        <Tooltip title={!isEditable ? "Không thể chỉnh sửa" : "Tăng số lượng"}>
                                                             <Button
-                                                                danger
+                                                                icon={isEditable ? <PlusOutlined /> : <LockOutlined />}
+                                                                size="small"
+                                                                onClick={() => handleUpdateQuantity(s.id, s.quantity + 1)}
+                                                                disabled={!isEditable}
+                                                                style={{ borderRadius: 4 }}
+                                                            />
+                                                        </Tooltip>
+                                                        
+                                                        {/* ✅ DISABLE NÚT XÓA NẾU KHÔNG EDITABLE */}
+                                                        <Tooltip title={!isEditable ? "Không thể xóa" : "Xóa dịch vụ"}>
+                                                            <Button
+                                                                danger={isEditable}
                                                                 type="text"
                                                                 size="small"
-                                                                icon={<DeleteOutlined />}
+                                                                icon={isEditable ? <DeleteOutlined /> : <LockOutlined />}
                                                                 onClick={() => handleDeleteService(s.id)}
+                                                                disabled={!isEditable}
                                                                 style={{ borderRadius: 4 }}
                                                             />
                                                         </Tooltip>
@@ -459,7 +521,15 @@ export const QuotationList = ({
                                 >
                                     <Space direction="vertical" style={{ width: '100%' }} size="small">
                                         <Row justify="space-between" align="middle">
-                                            <Text strong style={{ fontSize: 16 }}>#{q.quotationId}</Text>
+                                            <Space>
+                                                <Text strong style={{ fontSize: 16 }}>#{q.quotationId}</Text>
+                                                {/* ✅ HIỂN THỊ ICON KHÓA NẾU KHÔNG EDIT ĐƯỢC */}
+                                                {q.status !== "REJECTED" && (
+                                                    <Tooltip title="Không thể chỉnh sửa">
+                                                        <LockOutlined style={{ color: '#8c8c8c', fontSize: 12 }} />
+                                                    </Tooltip>
+                                                )}
+                                            </Space>
                                             <Tag 
                                                 color={statusColors[q.status]}
                                                 style={{ 

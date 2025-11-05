@@ -36,7 +36,7 @@ export default function UserTable({ users, roles, onEdit, onViewHistory, refetch
                         <td>{user.phone}</td>
                         <td>
                             <Badge bg="info">
-                                {roles.find((r) => r.roleName === user.roleName)?.roleName || user.roleName || "Unknown"}
+                                {roles.find((r) => r.roleId === user.roleId)?.roleName || "Unknown"}
                             </Badge>
                         </td>
                         <td>

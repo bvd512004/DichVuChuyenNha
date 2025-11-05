@@ -41,5 +41,15 @@ public class Payment {
     @Column(name = "payment_type")
     private String paymentType; // deposit | final
 
+
+    //thêm trường
+    @Column(name = "checkout_url")
+    private String checkoutUrl;
+
+    @Column(name = "order_code")
+    private Long orderCode;
+    @Column(name = "due_date")
+    private LocalDate dueDate;  // ✅ hạn thanh toán ở mức payment
+
 }
 //thêm trươờng

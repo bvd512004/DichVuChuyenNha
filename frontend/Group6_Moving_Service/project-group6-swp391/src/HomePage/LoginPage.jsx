@@ -4,6 +4,8 @@ import * as Yup from "yup";
 import axios from "axios";
 import "./style/LoginPage.css";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 import { Input, Button, Form, Modal } from "antd";
 
 const LoginPage = () => {
@@ -13,6 +15,8 @@ const LoginPage = () => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1);
+  const { login } = useAuth(); // ✅ lấy login từ context
+
 
   const validationSchema = Yup.object({
     email: Yup.string().email("Invalid email").required("Email is required"),
@@ -26,31 +30,43 @@ const LoginPage = () => {
       formik.setSubmitting(true);
       try {
         const response = await axios.post("http://localhost:8080/api/auth/login", values);
-        const { token, userId, username, roleId, roleName, position } = response.data.result;
 
+        // ĐÚNG: response.data.result
+        const result = response.data.result;
+        const token = result.token;
+        const roleId = result.roleId; // Sử dụng roleId để check
+        const position = result.position;
+
+        // Lưu token
         localStorage.setItem("token", token);
-        localStorage.setItem("userId", userId);
-        localStorage.setItem("username", username);
-        localStorage.setItem("roleId", roleId);
-        localStorage.setItem("roleName", roleName);
-        localStorage.setItem("position", position);
 
-        alert("Login successful!");
+        // Đọc scope từ JWT (để xác nhận) - giữ để debug nhưng không dùng cho redirect
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          console.log("JWT payload:", payload);  // Log để debug
+          const roleFromJwt = payload.roles?.[0]?.toLowerCase() || "";  // Sửa claim thành "roles"
+        } catch (err) {
+          console.error("Invalid JWT format:", err);  // Sửa message
+        }
 
-        if (roleId === 3 && position === "Surveyer") {
-          navigate("/survey-dashboard");
-        } else if (roleId === 3) {
-          navigate("/employee/dashboard");
-        } else if (roleId === 4 || roleId === 5) {
-          navigate("/customer-page");
-        } else if (roleId === 2) {
-          navigate("/manager/dashboard");
-        } else if (roleId === 1) {
+        // CHUYỂN HƯỚNG dựa trên roleId (an toàn hơn, vì id không đổi case)
+        if (roleId === 1) { // admin
           navigate("/admin-dashboard");
+        } else if (roleId === 2) { // manager
+          navigate("/manager/dashboard");
+        } else if (roleId === 3) { // employee
+          if (position === "Surveyer") {
+            navigate("/survey-dashboard");
+          } else {
+            navigate("/employee/dashboard");
+          }
+        } else if (roleId === 4 || roleId === 5) { // customer_individual hoặc customer_company
+          navigate("/customer-page");
         } else {
           navigate("/");
         }
       } catch (error) {
+        console.error("Login error:", error);
         alert(error.response?.data?.message || "Login failed");
       } finally {
         formik.setSubmitting(false);

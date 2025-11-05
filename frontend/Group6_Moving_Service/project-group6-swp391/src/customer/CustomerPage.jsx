@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Menu, Typography, Table, Tag, message, Card, Descriptions, List } from "antd"; 
+import { Layout, Menu, Typography, Table, Tag, message, Card, Descriptions, List } from "antd";
 import {
     FileTextOutlined,
     OrderedListOutlined,
@@ -7,13 +7,15 @@ import {
     HistoryOutlined,
     CheckCircleOutlined,
     ClockCircleOutlined,
+    QrcodeOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../service/axiosInstance"; 
+import { Tooltip } from "antd";
+import axiosInstance from "../service/axiosInstance";
 
 // Import existing components
 import QuotationApproval from "./QuotationApproval";
-import UserRequestsPage from "./UserRequestsPage"; 
+import UserRequestsPage from "./UserRequestsPage";
 import UserContractsPage from "./UserContractPage";
 import CustpmerWorkProgressPage from "./WorkProgressCustomerPage";
 
@@ -25,7 +27,7 @@ const formatCurrency = (amount) => amount?.toLocaleString("vi-VN") + " đ";
 
 const CustomerDashboard = () => {
     const navigate = useNavigate();
-    const [selectedKey, setSelectedKey] = useState("my-requests"); 
+    const [selectedKey, setSelectedKey] = useState("my-requests");
 
     /*** STATE LỊCH SỬ HỢP ĐỒNG ***/
     const [signedContracts, setSignedContracts] = useState([]);
@@ -52,21 +54,21 @@ const CustomerDashboard = () => {
 
     // CẤU HÌNH CỘT CHO BẢNG LỊCH SỬ HỢP ĐỒNG
     const signedContractsColumns = [
-        { 
-            title: "Mã HĐ", 
-            dataIndex: "contractId", 
+        {
+            title: "Mã HĐ",
+            dataIndex: "contractId",
             key: "contractId",
             width: 80,
             render: (id) => <Text strong>#KHĐ{id}</Text>
         },
-        { 
-            title: "Trạng thái", 
-            dataIndex: "status", 
+        {
+            title: "Trạng thái",
+            dataIndex: "status",
             key: "status",
             width: 130,
             render: () => (
-                <Tag 
-                    icon={<CheckCircleOutlined />} 
+                <Tag
+                    icon={<CheckCircleOutlined />}
                     color="success"
                     style={{ padding: '4px 8px' }}
                 >
@@ -74,9 +76,9 @@ const CustomerDashboard = () => {
                 </Tag>
             )
         },
-        { 
-            title: "Ngày ký", 
-            dataIndex: "signedDate", 
+        {
+            title: "Ngày ký",
+            dataIndex: "signedDate",
             key: "signedDate",
             width: 150,
             render: (date) => (
@@ -85,9 +87,9 @@ const CustomerDashboard = () => {
                 </Text>
             )
         },
-        { 
-            title: "Địa điểm chuyển", 
-            key: "locations", 
+        {
+            title: "Địa điểm chuyển",
+            key: "locations",
             render: (record) => (
                 <div>
                     <Text type="secondary">Từ:</Text> <Text strong>{record.startLocation}</Text>
@@ -96,8 +98,8 @@ const CustomerDashboard = () => {
                 </div>
             )
         },
-        { 
-            title: "Thời gian thực hiện", 
+        {
+            title: "Thời gian thực hiện",
             key: "timeframe",
             width: 200,
             render: (record) => (
@@ -108,27 +110,93 @@ const CustomerDashboard = () => {
                 </div>
             )
         },
-        { 
-            title: "Tổng giá trị", 
-            dataIndex: "totalAmount", 
-            key: "totalAmount", 
+        {
+            title: "Tổng giá trị",
+            dataIndex: "totalAmount",
+            key: "totalAmount",
             width: 150,
             render: (amount) => <Text strong style={{ color: '#fa8c16' }}>{formatCurrency(amount)}</Text>
         },
-        { 
-            title: "Tiền cọc", 
-            dataIndex: "depositAmount", 
-            key: "depositAmount", 
+        {
+            title: "Tiền cọc",
+            dataIndex: "depositAmount",
+            key: "depositAmount",
             width: 130,
             render: (amount) => <Text type="success">{formatCurrency(amount)}</Text>
         },
+        // hạn thanh toán
+        {
+            title: "Hạn thanh toán",
+            key: "depositDueDate",
+            width: 150,
+            render: (record) => (
+                <Text type="secondary">
+                    {record.depositDueDate
+                        ? new Date(record.depositDueDate).toLocaleDateString("vi-VN")
+                        : "Chưa có thông tin"}
+                </Text>
+            ),
+
+
+        },
+
+        //thêm cột mã QR code
+        {
+            title: "Thanh toán",
+            key: "payment",
+            width: 180,
+            render: (record) => {
+                const payment = record.payment || {}; // lấy thông tin thanh toán từ contract
+
+                if (payment.status === "pending") {
+                    return (
+                        <Tooltip title={`Hạn: ${payment.dueDate
+                            ? new Date(payment.dueDate).toLocaleDateString("vi-VN")
+                            : "Không rõ"
+                            }`}>
+                            <a
+                                href={payment.checkoutUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    backgroundColor: "#1677ff",
+                                    color: "#fff",
+                                    padding: "6px 12px",
+                                    borderRadius: "6px",
+                                    textDecoration: "none",
+                                    fontWeight: "500",
+                                    display: "inline-block",
+                                }}
+                            >
+                                💳 Thanh toán
+                            </a>
+                        </Tooltip>
+                    );
+                } else if (payment.status === "paid") {
+                    return (
+                        <Tag color="success" style={{ padding: "4px 8px" }}>
+                            ✅ Đã thanh toán
+                        </Tag>
+                    );
+                } else if (payment.status === "expired") {
+                    return (
+                        <Tag color="error" style={{ padding: "4px 8px" }}>
+                            ❌ Quá hạn
+                        </Tag>
+                    );
+                } else {
+                    return <Tag color="default">Không có</Tag>;
+                }
+            },
+        },
+
     ];
 
     // Hàm render nội dung theo tab
     const renderContent = () => {
         switch (selectedKey) {
             case "my-requests":
-                return <UserRequestsPage isEmbedded={true} />; 
+                return <UserRequestsPage isEmbedded={true} />;
             case "quotation-approval":
                 return <QuotationApproval />;
             case "unsigned-contracts":
@@ -150,10 +218,10 @@ const CustomerDashboard = () => {
                             pagination={{ pageSize: 5 }}
                             expandable={{
                                 expandedRowRender: (record) => (
-                                    <Descriptions 
-                                        bordered 
-                                        size="small" 
-                                        column={1} 
+                                    <Descriptions
+                                        bordered
+                                        size="small"
+                                        column={1}
                                         title={<Text strong>Dịch vụ chi tiết</Text>}
                                     >
                                         <Descriptions.Item label="Người Ký HĐ">

@@ -11,31 +11,33 @@ import {
   message,
   Card,
   List,
+  Alert,
 } from "antd";
-import { FileProtectOutlined, SignatureOutlined } from "@ant-design/icons";
+import { FileProtectOutlined, SignatureOutlined, QrcodeOutlined } from "@ant-design/icons";
 import axiosInstance from "../service/axiosInstance";
+import PaymentAPI from "../service/payment";
 import dayjs from "dayjs";
+import QRCode from "react-qr-code";
 
 const { Title, Text } = Typography;
 
 const UserContractsPage = () => {
-  const [contracts, setContracts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedContract, setSelectedContract] = useState(null);
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const [signing, setSigning] = useState(false);
+  const [contracts, setContracts] = useState([]); // Danh sách hợp đồng
+  const [loading, setLoading] = useState(true); // Trạng thái loading
+  const [selectedContract, setSelectedContract] = useState(null); // Hợp đồng được chọn
+  const [agreeTerms, setAgreeTerms] = useState(false); // Đồng ý điều khoản
+  const [signing, setSigning] = useState(false); // Trạng thái ký hợp đồng
+  const [paymentData, setPaymentData] = useState(null); // Dữ liệu thanh toán (mã QR, checkoutUrl...)
 
-  // Hàm tải danh sách hợp đồng
+  // Tải danh sách hợp đồng chưa ký
   const fetchContracts = async () => {
     setLoading(true);
     try {
-      // axiosInstance tự động thêm token
       const res = await axiosInstance.get("/contracts/unsigned/me");
-      // Cẩn thận với cấu trúc data trả về từ API
       const data = res.data?.result || res.data;
       setContracts(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch contracts error:", err);
       message.error("Không thể tải danh sách hợp đồng.");
       setContracts([]);
     } finally {
@@ -47,7 +49,7 @@ const UserContractsPage = () => {
     fetchContracts();
   }, []);
 
-  // Hàm ký hợp đồng
+  // Xử lý ký hợp đồng và tạo thanh toán
   const handleSign = async (contractId) => {
     if (!agreeTerms) {
       message.warning("Bạn cần đồng ý với điều khoản trước khi ký!");
@@ -56,22 +58,72 @@ const UserContractsPage = () => {
 
     setSigning(true);
     try {
-      // Đảm bảo endpoint PUT là chính xác
-      await axiosInstance.put(`/contracts/sign/${contractId}`);
-
+      // Gửi yêu cầu ký hợp đồng
+      const res = await axiosInstance.put(`/contracts/sign/${contractId}`);
+      if (res.status !== 200) {
+        throw new Error("Không thể ký hợp đồng. Vui lòng thử lại.");
+      }
       message.success("✅ Ký hợp đồng thành công!");
-      // Cập nhật state bằng cách lọc bỏ hợp đồng vừa ký
+
+      // Sau khi ký, tạo thanh toán đặt cọc PayOS
+      const loadingMsg = message.loading("Đang tạo mã QR thanh toán...", 0);
+
+      const paymentRes = await PaymentAPI.createDepositPayment(contractId);
+      loadingMsg(); // Đóng loading message
+
+      // Kiểm tra nếu response hợp lệ
+      if (!paymentRes?.checkoutUrl) {
+        message.error("❌ Không nhận được URL thanh toán từ server!");
+        return;
+      }
+
+      setPaymentData({
+        contractId,
+        checkoutUrl: paymentRes.checkoutUrl,
+        qrCode: paymentRes.qrCode || paymentRes.checkoutUrl,
+        amount: paymentRes.amount,
+        orderCode: paymentRes.orderCode,
+        dueDate: paymentRes.dueDate
+      });
+
+
+
+      // Cập nhật hợp đồng đã ký vào danh sách
+      setSelectedContract((prev) => ({
+        ...prev,
+        signed: true,
+        payment: {
+          checkoutUrl: paymentRes.checkoutUrl,
+          qrCode: paymentRes.qrCode || paymentRes.checkoutUrl,
+          amount: paymentRes.amount,
+          orderCode: paymentRes.orderCode,
+        }
+      }));
+
+      message.success("✅ Tạo mã QR thành công! Vui lòng quét mã để thanh toán.", 3);
+
+      // Xóa hợp đồng đã ký khỏi danh sách hợp đồng chưa ký
       setContracts((prev) => prev.filter((c) => c.contractId !== contractId));
-      setSelectedContract(null);
-      setAgreeTerms(false);
+
+      setAgreeTerms(false); // Reset checkbox điều khoản
+
     } catch (err) {
-      console.error(err);
-      message.error("❌ Ký hợp đồng thất bại!");
+      console.error("❌ Sign error:", err);
+      const errorMsg = err?.response?.data?.message || err.message || "Lỗi không xác định";
+      message.error("❌ Lỗi: " + errorMsg);
     } finally {
       setSigning(false);
     }
   };
 
+  // Đóng modal và refresh danh sách hợp đồng
+  const handleCloseModal = () => {
+    setSelectedContract(null);
+    setPaymentData(null);
+    setAgreeTerms(false);
+  };
+
+  // Cấu hình bảng hiển thị danh sách hợp đồng
   const columns = [
     {
       title: "Mã HĐ",
@@ -132,8 +184,7 @@ const UserContractsPage = () => {
     },
   ];
 
-  // --- JSX cho phần nội dung chính ---
-
+  // Loading UI khi đang tải
   if (loading) {
     return (
       <div
@@ -181,9 +232,9 @@ const UserContractsPage = () => {
           </Title>
         }
         open={!!selectedContract}
-        onCancel={() => setSelectedContract(null)}
+        onCancel={handleCloseModal}
         footer={[
-          <Button key="close" onClick={() => setSelectedContract(null)}>
+          <Button key="close" onClick={handleCloseModal}>
             Đóng
           </Button>,
           <Button
@@ -202,7 +253,18 @@ const UserContractsPage = () => {
       >
         {selectedContract && (
           <Space direction="vertical" size="large" style={{ width: "100%" }}>
-            <Card type="inner" title="Thông tin chung">
+            {/* Thông báo ký thành công và tạo mã QR */}
+            {paymentData && (
+              <Alert
+                message="✅ Hợp đồng đã được ký thành công!"
+                description="Vui lòng quét mã QR bên dưới để hoàn tất thanh toán đặt cọc. Bạn có thể lưu lại link hoặc chụp màn hình QR code."
+                type="success"
+                showIcon
+              />
+            )}
+
+            {/* Thông tin chung */}
+            <Card type="inner" title="📋 Thông tin chung">
               <Space direction="vertical" size="small" style={{ width: "100%" }}>
                 <Text>
                   <strong>Ngày bắt đầu:</strong>{" "}
@@ -214,7 +276,7 @@ const UserContractsPage = () => {
                 </Text>
                 <Text>
                   <strong>Tiền cọc:</strong>{" "}
-                  <Text strong>
+                  <Text strong type="warning">
                     {selectedContract.depositAmount?.toLocaleString("vi-VN")} ₫
                   </Text>
                 </Text>
@@ -230,14 +292,15 @@ const UserContractsPage = () => {
                 </Text>
                 <Text>
                   <strong>Trạng thái:</strong>{" "}
-                  <Text type="warning">
-                    {selectedContract.status || "Chưa ký"}
+                  <Text type={paymentData ? "success" : "warning"}>
+                    {paymentData ? "Đã ký - Chờ thanh toán" : selectedContract.status || "Chưa ký"}
                   </Text>
                 </Text>
               </Space>
             </Card>
 
-            <Card title="Chi tiết dịch vụ">
+            {/* Chi tiết dịch vụ */}
+            <Card title="🛠️ Chi tiết dịch vụ">
               {selectedContract.services?.length > 0 ? (
                 <List
                   itemLayout="horizontal"
@@ -246,7 +309,7 @@ const UserContractsPage = () => {
                     <List.Item
                       key={idx}
                       actions={[
-                        <Text strong key="subtotal">
+                        <Text strong key="subtotal" type="danger">
                           {s.subtotal?.toLocaleString("vi-VN")} ₫
                         </Text>,
                       ]}
@@ -263,14 +326,127 @@ const UserContractsPage = () => {
               )}
             </Card>
 
-            <div style={{ padding: "10px 0" }}>
-              <Checkbox
-                checked={agreeTerms}
-                onChange={(e) => setAgreeTerms(e.target.checked)}
+            {/* Hiển thị QR Code nếu đã ký và có payment data */}
+            {paymentData && paymentData.checkoutUrl ? (
+              <Card
+                title={
+                  <Space>
+                    <QrcodeOutlined style={{ fontSize: 20 }} />
+                    <Text strong>💳 Thanh toán đặt cọc</Text>
+                  </Space>
+                }
+                style={{
+                  marginTop: 16,
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  border: "none",
+                }}
+                headStyle={{
+                  background: "transparent",
+                  color: "white",
+                  borderBottom: "1px solid rgba(255,255,255,0.2)",
+                }}
+                bodyStyle={{ background: "white" }}
               >
-                Tôi **đã đọc và đồng ý** với tất cả các điều khoản và điều kiện của hợp đồng này.
-              </Checkbox>
-            </div>
+                <Space direction="vertical" align="center" style={{ width: "100%" }}>
+                  <Alert
+                    message="📱 Quét mã QR bên dưới để thanh toán"
+                    description={
+                      <Space direction="vertical" size={4}>
+                        <Text>Mã đơn hàng: <strong>{paymentData.orderCode}</strong></Text>
+                        <Text>Hợp đồng: <strong>#{paymentData.contractId}</strong></Text>
+                      </Space>
+                    }
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 16, width: "100%" }}
+                  />
+
+                  <div
+                    style={{
+                      padding: 20,
+                      background: "white",
+                      borderRadius: 8,
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    <QRCode
+                      value={paymentData.checkoutUrl}
+                      size={280}
+                      level="H"
+                      style={{ border: "8px solid white" }}
+                    />
+                  </div>
+
+                  <Text
+                    strong
+                    style={{ fontSize: 20, color: "#ff4d4f", marginTop: 16 }}
+                  >
+                    Số tiền: {paymentData.amount?.toLocaleString("vi-VN")} ₫
+                  </Text>
+                  <Text
+                    strong
+                    style={{ fontSize: 20, color: "#ff4d4f", marginTop: 16 }}
+                  >
+                    Số tiền: {paymentData.amount?.toLocaleString("vi-VN")} ₫
+                  </Text>
+
+                  {/* 🕒 Hạn thanh toán */}
+                  <Text strong style={{ marginTop: 8 }}>
+                    🕒 Hạn thanh toán:{" "}
+                    <Text type="danger">
+                      {paymentData.dueDate
+                        ? new Date(paymentData.dueDate).toLocaleDateString("vi-VN")
+                        : "Chưa có thông tin"}
+                    </Text>
+                  </Text>
+
+
+                  <Button
+                    type="primary"
+                    size="large"
+                    href={paymentData.checkoutUrl}
+                    target="_blank"
+                    icon={<QrcodeOutlined />}
+                    style={{
+                      marginTop: 16,
+                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      border: "none",
+                      height: 48,
+                      fontSize: 16,
+                    }}
+                  >
+                    Mở link thanh toán
+                  </Button>
+
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: 12, marginTop: 12, textAlign: "center" }}
+                  >
+                    💡 Bạn có thể quét mã QR hoặc click vào nút "Mở link thanh toán"
+                  </Text>
+
+                  <Alert
+                    message="📌 Lưu ý quan trọng"
+                    description="Hãy chụp màn hình hoặc lưu lại link thanh toán trước khi đóng cửa sổ này!"
+                    type="warning"
+                    showIcon
+                    style={{ marginTop: 16, width: "100%" }}
+                  />
+                </Space>
+              </Card>
+            ) : (
+              !paymentData && (
+                <div style={{ padding: "10px 0" }}>
+                  <Checkbox
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                  >
+                    Tôi <strong>đã đọc và đồng ý</strong> với tất cả các điều khoản
+                    và điều kiện của hợp đồng này.
+                  </Checkbox>
+                </div>
+              )
+            )}
           </Space>
         )}
       </Modal>
@@ -279,3 +455,4 @@ const UserContractsPage = () => {
 };
 
 export default UserContractsPage;
+//s

@@ -63,20 +63,44 @@ public class WorkProgressServiceImpl implements WorkProgressService {
     }
 
     @Override
-    public WorkProgressResponse updateWorkProgress(Integer progressId, Integer employeeId, WorkProgressRequest request) {
+    public WorkProgressResponse updateStatus(Integer progressId, Integer employeeId, String status) {
         WorkProgress progress = workProgressRepository.findById(progressId)
                 .orElseThrow(() -> new AppException(ErrorCode.WORK_PROGRESS_NOT_FOUND));
 
+        // chỉ cho nhân viên sở hữu progress này được cập nhật
         if (!progress.getEmployee().getEmployeeId().equals(employeeId)) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        progress.setTaskDescription(request.getTaskDescription());
-        progress.setProgressStatus(request.getProgressStatus());
-        progress.setUpdatedAt(LocalDateTime.now());
+        // validate trạng thái cho phép
+        String s = status == null ? "" : status.trim().toLowerCase();
+        if (!s.equals("in_progress") && !s.equals("completed")) {
+            throw new AppException(ErrorCode.INVALID_PARAMETER);
+        }
+
+        // chặn nhảy bậc ngược hoặc sai flow: pending -> in_progress -> completed
+        String current = progress.getProgressStatus() == null ? "pending" : progress.getProgressStatus();
+        switch (current) {
+            case "pending":
+                if (!s.equals("in_progress")) {
+                    throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
+                }
+                break;
+            case "in_progress":
+                if (!s.equals("completed")) {
+                    throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
+                }
+                break;
+            case "completed":
+                throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
+        }
+
+        progress.setProgressStatus(s);
+        progress.setUpdatedAt(java.time.LocalDateTime.now());
 
         return mapper.toResponse(workProgressRepository.save(progress));
     }
+
 
     @Override
     public void deleteWorkProgress(Integer progressId, Integer employeeId) {
@@ -102,7 +126,7 @@ public class WorkProgressServiceImpl implements WorkProgressService {
         Contract contract = contractRepository.findById(request.getContractId())
                 .orElseThrow(() -> new AppException(ErrorCode.CONTRACT_NOT_FOUND));
 
-        if (!"SIGNED".equalsIgnoreCase(contract.getStatus())) {
+        if (!"DEPOSIT_PAID".equalsIgnoreCase(contract.getStatus())) {
             throw new AppException(ErrorCode.INVALID_CONTRACT_STATUS);
         }
 

@@ -1,3 +1,4 @@
+// router/Router.js
 import React from "react";
 import Layout from "../components/Layout";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -10,13 +11,11 @@ import UserRequestsPage from "../customer/UserRequestsPage";
 import CustomerPage from "../customer/CustomerPage";
 import AnimatedPage from "../components/AnimatedPage";
 
-
 import LandingPage from "../HomePage/LandingPage";
 import ProtectedRoute from "../auth/ProtectRoute";
 import AccessDeniedPage from "../auth/AccessDeniedPage";
 import AdminDashboard from "../admin/AdminDashBoard";
 import ContractAssignment from "../manager/ContractAssigment";
-import CustomerProfile from "../auth/ProfilePage";
 import ProfilePage from "../auth/ProfilePage";
 import SurveyDashboard from "../staff/SurveyDashboard";
 import PriceTable from "../HomePage/PriceTable";
@@ -33,6 +32,12 @@ import QuotationAddServices from "../staff/QuotationAddServices";
 import QuotationContractList from "../manager/QuotationContractList";
 import ManagerWorkProgressPage from "../manager/ManagerWorkProgressPage";
 import WorkProgressList from "../manager/WorkProgressList";
+import ReviewQuotationManagement from "../manager/ReviewQuotationManagement";
+import PaymentSuccessPage from "../customer/PaymentSuccessPage";
+import PaymentCancelPage from "../customer/PaymentCancelPage";
+import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
+import ServicePrice from "../admin/components/ServicePrice";
+import ServiceDetail from "../admin/components/ServiceDetail";
 
 const Router = () => {
   const router = createBrowserRouter([
@@ -41,67 +46,7 @@ const Router = () => {
       element: <Layout />,
       children: [
         { index: true, element: <LandingPage /> },
-
-        {
-          path: "",
-          element: <HomePage />
-        },
-        //         {
-        //   path: "contract-assignment",
-        //   element: (
-
-        //       <ContractAssignment />
-
-        //   ),
-        // },
-        {
-          path: "user-profile",
-          element: <ProfilePage />
-        },
-        {
-          path: "assign-surveyer",
-          element: <AssignSurveyer />
-        },
-        {
-          path: "survey-dashboard",
-          element: (
-            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Surveyer">
-              <SurveyDashboard />
-            </ProtectedRoute>
-          ),
-        },
-
-        {
-          path: "price-service",
-          element: <PriceTable />
-        },
-        {
-          path: "add-services",
-          element: <QuotationAddServices />
-        },
-        {
-          path: "quotations-services",
-          element: <QuotationServiceManager />
-        },
-        {
-          path: "quotations-services-list",
-          element: <QuotationServiceList />
-        },
-        //  {
-        //   path:"review-quotations",
-        //   element: <ReviewQuotationManagement/>
-        // },
-        {
-          path: "quotation-for-customer",
-          element: <QuotationApproval />
-        },
-        {
-          path: "contracts-list-manager",
-          element: <QuotationContractList />
-        },
-
-
-
+        { path: "", element: <HomePage /> },
         {
           path: "login",
           element: (
@@ -110,7 +55,6 @@ const Router = () => {
             </AnimatedPage>
           ),
         },
-
         {
           path: "customer-register",
           element: (
@@ -119,12 +63,26 @@ const Router = () => {
             </AnimatedPage>
           ),
         },
-
         { path: "customer-page", element: <CustomerPage /> },
-
         { path: "list-contract-unsigned", element: <UserContractsPage /> },
+        { path: "my-requests", element: <UserRequestsPage /> },
+        { path: "access-denied", element: <AccessDeniedPage /> },
+        { path: "price-service", element: <PriceTable /> },
+        { path: "user-profile", element: <ProfilePage /> },
+        { path: "add-services", element: <QuotationAddServices /> },
+        { path: "quotations-services", element: <QuotationServiceManager /> },
+        { path: "quotations-services-list", element: <QuotationServiceList /> },
+        { path: "quotation-for-customer", element: <QuotationApproval /> },
+        { path: "contracts-list-manager", element: <QuotationContractList /> },
+        { path: "/payment/success", element: <PaymentSuccessPage /> },
+        { path: "/payment/cancel", element: <PaymentCancelPage /> },
+        { path: "/customer/final-payments", element: <UserFinalPaymentPage /> },
+        { path: "service-admin", element: <ServicePrice /> },
+        { path: "services/:id", element: <ServiceDetail /> },
+        { path: "assign-surveyer", element: <AssignSurveyer /> },
+        { path: "review-quotations", element: <ReviewQuotationManagement /> },
 
-        // Admin routes
+        // Protected routes
         {
           path: "admin-dashboard",
           element: (
@@ -134,55 +92,45 @@ const Router = () => {
           ),
         },
         {
-          path: "my-requests",
-          element: <UserRequestsPage />
-
-        },
-        {
-          path: "manager/work-progress",
-          element: <ManagerWorkProgressPage />
-
-        },
-        {
-          path: "manager/work-progress-list",
-          element: < WorkProgressList />
-
-        },
-
-        // user requests (customer)
-        { path: "my-requests", element: <UserRequestsPage /> },
-
-        { path: "access-denied", element: <AccessDeniedPage /> },
-        { path: "employee/work-progress", element: <WorkProgressPage /> },
-        { path: "customer/work-progress", element: <WorkProgressCustomerPage /> },
-        {
-          path: "employee/dashboard",
-          element: <EmployeeDashboard />,
-          children: [
-            // { index: true, element: <WorkProgressPage /> }, // mặc định khi vào /employee/dashboard
-            { path: "work-progress", element: <WorkProgressPage /> },
-
-          ],
+          path: "survey-dashboard",
+          element: (
+            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Surveyer">
+              <SurveyDashboard />
+            </ProtectedRoute>
+          ),
         },
         {
           path: "contract-assignment",
           element: (
-            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+            <ProtectedRoute allowedRoles={["manager"]}>
               <ContractAssignment />
             </ProtectedRoute>
           ),
+        },
+        { path: "employee/work-progress", element: <WorkProgressPage /> },
+        { path: "customer/work-progress", element: <WorkProgressCustomerPage /> },
+        { path: "manager/work-progress", element: <ManagerWorkProgressPage /> },
+        { path: "manager/work-progress-list", element: <WorkProgressList /> },
+
+        {
+          path: "employee/dashboard",
+          element: <EmployeeDashboard />,
+          children: [
+            { path: "work-progress", element: <WorkProgressPage /> },
+          ],
         },
         {
           path: "manager/dashboard",
           element: <ManagerDashboard />,
           children: [
-            // { index: true, element: <ContractAssignment /> }, // mặc định khi vào /manager/dashboard
             { path: "contract-assignment", element: <ContractAssignment /> },
             { path: "manager/work-progress", element: <ManagerWorkProgressPage /> },
             { path: "manager/work-progress-list", element: <WorkProgressList /> },
           ],
         },
 
+        // Fallback 404
+        { path: "*", element: <div>404 Not Found - Page does not exist</div> },
       ],
     },
   ]);
@@ -191,5 +139,3 @@ const Router = () => {
 };
 
 export default Router;
-
-

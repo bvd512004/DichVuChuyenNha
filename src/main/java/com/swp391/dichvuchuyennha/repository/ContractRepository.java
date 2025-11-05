@@ -27,5 +27,7 @@ public interface ContractRepository extends JpaRepository<Contract, Integer> {
     """, nativeQuery = true)
     Date findMovingDayByContractId(@Param("contractId") Integer contractId);
 
-
+    @Query("SELECT c FROM Contract c " +
+            "WHERE c.quotation.survey.request.user.userId = :userId")
+    List<Contract> findContractsByCustomerUserId(@Param("userId") Long userId);
 }

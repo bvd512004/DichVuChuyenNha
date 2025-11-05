@@ -164,13 +164,17 @@ export default function CustomerRegisterForm() {
           label="Chọn Role"
           validateStatus={formik.errors.roleId && formik.touched.roleId ? "error" : ""}
           help={formik.touched.roleId && formik.errors.roleId}
-          style={{ marginBottom: isCompanyRole ? 8 : 18 }}
         >
           <Select
             placeholder="Chọn role"
             value={formik.values.roleId}
             onChange={handleRoleChange}
-            onBlur={() => formik.setFieldTouched("roleId", true)}
+            onDropdownVisibleChange={(open) => {
+              if (!open) {
+                setTimeout(() => formik.setFieldTouched("roleId", true), 100);
+              }
+            }}
+            getPopupContainer={(trigger) => trigger.parentNode}
           >
             {roles.map((r) => (
               <Option key={r.roleId} value={r.roleId}>
@@ -185,7 +189,6 @@ export default function CustomerRegisterForm() {
           <div className="company-fields">
             <Form.Item
               label="Tên công ty"
-              className="mt-4"
               validateStatus={
                 formik.touched.companyName && !formik.values.companyName ? "error" : ""
               }

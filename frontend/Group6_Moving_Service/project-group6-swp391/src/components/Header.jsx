@@ -1,11 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Button, message, Dropdown, Menu } from "antd";
+import { Button, message } from "antd";
 import { UserOutlined, PhoneOutlined, DownOutlined } from "@ant-design/icons";
-import axios from "axios";
-import api from "../service/axiosInstance";
+import api from "../service/axiosInstance"; // Thống nhất dùng api
 import { useNavigate, useLocation } from "react-router-dom";
 import "./Header.css";
-
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,8 +12,6 @@ const Header = () => {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const dropdownRef = useRef(null);
   const roleName = localStorage.getItem("roleName");
-  // Inline request preview removed; we navigate to a dedicated page
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -23,90 +19,67 @@ const Header = () => {
         setIsDropdownVisible(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-
   const handleLogout = async () => {
     if (!token) {
       navigate("/login");
       return;
     }
-
     try {
-      await axios.post(
-        "http://localhost:8080/api/auth/logout",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-
-
+      await api.post("/auth/logout"); // Sử dụng api instance (đã có Authorization header)
       localStorage.removeItem("token");
       localStorage.removeItem("userId");
       localStorage.removeItem("user");
-
+      localStorage.removeItem("roleName"); // Thêm để clear role
       message.success("Đăng xuất thành công!");
       navigate("/");
-
     } catch (err) {
       console.error("Logout error:", err);
+      message.error("Lỗi đăng xuất");
     }
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    navigate("/login");
   };
-
-
   const handleUserMenuClick = () => {
     setIsDropdownVisible(!isDropdownVisible);
   };
-
-
   const userMenuItems = [
-    {
-      key: "my-requests",
-      label: "Danh sách yêu cầu",
-      onClick: () => {
-        navigate("/my-requests");
-        setIsDropdownVisible(false);
-      }
-    },
-    ...(roleName === "admin" ? [ // Thêm link chỉ cho admin
-      {
-        key: "admin-dashboard",
-        label: "Admin Dashboard",
-        onClick: () => {
-          navigate("/admin-dashboard");
-          setIsDropdownVisible(false);
-        }
-      }
-    ] : []),
+    // {
+    // key: "my-requests",
+    // label: "Danh sách yêu cầu",
+    // onClick: () => {
+    // navigate("/my-requests");
+    // setIsDropdownVisible(false);
+    // },
+    // },
+    ...(roleName === "admin"
+      ? [
+        {
+          key: "admin-dashboard",
+          label: "Admin Dashboard",
+          onClick: () => {
+            navigate("/admin-dashboard");
+            setIsDropdownVisible(false);
+          },
+        },
+      ]
+      : []),
     {
       key: "profile",
       label: "Thông tin cá nhân",
       onClick: () => {
         navigate("/user-profile");
         setIsDropdownVisible(false);
-      }
+      },
     },
     {
       key: "logout",
       label: "Đăng xuất",
-      onClick: handleLogout
-    }
+      onClick: handleLogout,
+    },
   ];
-
   return (
     <header className="navbar">
       <div className="navbar-container">
@@ -120,15 +93,21 @@ const Header = () => {
             <div className="company-tagline">Dịch Vụ Chuyển Nhà Chuyên Nghiệp</div>
           </div>
         </div>
-
         {/* Navigation Links */}
         <nav className="navbar-nav">
-          <a onClick={() => navigate("/price-service")} className="nav-link" style={{ cursor: 'pointer' }}>Dịch Vụ</a>
-          <a href="#about" className="nav-link">Giới Thiệu</a>
-          <a href="#reviews" className="nav-link">Đánh Giá</a>
-          <a href="#contact" className="nav-link">Liên Hệ</a>
+          <a onClick={() => navigate("/price-service")} className="nav-link" style={{ cursor: "pointer" }}>
+            Dịch Vụ
+          </a>
+          <a href="#about" className="nav-link">
+            Giới Thiệu
+          </a>
+          <a href="#reviews" className="nav-link">
+            Đánh Giá
+          </a>
+          <a href="#contact" className="nav-link">
+            Liên Hệ
+          </a>
         </nav>
-
         {/* Right Section */}
         <div className="navbar-actions">
           {/* Phone Number */}
@@ -136,36 +115,17 @@ const Header = () => {
             <PhoneOutlined className="phone-icon" />
             <span className="phone-number">(555) 123-4567</span>
           </div>
-
           {/* User Actions */}
           {isLoggedIn ? (
             <div className="user-menu" ref={dropdownRef}>
-              <button
-                className="user-button"
-                onClick={handleUserMenuClick}
-              >
+              <button className="user-button" onClick={handleUserMenuClick}>
                 <UserOutlined className="user-icon" />
                 <DownOutlined className="dropdown-icon" />
               </button>
-
               {isDropdownVisible && (
                 <div className="user-dropdown">
-                  {/* <button
-                    key="my-requests"
-                    className="dropdown-item"
-                    onClick={() => {
-                      navigate("/my-requests");
-                      setIsDropdownVisible(false);
-                    }}
-                  >
-                    Danh sách yêu cầu
-                  </button> */}
                   {userMenuItems.map((item) => (
-                    <button
-                      key={item.key}
-                      className="dropdown-item"
-                      onClick={item.onClick}
-                    >
+                    <button key={item.key} className="dropdown-item" onClick={item.onClick}>
                       {item.label}
                     </button>
                   ))}
@@ -174,18 +134,10 @@ const Header = () => {
             </div>
           ) : (
             <div className="auth-buttons">
-              <Button
-                type="text"
-                className="login-btn"
-                onClick={() => navigate("/login")}
-              >
+              <Button type="text" className="login-btn" onClick={() => navigate("/login")}>
                 Đăng Nhập
               </Button>
-              <Button
-                type="primary"
-                className="register-btn"
-                onClick={() => navigate("/customer-register")}
-              >
+              <Button type="primary" className="register-btn" onClick={() => navigate("/customer-register")}>
                 Đăng Ký
               </Button>
             </div>
@@ -193,8 +145,6 @@ const Header = () => {
         </div>
       </div>
     </header>
-
   );
 };
-
 export default Header;
