@@ -15,7 +15,7 @@ const LoginPage = () => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1);
-    const { login } = useAuth(); // ✅ lấy login từ context
+  const { login } = useAuth(); // ✅ lấy login từ context
 
 
   const validationSchema = Yup.object({
@@ -30,32 +30,49 @@ const LoginPage = () => {
       formik.setSubmitting(true);
       try {
         const response = await axios.post("http://localhost:8080/api/auth/login", values);
-       const { token, roleId, position } = response.data.result;
-      // ✅ gọi context login
-      login(token);
 
-      // Navigate tùy role
-   
-      if (roleId === 3 && position === "Surveyer") {
-        navigate("/survey-dashboard");
-      } else if (roleId === 3) {
-        navigate("/employee/dashboard");
-      } else if (roleId === 4 || roleId === 5) {
-        navigate("/customer-page");
-      } else if (roleId === 2) {
-        navigate("/manager/dashboard");
-      } else if (roleId === 1) {
-        navigate("/admin-dashboard");
-      } else {
-        navigate("/");
+        // ĐÚNG: response.data.result
+        const result = response.data.result;
+        const token = result.token;
+        const roleId = result.roleId; // Sử dụng roleId để check
+        const position = result.position;
+
+        // Lưu token và roleName (✅ Thêm dòng này, lưu lowercase để dễ check)
+        localStorage.setItem("token", token);
+        localStorage.setItem("roleName", result.roleName.toLowerCase()); // Ví dụ: 'admin'
+
+        // Đọc scope từ JWT (để xác nhận) - giữ để debug nhưng không dùng cho redirect
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          console.log("JWT payload:", payload);  // Log để debug
+          const roleFromJwt = payload.roles?.[0]?.toLowerCase() || "";  // Sửa claim thành "roles"
+        } catch (err) {
+          console.error("Invalid JWT format:", err);  // Sửa message
+        }
+
+        // CHUYỂN HƯỚNG dựa trên roleId (an toàn hơn, vì id không đổi case)
+        if (roleId === 1) { // admin
+          navigate("/admin-dashboard");
+        } else if (roleId === 2) { // manager
+          navigate("/manager/dashboard");
+        } else if (roleId === 3) { // employee
+          if (position === "Surveyer") {
+            navigate("/survey-dashboard");
+          } else {
+            navigate("/employee/dashboard");
+          }
+        } else if (roleId === 4 || roleId === 5) { // customer_individual hoặc customer_company
+          navigate("/customer-page");
+        } else {
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+        alert(error.response?.data?.message || "Login failed");
+      } finally {
+        formik.setSubmitting(false);
       }
-
-    } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
-      setSubmitting(false);
-    }
-  },
-
+    },
   });
 
   const handleSendOtp = async () => {

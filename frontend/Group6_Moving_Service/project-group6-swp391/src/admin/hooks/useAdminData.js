@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { adminApi } from "../../service/adminApi";
 import { message } from "antd";
+import { useNavigate } from "react-router-dom";  // Thêm import này
 
 export const useAdminData = () => {
     const [users, setUsers] = useState([]);
@@ -8,6 +9,7 @@ export const useAdminData = () => {
     const [vehicles, setVehicles] = useState([]);
     const [auditLogs, setAuditLogs] = useState([]);
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();  // Thêm này để dùng navigate
 
     const loadData = async () => {
         setLoading(true);
@@ -24,19 +26,32 @@ export const useAdminData = () => {
             setVehicles(vehiclesData);
             setAuditLogs(logsData);
         } catch (err) {
-            message.error("Không thể tải dữ liệu");
-            console.error(err);
+            console.error("Load data error:", err.response?.data || err.message);
+            if (err.response?.status === 403) {
+                message.error("Access denied: You don't have permission. Check your role.");
+            } else if (err.response?.status === 401) {
+                message.error("Session expired. Please login again.");
+                localStorage.removeItem("token");
+                navigate("/login");  // Sửa dùng navigate
+            } else {
+                message.error(err.response?.data?.message || "Không thể tải dữ liệu.");
+            }
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadData();
-        // eslint-disable-next-line
-    }, []);
+        const token = localStorage.getItem("token");
+        if (token) {
+            loadData();
+        } else {
+            message.error("Please login first");
+            navigate("/login");  // Sửa dùng navigate
+        }
+    }, [navigate]);  // Thêm dependency
 
-    const refetchUsers = () => adminApi.getUsers().then(setUsers);
+    const refetchUsers = () => adminApi.getUsers().then(setUsers).catch(err => message.error("Refetch users failed"));
 
     return {
         users,
