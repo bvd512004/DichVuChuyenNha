@@ -89,7 +89,14 @@ public class AuthenticationService {
                 .orElseGet(() -> userRepository.findByUsername(request.getEmail()) // fallback username nếu email fail
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
 
+        // Log để debug
+        System.out.println("=== PASSWORD CHECK ===");
+        System.out.println("Input password: " + request.getPassword());
+        System.out.println("Stored password hash: " + user.getPassword());
+        System.out.println("Password matches: " + passwordEncoder.matches(request.getPassword(), user.getPassword()));
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            System.out.println("ERROR: Password không khớp");
             saveFailedLogin(user);
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }

@@ -71,6 +71,18 @@ const Header = () => {
         },
       ]
       : []),
+    ...(roleName?.toLowerCase() === "manager"  // ✅ Thêm Manager Dashboard cho manager
+      ? [
+        {
+          key: "manager-dashboard",
+          label: "Manager Dashboard",
+          onClick: () => {
+            navigate("/manager/dashboard/contract-assignment");
+            setIsDropdownVisible(false);
+          },
+        },
+      ]
+      : []),
     {
       key: "profile",
       label: "Thông tin cá nhân",

@@ -37,7 +37,7 @@ public class QuotationController {
         return ResponseEntity.ok(savedQuotation);
     }
     @GetMapping("/me")
-    @PreAuthorize("hasRole('employee') and @employeePositionService.hasPositionSurveyer(authentication)")
+    @PreAuthorize("hasRole('EMPLOYEE') and @employeePositionService.hasPositionSurveyer(authentication)")
 
     public ResponseEntity<List<QuotationResponse>> getQuotationsByEmployee() {
         List<QuotationResponse> responses = quotationService.getQuotationsByCurrentEmployee();
