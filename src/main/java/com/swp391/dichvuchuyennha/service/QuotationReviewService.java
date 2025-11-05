@@ -43,7 +43,7 @@ public class QuotationReviewService {
         Quotations quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy quotation với ID: " + quotationId));
 
-        quotation.setStatus("REVIEW"); // để nhân viên khảo sát chỉnh sửa
+        quotation.setStatus("REJECTED"); // để nhân viên khảo sát chỉnh sửa
         quotationRepository.save(quotation);
 
         return quotationMapper.toResponse(quotation);

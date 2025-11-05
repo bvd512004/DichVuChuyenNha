@@ -14,9 +14,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    /**
-     * ✅ API tạo QR thanh toán đặt cọc
-     */
+
     @PostMapping("/deposit/{contractId}")
     public String createDepositPayment(@PathVariable Integer contractId) {
         JSONObject response = paymentService.createDepositPayment(contractId);
