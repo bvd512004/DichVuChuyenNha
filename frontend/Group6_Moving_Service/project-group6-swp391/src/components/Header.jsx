@@ -4,6 +4,7 @@ import { UserOutlined, PhoneOutlined, DownOutlined } from "@ant-design/icons";
 import api from "../service/axiosInstance"; // Thống nhất dùng api
 import { useNavigate, useLocation } from "react-router-dom";
 import "./Header.css";
+
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -11,7 +12,8 @@ const Header = () => {
   const isLoggedIn = !!token;
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const dropdownRef = useRef(null);
-  const roleName = localStorage.getItem("roleName");
+  const roleName = localStorage.getItem("roleName"); // Lấy từ localStorage (sẽ là 'admin' lowercase sau fix)
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -24,6 +26,7 @@ const Header = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
   const handleLogout = async () => {
     if (!token) {
       navigate("/login");
@@ -42,9 +45,11 @@ const Header = () => {
       message.error("Lỗi đăng xuất");
     }
   };
+
   const handleUserMenuClick = () => {
     setIsDropdownVisible(!isDropdownVisible);
   };
+
   const userMenuItems = [
     // {
     // key: "my-requests",
@@ -54,7 +59,7 @@ const Header = () => {
     // setIsDropdownVisible(false);
     // },
     // },
-    ...(roleName === "admin"
+    ...(roleName?.toLowerCase() === "admin"  // ✅ Sửa: Check lowercase để match
       ? [
         {
           key: "admin-dashboard",
@@ -80,6 +85,7 @@ const Header = () => {
       onClick: handleLogout,
     },
   ];
+
   return (
     <header className="navbar">
       <div className="navbar-container">
@@ -147,4 +153,5 @@ const Header = () => {
     </header>
   );
 };
+
 export default Header;

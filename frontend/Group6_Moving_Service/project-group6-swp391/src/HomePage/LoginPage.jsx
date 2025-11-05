@@ -37,8 +37,9 @@ const LoginPage = () => {
         const roleId = result.roleId; // Sử dụng roleId để check
         const position = result.position;
 
-        // Lưu token
+        // Lưu token và roleName (✅ Thêm dòng này, lưu lowercase để dễ check)
         localStorage.setItem("token", token);
+        localStorage.setItem("roleName", result.roleName.toLowerCase()); // Ví dụ: 'admin'
 
         // Đọc scope từ JWT (để xác nhận) - giữ để debug nhưng không dùng cho redirect
         try {
