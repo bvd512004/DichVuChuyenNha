@@ -1,54 +1,73 @@
-//package com.swp391.dichvuchuyennha.controller;
-//
-//import java.util.List;
-//
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.DeleteMapping;
-//import org.springframework.web.bind.annotation.GetMapping;
-//import org.springframework.web.bind.annotation.PathVariable;
-//import org.springframework.web.bind.annotation.PostMapping;
-//import org.springframework.web.bind.annotation.PutMapping;
-//import org.springframework.web.bind.annotation.RequestBody;
-//import org.springframework.web.bind.annotation.RequestMapping;
-//import org.springframework.web.bind.annotation.RestController;
-//
-//import com.swp391.dichvuchuyennha.dto.request.VehicleCreateRequest;
-//import com.swp391.dichvuchuyennha.dto.response.VehicleResponse;
-//import com.swp391.dichvuchuyennha.service.VehiclesService;
-//
-//import lombok.RequiredArgsConstructor;
-//
-//@RestController
-//@RequestMapping("/api/vehicles")
-//@RequiredArgsConstructor
-//public class VehiclesController {
-//
-//    private final VehiclesService vehiclesService;
-//
-//    @GetMapping
-//    public ResponseEntity<List<VehicleResponse>> getAllVehicles() {
-//        return ResponseEntity.ok(vehiclesService.getAllVehicles());
-//    }
-//
-//    @GetMapping("/{id}")
-//    public ResponseEntity<VehicleResponse> getVehicleById(@PathVariable Integer id) {
-//        return ResponseEntity.ok(vehiclesService.getVehicleById(id));
-//    }
-//
-//    @PostMapping
-//    public ResponseEntity<VehicleResponse> createVehicle(@RequestBody VehicleCreateRequest request) {
-//        return ResponseEntity.ok(vehiclesService.createVehicle(request));
-//    }
-//
-//    @PutMapping("/{id}")
-//    public ResponseEntity<VehicleResponse> updateVehicle(@PathVariable Integer id,
-//            @RequestBody VehicleCreateRequest request) {
-//        return ResponseEntity.ok(vehiclesService.updateVehicle(id, request));
-//    }
-//
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteVehicle(@PathVariable Integer id) {
-//        vehiclesService.deleteVehicle(id);
-//        return ResponseEntity.noContent().build();
-//    }
-//}
+package com.swp391.dichvuchuyennha.controller;
+
+import com.swp391.dichvuchuyennha.dto.request.VehicleAssignRequest;
+import com.swp391.dichvuchuyennha.dto.response.VehicleResponse;
+import com.swp391.dichvuchuyennha.service.VehiclesService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/vehicles")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
+public class VehiclesController {
+
+    private final VehiclesService vehiclesService;
+
+    /**
+     * Lấy danh sách xe có sẵn để gán
+     * GET /api/vehicles/available
+     */
+    @GetMapping("/available")
+    public ResponseEntity<List<VehicleResponse>> getAvailableVehicles() {
+        List<VehicleResponse> vehicles = vehiclesService.getAvailableVehicles();
+        return ResponseEntity.ok(vehicles);
+    }
+
+    /**
+     * Lấy danh sách xe đã được gán cho hợp đồng
+     * GET /api/vehicles/contract/{contractId}
+     */
+    @GetMapping("/contract/{contractId}")
+    public ResponseEntity<List<VehicleResponse>> getVehiclesByContract(@PathVariable Integer contractId) {
+        try {
+            List<VehicleResponse> vehicles = vehiclesService.getVehiclesByContract(contractId);
+            return ResponseEntity.ok(vehicles);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * Gán xe cho hợp đồng
+     * POST /api/vehicles/assign
+     */
+    @PostMapping("/assign")
+    public ResponseEntity<VehicleResponse> assignVehicleToContract(@RequestBody VehicleAssignRequest request) {
+        try {
+            VehicleResponse response = vehiclesService.assignVehicleToContract(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * Hủy gán xe khỏi hợp đồng
+     * DELETE /api/vehicles/assign/{contractId}/{vehicleId}
+     */
+    @DeleteMapping("/assign/{contractId}/{vehicleId}")
+    public ResponseEntity<Void> unassignVehicleFromContract(
+            @PathVariable Integer contractId,
+            @PathVariable Integer vehicleId) {
+        try {
+            vehiclesService.unassignVehicleFromContract(contractId, vehicleId);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+}

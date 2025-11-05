@@ -131,10 +131,12 @@ public class ContractService {
         contractRepository.deleteById(id);
     }
 
-    /** ✅ Lấy toàn bộ hợp đồng */
+    /** ✅ Lấy toàn bộ hợp đồng đã ký (cho manager) */
     public List<ContractResponse> getAllContracts() {
+        // Lấy hợp đồng đã ký (SIGNED, DEPOSIT_PAID, hoặc các status khác sau khi ký)
         return contractRepository.findAll()
                 .stream()
+                .filter(c -> c.getSignedDate() != null) // Chỉ lấy hợp đồng đã ký
                 .map(contractMapper::toResponse)
                 .toList();
     }

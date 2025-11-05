@@ -33,6 +33,7 @@ import QuotationContractList from "../manager/QuotationContractList";
 import ManagerWorkProgressPage from "../manager/ManagerWorkProgressPage";
 import WorkProgressList from "../manager/WorkProgressList";
 import ReviewQuotationManagement from "../manager/ReviewQuotationManagement";
+import VehicleAssignment from "../manager/VehicleAssignment";
 import PaymentSuccessPage from "../customer/PaymentSuccessPage";
 import PaymentCancelPage from "../customer/PaymentCancelPage";
 import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
@@ -123,9 +124,15 @@ const Router = () => {
           path: "manager/dashboard",
           element: <ManagerDashboard />,
           children: [
+            { index: true, element: <ContractAssignment /> },
             { path: "contract-assignment", element: <ContractAssignment /> },
+            { path: "assign-surveyer", element: <AssignSurveyer /> },
+            { path: "review-quotations", element: <ReviewQuotationManagement /> },
+            { path: "contracts-list-manager", element: <QuotationContractList /> },
+            { path: "vehicle-assignment", element: <VehicleAssignment /> },
             { path: "manager/work-progress", element: <ManagerWorkProgressPage /> },
             { path: "manager/work-progress-list", element: <WorkProgressList /> },
+            { path: "reports", element: <div>Reports Page - Coming Soon</div> },
           ],
         },
 

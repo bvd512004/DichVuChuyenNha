@@ -19,8 +19,11 @@ const LoginPage = () => {
 
 
   const validationSchema = Yup.object({
-    email: Yup.string().email("Invalid email").required("Email is required"),
-    password: Yup.string().required("Password is required"),
+    // Cho phép cả email và username (backend hỗ trợ cả 2)
+    email: Yup.string()
+      .required("Email hoặc Username là bắt buộc")
+      .min(3, "Email/Username phải có ít nhất 3 ký tự"),
+    password: Yup.string().required("Mật khẩu là bắt buộc"),
   });
 
   const formik = useFormik({
@@ -28,8 +31,18 @@ const LoginPage = () => {
     validationSchema,
     onSubmit: async (values) => {
       formik.setSubmitting(true);
+      
+      // Log để debug
+      console.log("Sending login request:", values);
+      
       try {
-        const response = await axios.post("http://localhost:8080/api/auth/login", values);
+        const response = await axios.post("http://localhost:8080/api/auth/login", values, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        
+        console.log("Login response:", response.data);
 
         // ĐÚNG: response.data.result
         const result = response.data.result;
@@ -68,7 +81,27 @@ const LoginPage = () => {
         }
       } catch (error) {
         console.error("Login error:", error);
-        alert(error.response?.data?.message || "Login failed");
+        
+        // Xử lý các loại lỗi khác nhau
+        let errorMessage = "Đăng nhập thất bại";
+        
+        if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+          errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra backend có đang chạy không.";
+        } else if (error.response) {
+          // Backend đã trả về response
+          const errorData = error.response.data;
+          errorMessage = errorData?.message || errorData?.result || `Lỗi ${error.response.status}: ${error.response.statusText}`;
+          
+          // Log chi tiết để debug
+          console.error("Error response:", errorData);
+        } else if (error.request) {
+          // Request đã được gửi nhưng không nhận được response
+          errorMessage = "Không nhận được phản hồi từ server.";
+        } else {
+          errorMessage = error.message || "Đã xảy ra lỗi không xác định";
+        }
+        
+        alert(errorMessage);
       } finally {
         formik.setSubmitting(false);
       }
@@ -131,15 +164,15 @@ const LoginPage = () => {
       <p className="auth-subtitle">Hãy đăng nhập tài khoản của bạn</p>
 
       <Form onFinish={formik.handleSubmit} layout="vertical">
-        {/* Email */}
+        {/* Email hoặc Username */}
         <Form.Item
-          label="Email"
+          label="Email hoặc Username"
           validateStatus={formik.errors.email && formik.touched.email ? "error" : ""}
           help={formik.errors.email && formik.touched.email ? formik.errors.email : null}
         >
           <Input
             name="email"
-            placeholder="Enter your email"
+            placeholder="Nhập email hoặc username"
             value={formik.values.email}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}

@@ -10,6 +10,7 @@ import com.swp391.dichvuchuyennha.dto.request.SurveyRequest;
 import com.swp391.dichvuchuyennha.dto.response.SurveyResponse;
 import com.swp391.dichvuchuyennha.entity.Surveys;
 import com.swp391.dichvuchuyennha.mapper.SurveyMapper;
+import com.swp391.dichvuchuyennha.service.EmployeePositionService;
 import com.swp391.dichvuchuyennha.service.SurveyService;
 
 import lombok.RequiredArgsConstructor;
@@ -21,16 +22,18 @@ public class SurveyController {
 
     private final SurveyService surveyService;
     private final SurveyMapper surveyMapper;
+    private final EmployeePositionService employeePositionService;
 
     // API tạo survey mới
     @PostMapping
+    @PreAuthorize("hasRole('MANAGER') or (hasRole('EMPLOYEE') and @employeePositionService.hasPositionSurveyer(authentication))")
     public ResponseEntity<SurveyResponse> createSurvey(@RequestBody SurveyRequest dto) {
         Surveys savedSurvey = surveyService.createSurvey(dto);
         return ResponseEntity.ok(surveyMapper.toResponse(savedSurvey));
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasRole('employee') and @employeePositionService.hasPositionSurveyer(authentication)")
+    @PreAuthorize("hasRole('EMPLOYEE') and @employeePositionService.hasPositionSurveyer(authentication)")
 
     public ResponseEntity<List<SurveyResponse>> getMySurveys() {
         return ResponseEntity.ok(surveyService.getSurveysByCurrentEmployee());
