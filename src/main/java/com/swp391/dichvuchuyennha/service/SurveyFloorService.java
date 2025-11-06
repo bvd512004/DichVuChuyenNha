@@ -1,7 +1,6 @@
 package com.swp391.dichvuchuyennha.service;
 
 import com.swp391.dichvuchuyennha.dto.request.SurveyFloorRequest;
-import com.swp391.dichvuchuyennha.entity.Surveys;
 import com.swp391.dichvuchuyennha.entity.SurveyFloor;
 import com.swp391.dichvuchuyennha.entity.Surveys;
 import com.swp391.dichvuchuyennha.mapper.SurveyFloorMapper;
@@ -54,6 +53,20 @@ public class SurveyFloorService {
 
         // Cập nhật lại tổng diện tích sau khi xóa tầng
         updateSurveyTotalArea(survey);
+    }
+
+    @Transactional
+    public SurveyFloor updateSurveyFloorArea(Integer floorId, Double area) {
+        SurveyFloor floor = surveyFloorRepository.findById(floorId)
+                .orElseThrow(() -> new RuntimeException("SurveyFloor not found"));
+
+        floor.setArea(area);
+        SurveyFloor updated = surveyFloorRepository.save(floor);
+
+        // Cập nhật lại tổng diện tích cho survey
+        updateSurveyTotalArea(floor.getSurvey());
+
+        return updated;
     }
 
     private void updateSurveyTotalArea(Surveys survey) {
