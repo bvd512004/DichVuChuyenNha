@@ -12,8 +12,11 @@ import {
   Badge,
   Tag,
   Space,
+  Descriptions,
+  List,
+  Card,
 } from "antd";
-import { PlusOutlined, CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import { PlusOutlined, CheckCircleOutlined, ClockCircleOutlined, RobotOutlined } from "@ant-design/icons";
 import axiosInstance from "../service/axiosInstance";
 
 const SurveyFloorList = ({ onSurveyUpdate }) => {
@@ -25,6 +28,9 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
   const [selectedFloor, setSelectedFloor] = useState(null);
   const [uploadForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     fetchMySurveys();
@@ -131,6 +137,113 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
     } catch (error) {
       console.error(error);
       message.error("❌ Lỗi khi tải ảnh!");
+    }
+  };
+
+  // Phân tích hình ảnh với AI
+  const handleAnalyzeImage = async () => {
+    try {
+      const files = uploadForm.getFieldValue("file") || [];
+      if (files.length === 0) {
+        message.error("Vui lòng chọn ít nhất 1 ảnh để phân tích!");
+        return;
+      }
+
+      // Lấy ảnh đầu tiên để phân tích
+      const firstFile = files[0].originFileObj;
+      const formData = new FormData();
+      formData.append("file", firstFile);
+
+      setAnalyzing(true);
+      const response = await axiosInstance.post("/survey-images/analyze", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setAnalysisResult(response.data);
+      setIsAnalysisModalOpen(true);
+      message.success("✅ Phân tích hình ảnh thành công!");
+    } catch (error) {
+      console.error(error);
+      message.error("❌ Lỗi khi phân tích hình ảnh!");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  // Áp dụng diện tích từ kết quả phân tích
+  const handleApplyArea = async () => {
+    if (!analysisResult?.estimatedArea) {
+      message.warning("Không có diện tích để áp dụng!");
+      return;
+    }
+
+    const area = Math.round(analysisResult.estimatedArea * 10) / 10; // Làm tròn 1 chữ số thập phân
+
+    try {
+      // Nếu đang upload ảnh cho tầng đã có (selectedFloor), cập nhật tầng đó
+      if (selectedFloor?.floorId) {
+        await axiosInstance.put(`/survey-floors/${selectedFloor.floorId}/area`, null, {
+          params: { area: area }
+        });
+        message.success(`✅ Đã cập nhật diện tích tầng ${selectedFloor.floorNumber}: ${area} m²`);
+        await fetchMySurveys(); // Refresh lại data
+      } else {
+        // Nếu đang ở form thêm tầng mới, áp dụng vào form
+        form.setFieldValue("area", area);
+        message.success(`✅ Đã áp dụng diện tích vào form: ${area} m²`);
+      }
+      setIsAnalysisModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      message.error("❌ Lỗi khi cập nhật diện tích!");
+    }
+  };
+
+  // Thêm dịch vụ đóng gói vào báo giá
+  const handleAddPackingService = async () => {
+    if (!analysisResult?.detectedFurniture || analysisResult.detectedFurniture.length === 0) {
+      message.warning("Không có đồ đạc nào để thêm dịch vụ!");
+      return;
+    }
+
+    if (!selectedFloor?.floorId) {
+      message.warning("Vui lòng chọn tầng trước khi thêm dịch vụ!");
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post(
+        `/survey-images/${selectedFloor.floorId}/add-packing-service`,
+        analysisResult
+      );
+      
+      // Hiển thị thông báo thành công với format đẹp hơn
+      const successMsg = response.data || "✅ Đã thêm dịch vụ đóng gói vào báo giá!";
+      message.success({
+        content: successMsg,
+        duration: 5,
+      });
+      setIsAnalysisModalOpen(false);
+    } catch (error) {
+      console.error("Lỗi khi thêm dịch vụ:", error);
+      console.error("Response data:", error.response?.data);
+      console.error("Request data:", analysisResult);
+      
+      // Lấy thông báo lỗi từ server
+      let errorMsg = "Lỗi không xác định";
+      if (error.response?.data) {
+        // Nếu response.data là string, dùng trực tiếp
+        errorMsg = typeof error.response.data === 'string' 
+          ? error.response.data 
+          : error.response.data.message || JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+      
+      message.error({
+        content: `❌ Lỗi khi thêm dịch vụ: ${errorMsg}`,
+        duration: 6,
+      });
     }
   };
 
@@ -401,11 +514,28 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
           setIsUploadModalOpen(false);
           setSelectedFloor(null);
           uploadForm.resetFields();
+          setAnalysisResult(null);
         }}
         onOk={() => uploadForm.submit()}
         okText="Tải lên"
         cancelText="Hủy"
-        width={600}
+        width={700}
+        footer={[
+          <Button key="analyze"onClick={handleAnalyzeImage} loading={analyzing}>
+             Phân tích AI
+          </Button>,
+          <Button key="cancel" onClick={() => {
+            setIsUploadModalOpen(false);
+            setSelectedFloor(null);
+            uploadForm.resetFields();
+            setAnalysisResult(null);
+          }}>
+            Hủy
+          </Button>,
+          <Button key="submit" type="primary" onClick={() => uploadForm.submit()}>
+            Tải lên
+          </Button>,
+        ]}
       >
         <Form form={uploadForm} layout="vertical" onFinish={handleUploadImage}>
           <Form.Item
@@ -414,6 +544,7 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
             valuePropName="fileList"
             getValueFromEvent={(e) => e?.fileList || []}
             rules={[{ required: true, message: "Vui lòng chọn ít nhất 1 ảnh!" }]}
+            extra="💡 Chọn ảnh và nhấn 'Phân tích AI' để tự động tính diện tích và nhận diện đồ đạc"
           >
             <Upload
               listType="picture-card"
@@ -436,6 +567,95 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
             <Input.TextArea placeholder="Nhập ghi chú chung cho các ảnh (tùy chọn)" rows={3} />
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Modal hiển thị kết quả phân tích AI */}
+      <Modal
+        title=" Kết quả phân tích "
+        open={isAnalysisModalOpen}
+        onCancel={() => setIsAnalysisModalOpen(false)}
+        footer={[
+          <Button key="close" onClick={() => setIsAnalysisModalOpen(false)}>
+            Đóng
+          </Button>,
+          <Button 
+            key="add-service" 
+            type="default" 
+            onClick={handleAddPackingService} 
+            disabled={!analysisResult?.detectedFurniture || analysisResult.detectedFurniture.length === 0 || !selectedFloor?.floorId}
+          >
+            Thêm dịch vụ đóng gói vào báo giá
+          </Button>,
+          <Button key="apply" type="primary" onClick={handleApplyArea} disabled={!analysisResult?.estimatedArea}>
+            Áp dụng diện tích vào form
+          </Button>,
+        ]}
+        width={800}
+      >
+        {analysisResult && (
+          <div>
+            <Descriptions bordered column={1} size="middle" style={{ marginBottom: 20 }}>
+              <Descriptions.Item label="📐 Diện tích ước tính">
+                <strong style={{ fontSize: 18, color: "#1890ff" }}>
+                  {analysisResult.estimatedArea ? `${Math.round(analysisResult.estimatedArea * 10) / 10} m²` : "Không xác định"}
+                </strong>
+              </Descriptions.Item>
+              {analysisResult.analysisNote && (
+                <Descriptions.Item label="📝 Ghi chú">
+                  {analysisResult.analysisNote}
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+
+            {analysisResult.detectedFurniture && analysisResult.detectedFurniture.length > 0 && (
+              <div>
+                <div style={{ marginBottom: 16, padding: 12, backgroundColor: "#f0f2f5", borderRadius: 4 }}>
+                  <strong>Tổng số đồ đạc: </strong>
+                  <span style={{ fontSize: 16, color: "#1890ff", fontWeight: "bold" }}>
+                    {analysisResult.detectedFurniture.reduce((sum, item) => sum + (item.quantity || 1), 0)} bộ
+                  </span>
+                  <span style={{ marginLeft: 8, color: "#666", fontSize: 12 }}>
+                    (Sẽ thêm dịch vụ "Đóng gói chuyên nghiệp - Theo bộ" vào báo giá)
+                  </span>
+                </div>
+                <h3 style={{ marginBottom: 16 }}>🪑 Đồ đạc được phát hiện:</h3>
+                <List
+                  grid={{ gutter: 16, column: 2 }}
+                  dataSource={analysisResult.detectedFurniture}
+                  renderItem={(item) => (
+                    <List.Item>
+                      <Card size="small">
+                        <div>
+                          <strong>{item.name}</strong>
+                          {item.quantity && <Tag color="blue" style={{ marginLeft: 8 }}>x{item.quantity}</Tag>}
+                        </div>
+                        {item.description && (
+                          <div style={{ marginTop: 8, color: "#666", fontSize: 12 }}>
+                            {item.description}
+                          </div>
+                        )}
+                        {item.suggestedServiceName && (
+                          <div style={{ marginTop: 8 }}>
+                            <Tag color="green">Dịch vụ: {item.suggestedServiceName}</Tag>
+                          </div>
+                        )}
+                      </Card>
+                    </List.Item>
+                  )}
+                />
+              </div>
+            )}
+
+            {(!analysisResult.detectedFurniture || analysisResult.detectedFurniture.length === 0) && (
+              <Alert
+                message="Không phát hiện đồ đạc"
+                description="AI không phát hiện được đồ đạc trong hình ảnh này."
+                type="info"
+                showIcon
+              />
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   );
