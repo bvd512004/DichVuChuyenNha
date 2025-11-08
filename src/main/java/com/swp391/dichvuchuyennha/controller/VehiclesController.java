@@ -1,6 +1,7 @@
 package com.swp391.dichvuchuyennha.controller;
 
 import com.swp391.dichvuchuyennha.dto.request.VehicleAssignRequest;
+import com.swp391.dichvuchuyennha.dto.response.DriverResponse;
 import com.swp391.dichvuchuyennha.dto.response.VehicleResponse;
 import com.swp391.dichvuchuyennha.service.VehiclesService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,15 @@ public class VehiclesController {
     }
 
     /**
+     * Lấy danh sách tài xế rảnh
+     */
+    @GetMapping("/available-drivers")
+    public ResponseEntity<List<DriverResponse>> getAvailableDrivers() {
+        List<DriverResponse> drivers = vehiclesService.getAvailableDrivers();
+        return ResponseEntity.ok(drivers);
+    }
+
+    /**
      * Lấy danh sách xe đã được gán cho hợp đồng
      * GET /api/vehicles/contract/{contractId}
      */
@@ -49,6 +59,20 @@ public class VehiclesController {
     public ResponseEntity<VehicleResponse> assignVehicleToContract(@RequestBody VehicleAssignRequest request) {
         try {
             VehicleResponse response = vehiclesService.assignVehicleToContract(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/assign-driver")
+    public ResponseEntity<VehicleResponse> assignDriverToVehicle(@RequestBody VehicleAssignRequest request) {
+        try {
+            VehicleResponse response = vehiclesService.assignDriverToVehicle(
+                    request.getContractId(),
+                    request.getVehicleId(),
+                    request.getDriverId()
+            );
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();

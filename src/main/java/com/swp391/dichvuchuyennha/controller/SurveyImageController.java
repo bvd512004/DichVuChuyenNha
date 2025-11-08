@@ -2,10 +2,13 @@ package com.swp391.dichvuchuyennha.controller;
 
 import com.swp391.dichvuchuyennha.dto.request.QuotationServiceRequest;
 import com.swp391.dichvuchuyennha.dto.response.ImageAnalysisResponse;
+import com.swp391.dichvuchuyennha.entity.Prices;
+import com.swp391.dichvuchuyennha.entity.QuotationServices;
 import com.swp391.dichvuchuyennha.entity.SurveyFloor;
 import com.swp391.dichvuchuyennha.entity.SurveyImage;
 import com.swp391.dichvuchuyennha.repository.PriceRepository;
 import com.swp391.dichvuchuyennha.repository.QuotationRepository;
+import com.swp391.dichvuchuyennha.repository.QuotationServiceRepository;
 import com.swp391.dichvuchuyennha.repository.SurveyFloorRepository;
 import com.swp391.dichvuchuyennha.repository.SurveyImageRepository;
 import com.swp391.dichvuchuyennha.dto.request.QuotationCreateRequest;
@@ -20,7 +23,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -37,6 +42,7 @@ public class SurveyImageController {
     private final QuotationService quotationService;
     private final QuotationRepository quotationRepository;
     private final PriceRepository priceRepository;
+    private final QuotationServiceRepository quotationServiceRepository;
 
     @PostMapping("/upload")
     public ResponseEntity<SurveyImage> uploadImage(
@@ -221,6 +227,45 @@ public class SurveyImageController {
                 }
             }
 
+            NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+
+            StringBuilder resultMessage = new StringBuilder("Đã thêm dịch vụ vào báo giá:\n");
+            boolean hasAddition = false;
+
+            // Cập nhật dịch vụ chính (Theo m²) theo tổng diện tích mới nhất
+            Prices mainAreaPrice = priceRepository
+                    .findTopByService_ServiceIdAndPriceTypeContainingAndIsActiveTrueOrderByEffectiveDateDesc(1, "Theo m2")
+                    .orElse(null);
+
+            if (mainAreaPrice != null && survey.getTotalArea() != null) {
+                int newAreaQuantity = Math.max(1, (int) Math.round(survey.getTotalArea()));
+
+                var mainServiceOpt = quotationServiceRepository
+                        .findByQuotationAndServiceAndPrice(quotation, mainAreaPrice.getService(), mainAreaPrice);
+
+                QuotationServices mainService;
+                if (mainServiceOpt.isPresent()) {
+                    mainService = mainServiceOpt.get();
+                } else {
+                    mainService = new QuotationServices();
+                    mainService.setQuotation(quotation);
+                    mainService.setService(mainAreaPrice.getService());
+                    mainService.setPrice(mainAreaPrice);
+                }
+
+                mainService.setQuantity(newAreaQuantity);
+                mainService.setSubtotal(mainAreaPrice.getAmount() * newAreaQuantity);
+                quotationServiceRepository.save(mainService);
+
+                resultMessage.append(String.format(
+                        "- Dịch vụ chính Theo m²: %d m² (Đơn giá %s, Thành tiền %s)\n",
+                        newAreaQuantity,
+                        currencyFormatter.format(mainAreaPrice.getAmount()),
+                        currencyFormatter.format(mainAreaPrice.getAmount() * newAreaQuantity)
+                ));
+                hasAddition = true;
+            }
+
             // Nhóm đồ đạc theo loại giá (bàn, ghế, đồ vật khác)
             Map<Integer, Integer> priceQuantityMap = new HashMap<>(); // priceId -> tổng số lượng
             
@@ -250,7 +295,6 @@ public class SurveyImageController {
             }
 
             // Thêm từng loại dịch vụ vào quotation
-            StringBuilder resultMessage = new StringBuilder("Đã thêm dịch vụ đóng gói vào báo giá:\n");
             
             for (Map.Entry<Integer, Integer> entry : priceQuantityMap.entrySet()) {
                 Integer priceId = entry.getKey();
@@ -266,7 +310,10 @@ public class SurveyImageController {
                     continue; // Bỏ qua nếu không tìm thấy price
                 }
                 
-                String priceTypeName = priceOpt.get().getPriceType();
+                var priceEntity = priceOpt.get();
+                String priceTypeName = priceEntity.getPriceType();
+                Double unitPrice = priceEntity.getAmount() != null ? priceEntity.getAmount() : 0.0;
+                double subtotal = unitPrice * quantity;
                 
                 QuotationServiceRequest request = QuotationServiceRequest.builder()
                         .quotationId(quotation.getQuotationId())
@@ -276,13 +323,110 @@ public class SurveyImageController {
                         .build();
 
                 quotationSvService.create(request);
-                resultMessage.append(String.format("- %s: %d chiếc\n", priceTypeName, quantity));
+                resultMessage.append(String.format(
+                        "- %s: %d chiếc (Đơn giá %s, Thành tiền %s)\n",
+                        priceTypeName,
+                        quantity,
+                        currencyFormatter.format(unitPrice),
+                        currencyFormatter.format(subtotal)
+                ));
+                hasAddition = true;
             }
 
-            if (resultMessage.length() <= "Đã thêm dịch vụ đóng gói vào báo giá:\n".length()) {
+            // Xử lý đề xuất phương tiện vận chuyển (service_id = 3)
+            if (analysisResult.getVehiclePlan() != null && !analysisResult.getVehiclePlan().isEmpty()) {
+                for (var plan : analysisResult.getVehiclePlan()) {
+                    if (plan.getVehicleType() == null) {
+                        continue;
+                    }
+
+                    Integer priceId = plan.getSuggestedPriceId();
+                    if (priceId == null) {
+                        String priceTypeHint;
+                        String vehicleTypeLower = plan.getVehicleType().toLowerCase();
+                        if (vehicleTypeLower.contains("container")) {
+                            priceTypeHint = "xe container";
+                        } else if (vehicleTypeLower.contains("to") || vehicleTypeLower.contains("lớn")) {
+                            priceTypeHint = "xe to";
+                        } else {
+                            priceTypeHint = "xe nhỏ";
+                        }
+
+                        var priceOpt = priceRepository
+                                .findTopByService_ServiceIdAndPriceTypeContainingAndIsActiveTrueOrderByEffectiveDateDesc(
+                                        3, priceTypeHint);
+                        if (priceOpt.isPresent()) {
+                            priceId = priceOpt.get().getPriceId();
+                            if (plan.getPriceType() == null) {
+                                plan.setPriceType(priceOpt.get().getPriceType());
+                            }
+                        }
+                    }
+
+                    if (priceId == null) {
+                        continue;
+                    }
+
+                    var vehiclePriceOpt = priceRepository.findById(priceId);
+                    if (vehiclePriceOpt.isEmpty()) {
+                        continue;
+                    }
+                    var vehiclePrice = vehiclePriceOpt.get();
+                    if (plan.getPriceType() == null) {
+                        plan.setPriceType(vehiclePrice.getPriceType());
+                    }
+
+                    int vehicleCount = plan.getVehicleCount() != null && plan.getVehicleCount() > 0
+                            ? plan.getVehicleCount() : 1;
+                    int trips = plan.getEstimatedTrips() != null && plan.getEstimatedTrips() > 0
+                            ? plan.getEstimatedTrips() : 1;
+
+                    Double distanceKm = plan.getEstimatedDistanceKm();
+                    if (distanceKm == null || distanceKm <= 0) {
+                        distanceKm = survey.getDistanceKm() != null ? survey.getDistanceKm().doubleValue() : null;
+                    }
+                    if (distanceKm == null || distanceKm <= 0) {
+                        distanceKm = 1.0; // Fallback tối thiểu
+                    }
+
+                    double totalKm = distanceKm * vehicleCount * trips;
+                    int quantityKm = (int) Math.ceil(totalKm);
+                    if (quantityKm <= 0) {
+                        quantityKm = 1;
+                    }
+
+                    QuotationServiceRequest vehicleRequest = QuotationServiceRequest.builder()
+                            .quotationId(quotation.getQuotationId())
+                            .serviceId(3)
+                            .priceId(priceId)
+                            .quantity(quantityKm)
+                            .build();
+
+                    quotationSvService.create(vehicleRequest);
+
+                    Double unitPrice = vehiclePrice.getAmount() != null ? vehiclePrice.getAmount() : 0.0;
+                    double subtotal = unitPrice * quantityKm;
+                    String priceTypeName = plan.getPriceType() != null ? plan.getPriceType() : plan.getVehicleType();
+                    String reason = plan.getReason() != null ? plan.getReason() : "";
+                    resultMessage.append(String.format(
+                            "- %s: %d km (%d xe x %d chuyến, giả định %.1f km/chuyến) → Thành tiền %s. %s\n",
+                            priceTypeName,
+                            quantityKm,
+                            vehicleCount,
+                            trips,
+                            distanceKm,
+                            currencyFormatter.format(subtotal),
+                            reason));
+                    hasAddition = true;
+                }
+            }
+
+            if (!hasAddition) {
                 return ResponseEntity.badRequest()
                         .body("Không thể thêm dịch vụ. Vui lòng kiểm tra lại cấu hình giá trong hệ thống.");
             }
+
+            quotationSvService.updateQuotationTotalPrice(quotation.getQuotationId());
 
             return ResponseEntity.ok(resultMessage.toString());
         } catch (Exception e) {

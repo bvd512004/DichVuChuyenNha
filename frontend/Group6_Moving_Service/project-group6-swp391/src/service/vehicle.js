@@ -19,17 +19,35 @@ export const vehicleApi = {
   getAvailableVehicles: () =>
     axios.get(`${API_BASE}/vehicles/available`, { headers: getAuthHeaders() }),
 
+  // Lấy danh sách tài xế rảnh
+  getAvailableDrivers: () =>
+    axios.get(`${API_BASE}/vehicles/available-drivers`, { headers: getAuthHeaders() }),
+
   // Lấy xe đã được gán cho hợp đồng (qua quotation)
   getVehiclesByContract: (contractId) =>
     axios.get(`${API_BASE}/vehicles/contract/${contractId}`, { headers: getAuthHeaders() }),
 
   // Gán xe cho hợp đồng (qua quotation)
-  assignVehicleToContract: ({ contractId, vehicleId }) =>
+  assignVehicleToContract: ({ contractId, vehicleId, driverId }) =>
     axios.post(
       `${API_BASE}/vehicles/assign`,
       {
         contractId,
         vehicleId,
+        driverId,
+      },
+      {
+        headers: getAuthHeaders(),
+      }
+    ),
+
+  assignDriverToVehicle: ({ contractId, vehicleId, driverId }) =>
+    axios.post(
+      `${API_BASE}/vehicles/assign-driver`,
+      {
+        contractId,
+        vehicleId,
+        driverId,
       },
       {
         headers: getAuthHeaders(),

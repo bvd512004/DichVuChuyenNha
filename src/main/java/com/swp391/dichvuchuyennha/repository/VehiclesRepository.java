@@ -20,4 +20,6 @@ public interface VehiclesRepository extends JpaRepository<Vehicles, Integer> {
     
     // Lấy xe theo vehicleId và kiểm tra quotation
     Optional<Vehicles> findByVehicleId(Integer vehicleId);
+
+    boolean existsByDriver_EmployeeIdAndStatusNotIgnoreCase(Integer driverId, String status);
 }
