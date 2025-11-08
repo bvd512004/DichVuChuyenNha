@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 public class VehicleAssignRequest {
     private Integer contractId;
     private Integer vehicleId;
+    private Integer driverId;
 }
 

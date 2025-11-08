@@ -53,16 +53,22 @@ export default function VehicleAssignment() {
   const [contractDetail, setContractDetail] = useState(null);
   const [assignedVehicles, setAssignedVehicles] = useState([]);
   const [availableVehicles, setAvailableVehicles] = useState([]);
+  const [availableDrivers, setAvailableDrivers] = useState([]);
 
   // Modal states
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [assignModalVisible, setAssignModalVisible] = useState(false);
+  const [driverModalVisible, setDriverModalVisible] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [vehicleToRemove, setVehicleToRemove] = useState(null);
+  const [selectedDriver, setSelectedDriver] = useState(null);
   const [assignError, setAssignError] = useState(null);
   const [pageLoading, setPageLoading] = useState(false);
+  const [vehicleForDriver, setVehicleForDriver] = useState(null);
+  const [selectedDriverForVehicle, setSelectedDriverForVehicle] = useState(null);
+  const [driverModalError, setDriverModalError] = useState(null);
+  const [driverModalLoading, setDriverModalLoading] = useState(false);
 
   useEffect(() => {
     loadContracts();
@@ -85,12 +91,14 @@ export default function VehicleAssignment() {
     setSelectedContract(contractId);
     setLoading(true);
     try {
-      const [detailRes, vehiclesRes] = await Promise.all([
+      const [detailRes, vehiclesRes, driversRes] = await Promise.all([
         ContractAPI.getById(contractId),
         vehicleApi.getVehiclesByContract(contractId),
+        vehicleApi.getAvailableDrivers(),
       ]);
       setContractDetail(detailRes);
       setAssignedVehicles(vehiclesRes.data || []);
+      setAvailableDrivers(driversRes.data || []);
       setDetailModalVisible(true);
     } catch (err) {
       console.error("Load details error:", err);
@@ -102,11 +110,16 @@ export default function VehicleAssignment() {
 
   const handleOpenAssignModal = async () => {
     try {
-      const res = await vehicleApi.getAvailableVehicles();
-      setAvailableVehicles(res.data || []);
+      const [vehiclesRes, driversRes] = await Promise.all([
+        vehicleApi.getAvailableVehicles(),
+        vehicleApi.getAvailableDrivers(),
+      ]);
+      setAvailableVehicles(vehiclesRes.data || []);
+      setAvailableDrivers(driversRes.data || []);
       setAssignModalVisible(true);
       setAssignError(null);
       setSelectedVehicle(null);
+      setSelectedDriver(null);
     } catch (err) {
       console.error("Load vehicles error:", err);
       message.error("Không thể tải danh sách xe");
@@ -116,6 +129,11 @@ export default function VehicleAssignment() {
   const handleAssign = async () => {
     if (!selectedVehicle) {
       setAssignError("Vui lòng chọn một xe");
+      return;
+    }
+
+    if (!selectedDriver) {
+      setAssignError("Vui lòng chọn tài xế cho xe này");
       return;
     }
 
@@ -134,15 +152,21 @@ export default function VehicleAssignment() {
       await vehicleApi.assignVehicleToContract({
         contractId: selectedContract,
         vehicleId: selectedVehicle,
+        driverId: selectedDriver,
       });
 
       message.success("Gán xe thành công!");
       setAssignModalVisible(false);
       setSelectedVehicle(null);
+      setSelectedDriver(null);
       setAssignError(null);
 
-      const vehiclesRes = await vehicleApi.getVehiclesByContract(selectedContract);
+      const [vehiclesRes, driversRes] = await Promise.all([
+        vehicleApi.getVehiclesByContract(selectedContract),
+        vehicleApi.getAvailableDrivers(),
+      ]);
       setAssignedVehicles(vehiclesRes.data || []);
+      setAvailableDrivers(driversRes.data || []);
     } catch (err) {
       const errorMessage =
         err.response?.data?.message ||
@@ -158,18 +182,102 @@ export default function VehicleAssignment() {
     }
   };
 
+  const handleOpenDriverModal = async (vehicle) => {
+    setVehicleForDriver(vehicle);
+    setDriverModalVisible(true);
+    setDriverModalError(null);
+    setDriverModalLoading(true);
+    try {
+      const res = await vehicleApi.getAvailableDrivers();
+      let drivers = res.data || [];
+
+      if (vehicle?.driverId && !drivers.some((d) => d.employeeId === vehicle.driverId)) {
+        drivers = [
+          ...drivers,
+          {
+            employeeId: vehicle.driverId,
+            username: vehicle.driverUsername,
+            fullName: vehicle.driverUsername,
+            phone: "",
+            status: "BUSY",
+          },
+        ];
+      }
+
+      setAvailableDrivers(drivers);
+      setSelectedDriverForVehicle(vehicle?.driverId || null);
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data ||
+        err.message ||
+        "Không thể tải danh sách tài xế";
+      setDriverModalError(errorMessage);
+      message.error(errorMessage);
+    } finally {
+      setDriverModalLoading(false);
+    }
+  };
+
+  const handleAssignDriver = async () => {
+    if (!vehicleForDriver) {
+      setDriverModalError("Không xác định được xe cần phân công");
+      return;
+    }
+
+    if (!selectedDriverForVehicle) {
+      setDriverModalError("Vui lòng chọn tài xế");
+      return;
+    }
+
+    setDriverModalLoading(true);
+    try {
+      await vehicleApi.assignDriverToVehicle({
+        contractId: selectedContract,
+        vehicleId: vehicleForDriver.vehicleId,
+        driverId: selectedDriverForVehicle,
+      });
+
+      message.success("Phân công tài xế thành công!");
+
+      const [vehiclesRes, driversRes] = await Promise.all([
+        vehicleApi.getVehiclesByContract(selectedContract),
+        vehicleApi.getAvailableDrivers(),
+      ]);
+
+      setAssignedVehicles(vehiclesRes.data || []);
+      setAvailableDrivers(driversRes.data || []);
+      setDriverModalVisible(false);
+      setVehicleForDriver(null);
+      setSelectedDriverForVehicle(null);
+      setDriverModalError(null);
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data ||
+        err.message ||
+        "Không thể phân công tài xế";
+      setDriverModalError(errorMessage);
+      message.error(errorMessage);
+    } finally {
+      setDriverModalLoading(false);
+    }
+  };
+
   const handleUnassign = async (vehicleId) => {
     try {
       await vehicleApi.unassignVehicleFromContract(selectedContract, vehicleId);
       message.success("Hủy gán xe thành công!");
 
-      const [detailRes, vehiclesRes] = await Promise.all([
+      const [detailRes, vehiclesRes, driversRes] = await Promise.all([
         ContractAPI.getById(selectedContract),
         vehicleApi.getVehiclesByContract(selectedContract),
+        vehicleApi.getAvailableDrivers(),
       ]);
 
       setContractDetail(detailRes);
       setAssignedVehicles(vehiclesRes.data || []);
+      setAvailableDrivers(driversRes.data || []);
     } catch (err) {
       message.error(
         err.response?.data?.message || err.message || "Không thể hủy gán xe"
@@ -570,32 +678,39 @@ export default function VehicleAssignment() {
                                 {vehicle.status}
                               </Tag>
                             </div>
-                            {vehicle.driverUsername && (
-                              <div className="vehicle-info-row">
-                                <UserOutlined className="vehicle-info-icon" />
-                                <Text>Tài xế: </Text>
-                                <Text strong>{vehicle.driverUsername}</Text>
-                              </div>
-                            )}
+                            <div className="vehicle-info-row">
+                              <UserOutlined className="vehicle-info-icon" />
+                              <Text>Tài xế: </Text>
+                              <Text strong>{vehicle.driverUsername || "Chưa phân công"}</Text>
+                            </div>
                           </div>
-                          <Popconfirm
-                            title="Xác nhận hủy gán xe"
-                            description="Bạn có chắc chắn muốn hủy gán xe này khỏi hợp đồng không?"
-                            onConfirm={() => handleUnassign(vehicle.vehicleId)}
-                            okText="Xác nhận"
-                            cancelText="Hủy"
-                            okType="danger"
-                          >
+                          <Space direction="vertical" style={{ width: "100%" }}>
                             <Button
-                              danger
-                              icon={<DeleteOutlined />}
-                              className="remove-vehicle-btn"
+                              icon={<UserOutlined />}
+                              className="assign-driver-btn"
                               block
-                              style={{ marginTop: 16 }}
+                              onClick={() => handleOpenDriverModal(vehicle)}
                             >
-                              Hủy Gán
+                              {vehicle.driverUsername ? "Đổi tài xế" : "Phân công tài xế"}
                             </Button>
-                          </Popconfirm>
+                            <Popconfirm
+                              title="Xác nhận hủy gán xe"
+                              description="Bạn có chắc chắn muốn hủy gán xe này khỏi hợp đồng không?"
+                              onConfirm={() => handleUnassign(vehicle.vehicleId)}
+                              okText="Xác nhận"
+                              cancelText="Hủy"
+                              okType="danger"
+                            >
+                              <Button
+                                danger
+                                icon={<DeleteOutlined />}
+                                className="remove-vehicle-btn"
+                                block
+                              >
+                                Hủy Gán
+                              </Button>
+                            </Popconfirm>
+                          </Space>
                         </Card>
                       </Col>
                     ))}
@@ -628,6 +743,7 @@ export default function VehicleAssignment() {
         onCancel={() => {
           setAssignModalVisible(false);
           setSelectedVehicle(null);
+          setSelectedDriver(null);
           setAssignError(null);
         }}
         onOk={handleAssign}
@@ -635,7 +751,7 @@ export default function VehicleAssignment() {
         okText="Xác Nhận Gán"
         cancelText="Hủy"
         okButtonProps={{
-          disabled: !selectedVehicle || loading,
+          disabled: !selectedVehicle || !selectedDriver || loading,
           className: "assign-modal-ok-btn",
         }}
         className="assign-modal"
@@ -699,6 +815,61 @@ export default function VehicleAssignment() {
               ))}
             </Select>
           </div>
+          <div className="select-wrapper" style={{ marginTop: 16 }}>
+            <Text strong className="select-label">
+              Chọn Tài Xế <span style={{ color: "#ff4d4f" }}>*</span>
+            </Text>
+            <Select
+              placeholder="Chọn một tài xế"
+              size="large"
+              onChange={(value) => {
+                setSelectedDriver(value);
+                setAssignError(null);
+              }}
+              style={{ width: "100%" }}
+              value={selectedDriver}
+              showSearch
+              optionFilterProp="children"
+              disabled={loading}
+              className="driver-select"
+              getPopupContainer={(triggerNode) => {
+                const modalContainer = document.querySelector('.assign-modal .ant-modal-body');
+                return modalContainer || triggerNode.parentElement || document.body;
+              }}
+              dropdownStyle={{ zIndex: 1020 }}
+              notFoundContent={
+                <Empty
+                  description="Không có tài xế khả dụng"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  style={{ padding: "20px 0" }}
+                />
+              }
+            >
+              {availableDrivers.map((driver) => (
+                <Option key={driver.employeeId} value={driver.employeeId}>
+                  <div className="vehicle-option">
+                    <UserOutlined className="vehicle-option-icon" />
+                    <div className="vehicle-option-content">
+                      <Text strong>{driver.fullName || driver.username}</Text>
+                      {driver.phone && (
+                        <Text type="secondary" className="vehicle-option-plate">
+                          {driver.phone}
+                        </Text>
+                      )}
+                    </div>
+                    <Tag
+                      color={
+                        driver.status && driver.status.toLowerCase() === "free" ? "green" : "orange"
+                      }
+                      className="vehicle-option-tag"
+                    >
+                      {driver.status || "N/A"}
+                    </Tag>
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </div>
           {contractDetail && (
             <Card className="info-banner" size="small">
               <div className="info-banner-content">
@@ -714,6 +885,108 @@ export default function VehicleAssignment() {
               </div>
             </Card>
           )}
+        </div>
+      </Modal>
+
+      <Modal
+        title={
+          <div className="modal-header-custom">
+            <div className="modal-icon-wrapper modal-icon-primary">
+              <UserOutlined />
+            </div>
+            <div>
+              <Title level={4} className="modal-title">
+                {vehicleForDriver?.licensePlate
+                  ? `Phân công tài xế cho ${vehicleForDriver.licensePlate}`
+                  : "Phân công tài xế"}
+              </Title>
+              <Text type="secondary" className="modal-subtitle">
+                Chọn tài xế phù hợp cho xe này
+              </Text>
+            </div>
+          </div>
+        }
+        open={driverModalVisible}
+        onCancel={() => {
+          setDriverModalVisible(false);
+          setVehicleForDriver(null);
+          setSelectedDriverForVehicle(null);
+          setDriverModalError(null);
+        }}
+        onOk={handleAssignDriver}
+        confirmLoading={driverModalLoading}
+        okText="Xác nhận"
+        cancelText="Hủy"
+        okButtonProps={{
+          disabled: !selectedDriverForVehicle || driverModalLoading,
+        }}
+        className="assign-driver-modal"
+        width={600}
+        zIndex={1015}
+        maskClosable={false}
+      >
+        <div className="assign-modal-content">
+          {driverModalError && (
+            <div className="error-alert">
+              <span className="error-icon">⚠️</span>
+              <span>{driverModalError}</span>
+            </div>
+          )}
+          <div className="select-wrapper">
+            <Text strong className="select-label">
+              Chọn tài xế <span style={{ color: "#ff4d4f" }}>*</span>
+            </Text>
+            <Select
+              placeholder="Chọn tài xế từ danh sách"
+              size="large"
+              onChange={(value) => {
+                setSelectedDriverForVehicle(value);
+                setDriverModalError(null);
+              }}
+              style={{ width: "100%" }}
+              value={selectedDriverForVehicle}
+              showSearch
+              optionFilterProp="children"
+              disabled={driverModalLoading}
+              className="driver-select"
+              getPopupContainer={(triggerNode) => {
+                const modalContainer = document.querySelector('.assign-driver-modal .ant-modal-body');
+                return modalContainer || triggerNode.parentElement || document.body;
+              }}
+              dropdownStyle={{ zIndex: 1030 }}
+              notFoundContent={
+                <Empty
+                  description="Không có tài xế khả dụng"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  style={{ padding: "20px 0" }}
+                />
+              }
+            >
+              {availableDrivers.map((driver) => (
+                <Option key={driver.employeeId} value={driver.employeeId}>
+                  <div className="vehicle-option">
+                    <UserOutlined className="vehicle-option-icon" />
+                    <div className="vehicle-option-content">
+                      <Text strong>{driver.fullName || driver.username}</Text>
+                      {driver.phone && (
+                        <Text type="secondary" className="vehicle-option-plate">
+                          {driver.phone}
+                        </Text>
+                      )}
+                    </div>
+                    <Tag
+                      color={
+                        driver.status && driver.status.toLowerCase() === "free" ? "green" : "orange"
+                      }
+                      className="vehicle-option-tag"
+                    >
+                      {driver.status || "N/A"}
+                    </Tag>
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </div>
         </div>
       </Modal>
     </div>

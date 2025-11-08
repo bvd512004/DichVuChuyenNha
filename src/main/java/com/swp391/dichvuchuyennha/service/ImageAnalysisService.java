@@ -28,35 +28,8 @@ public class ImageAnalysisService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // Mapping từ tên đồ đạc sang loại giá (bàn, ghế, hoặc khác)
-    private static final Map<String, String> FURNITURE_TO_PRICE_TYPE = Map.ofEntries(
-            Map.entry("bàn", "Theo chiếc - Bàn"),
-            Map.entry("bàn ăn", "Theo chiếc - Bàn"),
-            Map.entry("bàn làm việc", "Theo chiếc - Bàn"),
-            Map.entry("bàn trà", "Theo chiếc - Bàn"),
-            Map.entry("ghế", "Theo chiếc - Ghế"),
-            Map.entry("ghế ngồi", "Theo chiếc - Ghế"),
-            Map.entry("ghế tựa", "Theo chiếc - Ghế")
-    );
-
     @Value("${spring.ai.openai.api-key}")
     private String apiKey;
-
-    // Mapping từ tên đồ đạc sang service ID (có thể mở rộng từ database)
-    private static final Map<String, Integer> FURNITURE_TO_SERVICE_MAP = Map.ofEntries(
-            Map.entry("bàn", 4), // Dịch vụ vận chuyển đồ đạc
-            Map.entry("ghế", 4),
-            Map.entry("giường", 4),
-            Map.entry("tủ", 4),
-            Map.entry("tủ lạnh", 4),
-            Map.entry("máy giặt", 4),
-            Map.entry("tivi", 4),
-            Map.entry("bàn làm việc", 4),
-            Map.entry("kệ sách", 4),
-            Map.entry("sofa", 4),
-            Map.entry("bàn ăn", 4),
-            Map.entry("tủ quần áo", 4)
-    );
 
     /**
      * Phân tích hình ảnh để tính diện tích và nhận diện đồ đạc
@@ -99,8 +72,12 @@ public class ImageAnalysisService {
                 "   - Tên đồ đạc BẰNG TIẾNG VIỆT (ví dụ: bàn, ghế, giường, tủ, tủ lạnh, máy giặt, tivi, sofa, kệ sách, v.v.)\n" +
                 "   - Số lượng\n" +
                 "   - Mô tả ngắn gọn BẰNG TIẾNG VIỆT (kích thước, loại, tình trạng nếu có thể nhận biết)\n\n" +
-                "3. DANH SÁCH DỊCH VỤ CÓ SẴN:\n" + servicesInfo.toString() + "\n\n" +
-                "4. ĐỊNH DẠNG KẾT QUẢ: Trả về kết quả theo định dạng JSON chính xác như sau:\n" +
+                "3. ƯỚC LƯỢNG KẾ HOẠCH VẬN CHUYỂN: Dựa trên tổng số lượng, kích thước và khối lượng ước tính của đồ đạc, hãy " +
+                "đề xuất loại xe phù hợp thuộc service_id = 3 (các lựa chọn: xe nhỏ, xe to, xe container). " +
+                "Gợi ý: xe nhỏ ~ 500kg, xe to ~ 1.5 tấn, xe container > 3 tấn. Tính toán số lượng xe cần dùng đồng thời và số chuyến cho mỗi xe. " +
+                "Nếu không đủ dữ liệu, hãy nêu rõ giả định được sử dụng.\n\n" +
+                "4. DANH SÁCH DỊCH VỤ CÓ SẴN:\n" + servicesInfo.toString() + "\n\n" +
+                "5. ĐỊNH DẠNG KẾT QUẢ: Trả về kết quả theo định dạng JSON chính xác như sau:\n" +
                 "{\n" +
                 "  \"estimatedArea\": <số thực>, // Diện tích ước tính (m²)\n" +
                 "  \"detectedFurniture\": [\n" +
@@ -112,6 +89,15 @@ public class ImageAnalysisService {
                 "      \"suggestedServiceName\": \"<tên dịch vụ hoặc null>\"\n" +
                 "    }\n" +
                 "  ],\n" +
+                "  \"vehiclePlan\": [\n" +
+                "    {\n" +
+                "      \"vehicleType\": \"xe nhỏ | xe to | xe container\",\n" +
+                "      \"vehicleCount\": <số lượng xe sử dụng cùng lúc>,\n" +
+                "      \"estimatedTrips\": <số chuyến mỗi xe>,\n" +
+                "      \"estimatedDistanceKm\": <quãng đường 1 chiều dự kiến hoặc null nếu không biết>,\n" +
+                "      \"reason\": \"<giải thích bằng TIẾNG VIỆT>\"\n" +
+                "    }\n" +
+                "  ],\n" +
                 "  \"analysisNote\": \"<ghi chú tổng quan về căn phòng BẰNG TIẾNG VIỆT>\"\n" +
                 "}\n\n" +
                 "LƯU Ý QUAN TRỌNG:\n" +
@@ -119,6 +105,7 @@ public class ImageAnalysisService {
                 "- Chỉ trả về JSON, không thêm text nào khác\n" +
                 "- estimatedArea phải là số thực (ví dụ: 25.5)\n" +
                 "- detectedFurniture là mảng, có thể rỗng nếu không thấy đồ đạc\n" +
+                "- vehiclePlan là mảng, có thể rỗng nếu không thể đề xuất phương tiện (nhưng cố gắng đưa ra đề xuất hợp lý nhất)\n" +
                 "- Nếu không chắc chắn về diện tích, hãy ước tính dựa trên các vật thể chuẩn trong ảnh\n" +
                 "- suggestedServiceId và suggestedServiceName có thể là null nếu không match được với dịch vụ nào\n" +
                 "- Tên đồ đạc phải là tiếng Việt thuần túy, ví dụ: 'bàn' không phải 'table', 'ghế' không phải 'chair'";
@@ -252,10 +239,22 @@ public class ImageAnalysisService {
                 builder.analysisNote(noteObj.toString());
             }
 
+            // Parse vehiclePlan
+            Object vehiclePlanObj = responseMap.get("vehiclePlan");
+            if (vehiclePlanObj instanceof List<?>) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> vehiclePlanList = (List<Map<String, Object>>) vehiclePlanObj;
+                List<ImageAnalysisResponse.VehiclePlan> plans = vehiclePlanList.stream()
+                        .map(this::parseVehiclePlan)
+                        .collect(Collectors.toList());
+                builder.vehiclePlan(plans);
+            }
+
             ImageAnalysisResponse response = builder.build();
 
             // Matching với dịch vụ
             matchFurnitureWithServices(response);
+            matchVehiclePlanWithServices(response);
 
             return response;
 
@@ -286,6 +285,40 @@ public class ImageAnalysisService {
 
         if (furnitureMap.get("description") != null) {
             builder.description(furnitureMap.get("description").toString());
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * Parse vehicle plan object
+     */
+    private ImageAnalysisResponse.VehiclePlan parseVehiclePlan(Map<String, Object> planMap) {
+        ImageAnalysisResponse.VehiclePlan.VehiclePlanBuilder builder = ImageAnalysisResponse.VehiclePlan.builder();
+
+        if (planMap.get("vehicleType") != null) {
+            builder.vehicleType(planMap.get("vehicleType").toString());
+        }
+        if (planMap.get("vehicleCount") != null) {
+            Integer count = planMap.get("vehicleCount") instanceof Number
+                    ? ((Number) planMap.get("vehicleCount")).intValue()
+                    : Integer.parseInt(planMap.get("vehicleCount").toString());
+            builder.vehicleCount(count);
+        }
+        if (planMap.get("estimatedTrips") != null) {
+            Integer trips = planMap.get("estimatedTrips") instanceof Number
+                    ? ((Number) planMap.get("estimatedTrips")).intValue()
+                    : Integer.parseInt(planMap.get("estimatedTrips").toString());
+            builder.estimatedTrips(trips);
+        }
+        if (planMap.get("estimatedDistanceKm") != null) {
+            Double distance = planMap.get("estimatedDistanceKm") instanceof Number
+                    ? ((Number) planMap.get("estimatedDistanceKm")).doubleValue()
+                    : Double.parseDouble(planMap.get("estimatedDistanceKm").toString());
+            builder.estimatedDistanceKm(distance);
+        }
+        if (planMap.get("reason") != null) {
+            builder.reason(planMap.get("reason").toString());
         }
 
         return builder.build();
@@ -358,6 +391,42 @@ public class ImageAnalysisService {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Matching kế hoạch phương tiện với service và price
+     */
+    private void matchVehiclePlanWithServices(ImageAnalysisResponse response) {
+        if (response.getVehiclePlan() == null) {
+            return;
+        }
+
+        for (ImageAnalysisResponse.VehiclePlan plan : response.getVehiclePlan()) {
+            if (plan.getVehicleType() == null) {
+                continue;
+            }
+
+            plan.setSuggestedServiceId(3); // Service vận chuyển bằng xe
+
+            String vehicleTypeLower = plan.getVehicleType().toLowerCase(Locale.ROOT);
+            String priceType;
+            if (vehicleTypeLower.contains("container")) {
+                priceType = "xe container";
+            } else if (vehicleTypeLower.contains("to") || vehicleTypeLower.contains("lớn")) {
+                priceType = "xe to";
+            } else {
+                priceType = "xe nhỏ";
+            }
+
+            Optional<Prices> price = priceRepository
+                    .findTopByService_ServiceIdAndPriceTypeContainingAndIsActiveTrueOrderByEffectiveDateDesc(
+                            3, priceType);
+
+            price.ifPresent(pr -> {
+                plan.setSuggestedPriceId(pr.getPriceId());
+                plan.setPriceType(pr.getPriceType());
+            });
         }
     }
 }

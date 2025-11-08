@@ -170,45 +170,15 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
     }
   };
 
-  // Áp dụng diện tích từ kết quả phân tích
-  const handleApplyArea = async () => {
-    if (!analysisResult?.estimatedArea) {
-      message.warning("Không có diện tích để áp dụng!");
-      return;
-    }
-
-    const area = Math.round(analysisResult.estimatedArea * 10) / 10; // Làm tròn 1 chữ số thập phân
-
-    try {
-      // Nếu đang upload ảnh cho tầng đã có (selectedFloor), cập nhật tầng đó
-      if (selectedFloor?.floorId) {
-        await axiosInstance.put(`/survey-floors/${selectedFloor.floorId}/area`, null, {
-          params: { area: area }
-        });
-        message.success(`✅ Đã cập nhật diện tích tầng ${selectedFloor.floorNumber}: ${area} m²`);
-        await fetchMySurveys(); // Refresh lại data
-      } else {
-        // Nếu đang ở form thêm tầng mới, áp dụng vào form
-        form.setFieldValue("area", area);
-        message.success(`✅ Đã áp dụng diện tích vào form: ${area} m²`);
-      }
-      setIsAnalysisModalOpen(false);
-    } catch (error) {
-      console.error(error);
-      message.error("❌ Lỗi khi cập nhật diện tích!");
-    }
-  };
-
-  // Thêm dịch vụ đóng gói vào báo giá
-  const handleAddPackingService = async () => {
+  const addPackingServiceToQuotation = async ({ showSuccess = true } = {}) => {
     if (!analysisResult?.detectedFurniture || analysisResult.detectedFurniture.length === 0) {
       message.warning("Không có đồ đạc nào để thêm dịch vụ!");
-      return;
+      return { success: false };
     }
 
     if (!selectedFloor?.floorId) {
       message.warning("Vui lòng chọn tầng trước khi thêm dịch vụ!");
-      return;
+      return { success: false };
     }
 
     try {
@@ -216,14 +186,15 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
         `/survey-images/${selectedFloor.floorId}/add-packing-service`,
         analysisResult
       );
-      
-      // Hiển thị thông báo thành công với format đẹp hơn
       const successMsg = response.data || "✅ Đã thêm dịch vụ đóng gói vào báo giá!";
-      message.success({
-        content: successMsg,
-        duration: 5,
-      });
-      setIsAnalysisModalOpen(false);
+      
+      if (showSuccess) {
+        message.success({
+          content: <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>{successMsg}</pre>,
+          duration: 5,
+        });
+      }
+      return { success: true, message: successMsg };
     } catch (error) {
       console.error("Lỗi khi thêm dịch vụ:", error);
       console.error("Response data:", error.response?.data);
@@ -239,12 +210,68 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
       } else if (error.message) {
         errorMsg = error.message;
       }
-      
-      message.error({
-        content: `❌ Lỗi khi thêm dịch vụ: ${errorMsg}`,
-        duration: 6,
-      });
+      message.error(`❌ Không thể thêm dịch vụ: ${errorMsg}`);
+      return { success: false };
     }
+  };
+
+  const applyAreaFromAnalysis = async ({ showSuccess = true } = {}) => {
+    if (!analysisResult?.estimatedArea) {
+      message.warning("Không có diện tích để áp dụng!");
+      return { success: false };
+    }
+
+    const area = Math.round(analysisResult.estimatedArea * 10) / 10; // Làm tròn 1 chữ số thập phân
+    const areaMessage = selectedFloor?.floorId
+      ? `✅ Đã cập nhật diện tích tầng ${selectedFloor.floorNumber}: ${area} m²`
+      : `✅ Đã áp dụng diện tích vào form: ${area} m²`;
+
+    try {
+      if (selectedFloor?.floorId) {
+        await axiosInstance.put(`/survey-floors/${selectedFloor.floorId}/area`, null, {
+          params: { area: area }
+        });
+        if (showSuccess) {
+          message.success(areaMessage);
+        }
+        await fetchMySurveys(); // Refresh lại data
+      } else {
+        form.setFieldValue("area", area);
+        if (showSuccess) {
+          message.success(areaMessage);
+        }
+      }
+      return { success: true, area, message: areaMessage };
+    } catch (error) {
+      console.error(error);
+      message.error("❌ Lỗi khi cập nhật diện tích!");
+      return { success: false };
+    }
+  };
+
+  const handleAddPackingServiceAndArea = async () => {
+    const { success: areaSuccess, area, message: areaMsg } = await applyAreaFromAnalysis({ showSuccess: false });
+    if (!areaSuccess) {
+      return;
+    }
+
+    const { success: serviceSuccess, message: serviceMessage } = await addPackingServiceToQuotation({ showSuccess: false });
+    if (!serviceSuccess) {
+      return;
+    }
+
+    message.success({
+      content: (
+        <div>
+          <div>{areaMsg || (area ? `✅ Đã cập nhật diện tích: ${area} m²` : "✅ Đã cập nhật diện tích.")}</div>
+          <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+            {serviceMessage || "✅ Đã thêm dịch vụ đóng gói vào báo giá."}
+          </pre>
+        </div>
+      ),
+      duration: 6,
+    });
+    setIsAnalysisModalOpen(false);
   };
 
   // Lọc chỉ những khảo sát chưa đủ tầng
@@ -578,16 +605,18 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
           <Button key="close" onClick={() => setIsAnalysisModalOpen(false)}>
             Đóng
           </Button>,
-          <Button 
-            key="add-service" 
-            type="default" 
-            onClick={handleAddPackingService} 
-            disabled={!analysisResult?.detectedFurniture || analysisResult.detectedFurniture.length === 0 || !selectedFloor?.floorId}
+          <Button
+            key="add-service-area"
+            type="primary"
+            onClick={handleAddPackingServiceAndArea}
+            disabled={
+              !selectedFloor?.floorId ||
+              !analysisResult?.estimatedArea ||
+              !analysisResult?.detectedFurniture ||
+              analysisResult.detectedFurniture.length === 0
+            }
           >
-            Thêm dịch vụ đóng gói vào báo giá
-          </Button>,
-          <Button key="apply" type="primary" onClick={handleApplyArea} disabled={!analysisResult?.estimatedArea}>
-            Áp dụng diện tích vào form
+            Thêm dịch vụ đóng gói và báo giá
           </Button>,
         ]}
         width={800}
@@ -622,8 +651,8 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
                 <List
                   grid={{ gutter: 16, column: 2 }}
                   dataSource={analysisResult.detectedFurniture}
-                  renderItem={(item) => (
-                    <List.Item>
+                  renderItem={(item, index) => (
+                    <List.Item key={`${item.name}-${index}`}>
                       <Card size="small">
                         <div>
                           <strong>{item.name}</strong>
@@ -637,6 +666,49 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
                         {item.suggestedServiceName && (
                           <div style={{ marginTop: 8 }}>
                             <Tag color="green">Dịch vụ: {item.suggestedServiceName}</Tag>
+                          </div>
+                        )}
+                        {item.priceType && (
+                          <div style={{ marginTop: 4 }}>
+                            <Tag color="purple">{item.priceType}</Tag>
+                          </div>
+                        )}
+                      </Card>
+                    </List.Item>
+                  )}
+                />
+              </div>
+            )}
+
+            {analysisResult.vehiclePlan && analysisResult.vehiclePlan.length > 0 && (
+              <div style={{ marginTop: 24 }}>
+                <h3 style={{ marginBottom: 16 }}>🚚 Kế hoạch phương tiện đề xuất:</h3>
+                <List
+                  grid={{ gutter: 16, column: 2 }}
+                  dataSource={analysisResult.vehiclePlan}
+                  renderItem={(plan, index) => (
+                    <List.Item key={`vehicle-plan-${index}`}>
+                      <Card size="small">
+                        <div>
+                          <strong>{plan.vehicleType || "Loại xe chưa xác định"}</strong>
+                          {plan.priceType && (
+                            <Tag color="geekblue" style={{ marginLeft: 8 }}>
+                              {plan.priceType}
+                            </Tag>
+                          )}
+                        </div>
+                        <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          {plan.vehicleCount && <Tag color="blue">{plan.vehicleCount} xe</Tag>}
+                          {plan.estimatedTrips && <Tag color="volcano">{plan.estimatedTrips} chuyến/xe</Tag>}
+                          {plan.estimatedDistanceKm && (
+                            <Tag color="gold">
+                              {Math.round(plan.estimatedDistanceKm * 10) / 10} km/chuyến
+                            </Tag>
+                          )}
+                        </div>
+                        {plan.reason && (
+                          <div style={{ marginTop: 8, color: "#666", fontSize: 12 }}>
+                            {plan.reason}
                           </div>
                         )}
                       </Card>
