@@ -132,13 +132,97 @@ public class ContractService {
     }
 
     /** ✅ Lấy toàn bộ hợp đồng đã ký (cho manager) */
+    @Transactional(readOnly = true)
     public List<ContractResponse> getAllContracts() {
-        // Lấy hợp đồng đã ký (SIGNED, DEPOSIT_PAID, hoặc các status khác sau khi ký)
-        return contractRepository.findAll()
-                .stream()
-                .filter(c -> c.getSignedDate() != null) // Chỉ lấy hợp đồng đã ký
-                .map(contractMapper::toResponse)
-                .toList();
+        try {
+            // Lấy hợp đồng đã ký (SIGNED, DEPOSIT_PAID, hoặc các status khác sau khi ký)
+            List<Contract> contracts = contractRepository.findAll()
+                    .stream()
+                    .filter(c -> c.getSignedDate() != null) // Chỉ lấy hợp đồng đã ký
+                    .toList();
+            
+            return contracts.stream()
+                    .filter(contract -> {
+                        // Kiểm tra contract có dữ liệu hợp lệ không
+                        try {
+                            return contract != null && 
+                                   contract.getQuotation() != null &&
+                                   contract.getQuotation().getSurvey() != null &&
+                                   contract.getQuotation().getSurvey().getRequest() != null;
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    })
+                    .map(contract -> {
+                        try {
+                            // Force load các lazy collections trong transaction
+                            if (contract.getQuotation() != null) {
+                                Quotations quotation = contract.getQuotation();
+                                
+                                // Force load survey
+                                if (quotation.getSurvey() != null) {
+                                    Surveys survey = quotation.getSurvey();
+                                    
+                                    // Force load request
+                                    if (survey.getRequest() != null) {
+                                        Requests request = survey.getRequest();
+                                        
+                                        // Force load user
+                                        if (request.getUser() != null) {
+                                            Users user = request.getUser();
+                                            user.getUserId(); // Force load
+                                            
+                                            // Force load customer company
+                                            if (user.getCustomerCompany() != null) {
+                                                user.getCustomerCompany().getCompanyName(); // Force load
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Force load quotation services
+                                if (quotation.getQuotationServices() != null) {
+                                    quotation.getQuotationServices().forEach(qs -> {
+                                        if (qs != null) {
+                                            if (qs.getService() != null) {
+                                                qs.getService().getServiceName(); // Force load
+                                            }
+                                            if (qs.getPrice() != null) {
+                                                qs.getPrice().getPriceType(); // Force load
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                            
+                            // Force load signedBy
+                            if (contract.getSignedBy() != null) {
+                                contract.getSignedBy().getUserId(); // Force load
+                                contract.getSignedBy().getUsername(); // Force load
+                            }
+                            
+                            // Sử dụng buildContractDetail để đảm bảo xử lý đúng
+                            return buildContractDetail(contract);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            // Trả về response đơn giản nếu có lỗi
+                            return ContractResponse.builder()
+                                    .contractId(contract.getContractId())
+                                    .startDate(contract.getStartDate())
+                                    .endDate(contract.getEndDate())
+                                    .depositAmount(contract.getDepositAmount())
+                                    .totalAmount(contract.getTotalAmount())
+                                    .status(contract.getStatus())
+                                    .signedDate(contract.getSignedDate())
+                                    .build();
+                        }
+                    })
+                    .filter(response -> response != null)
+                    .toList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi lấy danh sách hợp đồng: " + e.getMessage(), e);
+        }
     }
 
     /** ✅ Xây chi tiết hợp đồng (bao gồm movingDay) */

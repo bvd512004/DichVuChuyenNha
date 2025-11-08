@@ -17,6 +17,9 @@ import {
   Badge,
   Avatar,
   Tooltip,
+  Divider,
+  Descriptions,
+  Popconfirm,
 } from "antd";
 import {
   CarOutlined,
@@ -30,6 +33,11 @@ import {
   ReloadOutlined,
   FileTextOutlined,
   ClockCircleOutlined,
+  EnvironmentOutlined,
+  PhoneOutlined,
+  MailOutlined,
+  SafetyOutlined,
+  ThunderboltOutlined,
 } from "@ant-design/icons";
 import vehicleApi from "../service/vehicle";
 import ContractAPI from "../service/contract";
@@ -98,6 +106,7 @@ export default function VehicleAssignment() {
       setAvailableVehicles(res.data || []);
       setAssignModalVisible(true);
       setAssignError(null);
+      setSelectedVehicle(null);
     } catch (err) {
       console.error("Load vehicles error:", err);
       message.error("Không thể tải danh sách xe");
@@ -149,15 +158,9 @@ export default function VehicleAssignment() {
     }
   };
 
-  const handleUnassign = (vehicleId) => {
-    setVehicleToRemove(vehicleId);
-  };
-
-  const confirmUnassign = async () => {
-    if (!vehicleToRemove) return;
-
+  const handleUnassign = async (vehicleId) => {
     try {
-      await vehicleApi.unassignVehicleFromContract(selectedContract, vehicleToRemove);
+      await vehicleApi.unassignVehicleFromContract(selectedContract, vehicleId);
       message.success("Hủy gán xe thành công!");
 
       const [detailRes, vehiclesRes] = await Promise.all([
@@ -167,12 +170,10 @@ export default function VehicleAssignment() {
 
       setContractDetail(detailRes);
       setAssignedVehicles(vehiclesRes.data || []);
-      setVehicleToRemove(null);
     } catch (err) {
       message.error(
         err.response?.data?.message || err.message || "Không thể hủy gán xe"
       );
-      setVehicleToRemove(null);
     }
   };
 
@@ -203,26 +204,58 @@ export default function VehicleAssignment() {
     return statusMap[status] || status;
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN').format(amount || 0);
+  };
+
   const columns = [
     {
       title: "Mã Hợp Đồng",
       dataIndex: "contractId",
       key: "contractId",
-      width: 120,
+      width: 140,
       render: (id) => (
-        <Badge
-          count={id}
-          showZero
-          style={{ backgroundColor: "#667eea" }}
-          overflowCount={9999}
-        />
+        <div className="contract-id-cell">
+          <FileTextOutlined className="contract-id-icon" />
+          <Text strong className="contract-id-text">#{id}</Text>
+        </div>
+      ),
+    },
+    {
+      title: "Khách Hàng",
+      dataIndex: "username",
+      key: "username",
+      width: 180,
+      render: (username, record) => (
+        <div className="customer-cell">
+          <Avatar size="small" icon={<UserOutlined />} className="customer-avatar" />
+          <div>
+            <Text strong>{username || "N/A"}</Text>
+            {record.companyName && (
+              <div>
+                <Tag color="cyan" size="small">{record.companyName}</Tag>
+              </div>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Tổng Tiền",
+      dataIndex: "totalAmount",
+      key: "totalAmount",
+      width: 150,
+      render: (amount) => (
+        <Text strong className="amount-cell">
+          {formatCurrency(amount)} ₫
+        </Text>
       ),
     },
     {
       title: "Trạng Thái",
       dataIndex: "status",
       key: "status",
-      width: 150,
+      width: 140,
       render: (status) => (
         <Tag color={getStatusColor(status)} className="status-tag">
           {getStatusText(status)}
@@ -230,9 +263,26 @@ export default function VehicleAssignment() {
       ),
     },
     {
+      title: "Xe Đã Gán",
+      key: "hasVehicles",
+      width: 120,
+      render: (_, record) => (
+        <Badge
+          count={record.hasVehicles ? 1 : 0}
+          showZero
+          style={{
+            backgroundColor: record.hasVehicles ? "#52c41a" : "#faad14",
+          }}
+        >
+          <CarOutlined style={{ fontSize: 20, color: record.hasVehicles ? "#52c41a" : "#d9d9d9" }} />
+        </Badge>
+      ),
+    },
+    {
       title: "Thao Tác",
       key: "action",
-      width: 180,
+      width: 120,
+      fixed: "right",
       render: (_, record) => (
         <Button
           type="primary"
@@ -247,6 +297,9 @@ export default function VehicleAssignment() {
     },
   ];
 
+  const assignedCount = contracts.filter((c) => c.hasVehicles).length;
+  const pendingCount = contracts.filter((c) => !c.hasVehicles).length;
+
   return (
     <div className="vehicle-assignment-container">
       <Spin spinning={pageLoading}>
@@ -257,12 +310,12 @@ export default function VehicleAssignment() {
               <div className="icon-wrapper">
                 <CarOutlined className="header-icon" />
               </div>
-              <div>
+              <div className="header-text">
                 <Title level={2} className="page-title">
                   Quản Lý Gán Xe Cho Hợp Đồng
                 </Title>
-                <Text type="secondary" className="page-subtitle">
-                  Quản lý và phân công xe cho các hợp đồng đã được ký
+                <Text className="page-subtitle">
+                  Phân công và quản lý phương tiện vận chuyển cho các hợp đồng
                 </Text>
               </div>
             </div>
@@ -270,6 +323,7 @@ export default function VehicleAssignment() {
               icon={<ReloadOutlined />}
               onClick={loadContracts}
               className="refresh-btn"
+              size="large"
             >
               Làm Mới
             </Button>
@@ -277,34 +331,37 @@ export default function VehicleAssignment() {
         </div>
 
         {/* Statistics Cards */}
-        <Row gutter={[16, 16]} className="stats-row">
-          <Col xs={24} sm={12} md={8}>
-            <Card className="stat-card">
+        <Row gutter={[20, 20]} className="stats-row">
+          <Col xs={24} sm={12} lg={8}>
+            <Card className="stat-card stat-card-primary" hoverable>
               <Statistic
                 title="Tổng Hợp Đồng"
                 value={contracts.length}
                 prefix={<FileTextOutlined />}
-                valueStyle={{ color: "#667eea" }}
+                valueStyle={{ color: "#1890ff" }}
+                suffix={<span className="stat-suffix">hợp đồng</span>}
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Card className="stat-card">
+          <Col xs={24} sm={12} lg={8}>
+            <Card className="stat-card stat-card-success" hoverable>
               <Statistic
                 title="Đã Gán Xe"
-                value={contracts.filter((c) => c.hasVehicles).length || 0}
+                value={assignedCount}
                 prefix={<CheckCircleOutlined />}
                 valueStyle={{ color: "#52c41a" }}
+                suffix={<span className="stat-suffix">hợp đồng</span>}
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Card className="stat-card">
+          <Col xs={24} sm={12} lg={8}>
+            <Card className="stat-card stat-card-warning" hoverable>
               <Statistic
-                title="Chờ Gán"
-                value={contracts.filter((c) => !c.hasVehicles).length || 0}
+                title="Chờ Gán Xe"
+                value={pendingCount}
                 prefix={<ClockCircleOutlined />}
                 valueStyle={{ color: "#faad14" }}
+                suffix={<span className="stat-suffix">hợp đồng</span>}
               />
             </Card>
           </Col>
@@ -312,6 +369,12 @@ export default function VehicleAssignment() {
 
         {/* Contracts Table */}
         <Card className="main-table-card">
+          <div className="table-header">
+            <Title level={4} className="table-title">
+              <FileTextOutlined /> Danh Sách Hợp Đồng
+            </Title>
+            <Text type="secondary">Tổng {contracts.length} hợp đồng đã ký</Text>
+          </div>
           <Table
             dataSource={contracts}
             rowKey="contractId"
@@ -321,9 +384,11 @@ export default function VehicleAssignment() {
               showSizeChanger: true,
               showTotal: (total) => `Tổng ${total} hợp đồng`,
               showQuickJumper: true,
+              pageSizeOptions: ["10", "20", "50"],
             }}
             className="vehicle-table"
             rowClassName="table-row"
+            scroll={{ x: 1000 }}
           />
         </Card>
       </Spin>
@@ -331,187 +396,232 @@ export default function VehicleAssignment() {
       {/* Detail Modal */}
       <Modal
         title={
-          <div className="modal-header">
-            <CarOutlined className="modal-header-icon" />
-            <span>Chi Tiết Hợp Đồng #{contractDetail?.contractId}</span>
+          <div className="modal-header-custom">
+            <div className="modal-icon-wrapper">
+              <CarOutlined />
+            </div>
+            <div>
+              <Title level={4} className="modal-title">
+                Chi Tiết Hợp Đồng #{contractDetail?.contractId}
+              </Title>
+              <Text type="secondary" className="modal-subtitle">
+                Thông tin hợp đồng và danh sách xe đã gán
+              </Text>
+            </div>
           </div>
         }
         open={detailModalVisible}
         onCancel={handleCloseDetailModal}
         footer={null}
-        width={900}
+        width={1000}
         className="detail-modal"
         destroyOnClose
+        zIndex={1000}
       >
-        {contractDetail && (
-          <div className="modal-content">
-            {/* Contract Info Card */}
-            <Card className="info-card" title="Thông Tin Hợp Đồng">
-              <Row gutter={[16, 16]}>
-                <Col xs={24} sm={12}>
-                  <div className="info-item">
-                    <CalendarOutlined className="info-icon" />
-                    <div>
-                      <Text type="secondary">Ngày Bắt Đầu</Text>
-                      <div className="info-value">
-                        {contractDetail.startDate
-                          ? dayjs(contractDetail.startDate).format("DD/MM/YYYY")
-                          : "N/A"}
+        <Spin spinning={loading}>
+          {contractDetail && (
+            <div className="modal-content-wrapper">
+              {/* Contract Info Section */}
+              <Card className="contract-info-card" bordered={false}>
+                <Row gutter={[24, 24]}>
+                  <Col xs={24} md={12}>
+                    <div className="info-block">
+                      <div className="info-block-header">
+                        <CalendarOutlined className="info-block-icon" />
+                        <Text strong>Thông Tin Hợp Đồng</Text>
+                      </div>
+                      <Divider style={{ margin: "12px 0" }} />
+                      <Descriptions column={1} size="small" className="info-descriptions">
+                        <Descriptions.Item label="Ngày Bắt Đầu">
+                          {contractDetail.startDate
+                            ? dayjs(contractDetail.startDate).format("DD/MM/YYYY")
+                            : "N/A"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Ngày Kết Thúc">
+                          {contractDetail.endDate
+                            ? dayjs(contractDetail.endDate).format("DD/MM/YYYY")
+                            : "N/A"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Ngày Chuyển">
+                          {contractDetail.movingDay
+                            ? dayjs(contractDetail.movingDay).format("DD/MM/YYYY")
+                            : "N/A"}
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </div>
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <div className="info-block">
+                      <div className="info-block-header">
+                        <DollarOutlined className="info-block-icon" />
+                        <Text strong>Thông Tin Thanh Toán</Text>
+                      </div>
+                      <Divider style={{ margin: "12px 0" }} />
+                      <Descriptions column={1} size="small" className="info-descriptions">
+                        <Descriptions.Item label="Tiền Đặt Cọc">
+                          <Text strong style={{ color: "#1890ff" }}>
+                            {formatCurrency(contractDetail.depositAmount)} ₫
+                          </Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Tổng Số Tiền">
+                          <Text strong style={{ color: "#52c41a", fontSize: 16 }}>
+                            {formatCurrency(contractDetail.totalAmount)} ₫
+                          </Text>
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </div>
+                  </Col>
+                  <Col xs={24}>
+                    <div className="info-block">
+                      <div className="info-block-header">
+                        <UserOutlined className="info-block-icon" />
+                        <Text strong>Thông Tin Khách Hàng</Text>
+                      </div>
+                      <Divider style={{ margin: "12px 0" }} />
+                      <div className="customer-info">
+                        <Avatar size={48} icon={<UserOutlined />} className="customer-info-avatar" />
+                        <div className="customer-info-details">
+                          <Text strong style={{ fontSize: 16 }}>
+                            {contractDetail.username || "N/A"}
+                          </Text>
+                          {contractDetail.companyName && (
+                            <Tag color="blue" style={{ marginLeft: 8 }}>
+                              {contractDetail.companyName}
+                            </Tag>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <div className="info-item">
-                    <CalendarOutlined className="info-icon" />
-                    <div>
-                      <Text type="secondary">Ngày Kết Thúc</Text>
-                      <div className="info-value">
-                        {contractDetail.endDate
-                          ? dayjs(contractDetail.endDate).format("DD/MM/YYYY")
-                          : "N/A"}
-                      </div>
-                    </div>
-                  </div>
-                </Col>
-                <Col xs={24}>
-                  <div className="info-item">
-                    <CarOutlined className="info-icon" />
-                    <div>
-                      <Text type="secondary">Ngày Chuyển</Text>
-                      <div className="info-value">
-                        {contractDetail.movingDay
-                          ? dayjs(contractDetail.movingDay).format("DD/MM/YYYY")
-                          : "N/A"}
-                      </div>
-                    </div>
-                  </div>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <div className="info-item">
-                    <DollarOutlined className="info-icon" />
-                    <div>
-                      <Text type="secondary">Tiền Đặt Cọc</Text>
-                      <div className="info-value">
-                        {contractDetail.depositAmount?.toLocaleString("vi-VN")} VND
-                      </div>
-                    </div>
-                  </div>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <div className="info-item">
-                    <DollarOutlined className="info-icon" />
-                    <div>
-                      <Text type="secondary">Tổng Số Tiền</Text>
-                      <div className="info-value highlight">
-                        {contractDetail.totalAmount?.toLocaleString("vi-VN")} VND
-                      </div>
-                    </div>
-                  </div>
-                </Col>
-                <Col xs={24}>
-                  <div className="info-item">
-                    <UserOutlined className="info-icon" />
-                    <div>
-                      <Text type="secondary">Khách Hàng</Text>
-                      <div className="info-value">
-                        {contractDetail.username || "N/A"}
-                        {contractDetail.companyName && (
-                          <Tag color="blue" style={{ marginLeft: 8 }}>
-                            {contractDetail.companyName}
-                          </Tag>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Col>
-              </Row>
-            </Card>
+                  </Col>
+                </Row>
+              </Card>
 
-            {/* Vehicles Card */}
-            <Card
-              className="vehicles-card"
-              title={
-                <div className="card-title-wrapper">
-                  <span>Danh Sách Xe Đã Gán</span>
-                  <Badge count={assignedVehicles.length} showZero />
-                </div>
-              }
-              extra={
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={handleOpenAssignModal}
-                  className="assign-btn"
-                >
-                  Gán Xe Mới
-                </Button>
-              }
-            >
-              {assignedVehicles.length === 0 ? (
-                <Empty
-                  description="Chưa có xe nào được gán"
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
-              ) : (
-                <Row gutter={[16, 16]}>
-                  {assignedVehicles.map((vehicle) => (
-                    <Col xs={24} sm={12} key={vehicle.vehicleId}>
-                      <Card className="vehicle-card" hoverable>
-                        <div className="vehicle-card-content">
-                          <div className="vehicle-header">
+              {/* Vehicles Section */}
+              <Card
+                className="vehicles-section-card"
+                bordered={false}
+                title={
+                  <div className="vehicles-card-title">
+                    <CarOutlined className="vehicles-card-icon" />
+                    <span>Danh Sách Xe Đã Gán</span>
+                    <Badge count={assignedVehicles.length} showZero className="vehicles-badge" />
+                  </div>
+                }
+                extra={
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleOpenAssignModal}
+                    className="assign-btn"
+                    size="large"
+                  >
+                    Gán Xe Mới
+                  </Button>
+                }
+              >
+                {assignedVehicles.length === 0 ? (
+                  <Empty
+                    description="Chưa có xe nào được gán cho hợp đồng này"
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    className="empty-state"
+                  >
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleOpenAssignModal}
+                    >
+                      Gán Xe Ngay
+                    </Button>
+                  </Empty>
+                ) : (
+                  <Row gutter={[16, 16]}>
+                    {assignedVehicles.map((vehicle) => (
+                      <Col xs={24} sm={12} lg={8} key={vehicle.vehicleId}>
+                        <Card className="vehicle-item-card" hoverable>
+                          <div className="vehicle-item-header">
                             <Avatar
-                              size={48}
+                              size={56}
                               icon={<CarOutlined />}
-                              className="vehicle-avatar"
+                              className="vehicle-item-avatar"
                             />
-                            <div className="vehicle-title">
-                              <div className="vehicle-type">{vehicle.vehicleType}</div>
-                              <div className="vehicle-plate">{vehicle.licensePlate}</div>
+                            <div className="vehicle-item-title">
+                              <Text strong className="vehicle-type-text">
+                                {vehicle.vehicleType}
+                              </Text>
+                              <Text className="vehicle-plate-text">
+                                {vehicle.licensePlate}
+                              </Text>
                             </div>
                           </div>
-                          <div className="vehicle-info">
-                            <Tag color="blue" className="info-tag">
-                              Dung tích: {vehicle.capacity} tấn
-                            </Tag>
-                            <Tag
-                              color={vehicle.status === "AVAILABLE" ? "green" : "orange"}
-                              className="info-tag"
-                            >
-                              {vehicle.status}
-                            </Tag>
-                            {vehicle.driverUsername && (
-                              <Tag color="purple" className="info-tag">
-                                <UserOutlined /> {vehicle.driverUsername}
+                          <Divider style={{ margin: "16px 0" }} />
+                          <div className="vehicle-item-info">
+                            <div className="vehicle-info-row">
+                              <SafetyOutlined className="vehicle-info-icon" />
+                              <Text>Dung tích: </Text>
+                              <Text strong>{vehicle.capacity} tấn</Text>
+                            </div>
+                            <div className="vehicle-info-row">
+                              <ThunderboltOutlined className="vehicle-info-icon" />
+                              <Text>Trạng thái: </Text>
+                              <Tag
+                                color={vehicle.status === "AVAILABLE" ? "success" : "warning"}
+                                className="vehicle-status-tag"
+                              >
+                                {vehicle.status}
                               </Tag>
+                            </div>
+                            {vehicle.driverUsername && (
+                              <div className="vehicle-info-row">
+                                <UserOutlined className="vehicle-info-icon" />
+                                <Text>Tài xế: </Text>
+                                <Text strong>{vehicle.driverUsername}</Text>
+                              </div>
                             )}
                           </div>
-                          <Button
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleUnassign(vehicle.vehicleId)}
-                            className="remove-vehicle-btn"
-                            block
+                          <Popconfirm
+                            title="Xác nhận hủy gán xe"
+                            description="Bạn có chắc chắn muốn hủy gán xe này khỏi hợp đồng không?"
+                            onConfirm={() => handleUnassign(vehicle.vehicleId)}
+                            okText="Xác nhận"
+                            cancelText="Hủy"
+                            okType="danger"
                           >
-                            Hủy Gán
-                          </Button>
-                        </div>
-                      </Card>
-                    </Col>
-                  ))}
-                </Row>
-              )}
-            </Card>
-          </div>
-        )}
+                            <Button
+                              danger
+                              icon={<DeleteOutlined />}
+                              className="remove-vehicle-btn"
+                              block
+                              style={{ marginTop: 16 }}
+                            >
+                              Hủy Gán
+                            </Button>
+                          </Popconfirm>
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                )}
+              </Card>
+            </div>
+          )}
+        </Spin>
       </Modal>
 
       {/* Assign Vehicle Modal */}
       <Modal
         title={
-          <div className="modal-header">
-            <PlusOutlined className="modal-header-icon" />
-            <span>Gán Xe Cho Hợp Đồng</span>
+          <div className="modal-header-custom">
+            <div className="modal-icon-wrapper modal-icon-primary">
+              <PlusOutlined />
+            </div>
+            <div>
+              <Title level={4} className="modal-title">
+                Gán Xe Cho Hợp Đồng
+              </Title>
+              <Text type="secondary" className="modal-subtitle">
+                Chọn xe từ danh sách xe có sẵn
+              </Text>
+            </div>
           </div>
         }
         open={assignModalVisible}
@@ -524,11 +634,17 @@ export default function VehicleAssignment() {
         confirmLoading={loading}
         okText="Xác Nhận Gán"
         cancelText="Hủy"
-        okButtonProps={{ disabled: loading || !!assignError }}
+        okButtonProps={{
+          disabled: !selectedVehicle || loading,
+          className: "assign-modal-ok-btn",
+        }}
         className="assign-modal"
-        width={600}
+        width={700}
+        zIndex={1010}
+        mask={true}
+        maskClosable={false}
       >
-        <div className="assign-modal-content">
+        <div className="assign-modal-content" id="assign-modal-container">
           {assignError && (
             <div className="error-alert">
               <span className="error-icon">⚠️</span>
@@ -537,7 +653,7 @@ export default function VehicleAssignment() {
           )}
           <div className="select-wrapper">
             <Text strong className="select-label">
-              Chọn Xe
+              Chọn Xe <span style={{ color: "#ff4d4f" }}>*</span>
             </Text>
             <Select
               placeholder="Chọn một xe từ danh sách"
@@ -552,15 +668,30 @@ export default function VehicleAssignment() {
               optionFilterProp="children"
               disabled={loading}
               className="vehicle-select"
+              getPopupContainer={(triggerNode) => {
+                const modalContainer = document.querySelector('.assign-modal .ant-modal-body');
+                return modalContainer || triggerNode.parentElement || document.body;
+              }}
+              dropdownStyle={{ zIndex: 1020 }}
+              notFoundContent={
+                <Empty
+                  description="Không có xe nào khả dụng"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  style={{ padding: "20px 0" }}
+                />
+              }
             >
               {availableVehicles.map((vehicle) => (
                 <Option key={vehicle.vehicleId} value={vehicle.vehicleId}>
                   <div className="vehicle-option">
-                    <CarOutlined />
-                    <span className="vehicle-option-text">
-                      {vehicle.vehicleType} - {vehicle.licensePlate}
-                    </span>
-                    <Tag color="blue" style={{ marginLeft: "auto" }}>
+                    <CarOutlined className="vehicle-option-icon" />
+                    <div className="vehicle-option-content">
+                      <Text strong>{vehicle.vehicleType}</Text>
+                      <Text type="secondary" className="vehicle-option-plate">
+                        {vehicle.licensePlate}
+                      </Text>
+                    </div>
+                    <Tag color="blue" className="vehicle-option-tag">
                       {vehicle.capacity} tấn
                     </Tag>
                   </div>
@@ -570,31 +701,19 @@ export default function VehicleAssignment() {
           </div>
           {contractDetail && (
             <Card className="info-banner" size="small">
-              <CalendarOutlined />
-              <Text>
-                <strong>Ngày Chuyển:</strong>{" "}
-                {contractDetail.movingDay
-                  ? dayjs(contractDetail.movingDay).format("DD/MM/YYYY")
-                  : "N/A"}
-              </Text>
+              <div className="info-banner-content">
+                <CalendarOutlined className="info-banner-icon" />
+                <div>
+                  <Text strong>Ngày Chuyển: </Text>
+                  <Text>
+                    {contractDetail.movingDay
+                      ? dayjs(contractDetail.movingDay).format("DD/MM/YYYY")
+                      : "N/A"}
+                  </Text>
+                </div>
+              </div>
             </Card>
           )}
-        </div>
-      </Modal>
-
-      {/* Confirm Unassign Modal */}
-      <Modal
-        title="Xác Nhận Hủy Gán"
-        open={vehicleToRemove !== null}
-        onCancel={() => setVehicleToRemove(null)}
-        onOk={confirmUnassign}
-        okText="Xác Nhận"
-        okType="danger"
-        cancelText="Hủy"
-        className="confirm-modal"
-      >
-        <div className="confirm-content">
-          <p>Bạn có chắc chắn muốn hủy gán xe này khỏi hợp đồng không?</p>
         </div>
       </Modal>
     </div>

@@ -7,13 +7,34 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface QuotationServiceInfoMapper {
-    @Mapping(target = "serviceName", source = "service.serviceName")
-    @Mapping(target = "priceType", source = "price.priceType")
+    @Mapping(target = "serviceName", expression = "java(getServiceName(entity))")
+    @Mapping(target = "priceType", expression = "java(getPriceType(entity))")
     @Mapping(target = "quantity", source = "quantity")
     @Mapping(target = "subtotal", source = "subtotal")
     @Mapping(target = "id", source = "id")
-    @Mapping(target = "amount",source = "price.amount")
+    @Mapping(target = "amount", expression = "java(getAmount(entity))")
 
     
     QuotationServiceInfo toResponse(QuotationServices entity);
+    
+    default String getServiceName(QuotationServices entity) {
+        if (entity == null || entity.getService() == null) {
+            return null;
+        }
+        return entity.getService().getServiceName();
+    }
+    
+    default String getPriceType(QuotationServices entity) {
+        if (entity == null || entity.getPrice() == null) {
+            return null;
+        }
+        return entity.getPrice().getPriceType();
+    }
+    
+    default Double getAmount(QuotationServices entity) {
+        if (entity == null || entity.getPrice() == null) {
+            return null;
+        }
+        return entity.getPrice().getAmount();
+    }
 }
