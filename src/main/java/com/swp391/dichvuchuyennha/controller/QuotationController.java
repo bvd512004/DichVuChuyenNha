@@ -73,18 +73,18 @@ public class QuotationController {
     }
     @PutMapping("/reject/{quotationId}")
     public ResponseEntity<QuotationForCustomer> rejectQuotation(@PathVariable Integer quotationId) {
-        // 1️⃣ Lấy username người đang đăng nhập
+        // Lấy username người đang đăng nhập
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // 2️⃣ Lấy user từ DB
+        // Lấy user từ DB
         Users user = userRepository.findByUsername(username).orElseThrow(
                 () -> new EntityNotFoundException("User not found")
         );
 
-        // 3️⃣ Gọi service xử lý từ chối báo giá
+        // Gọi service xử lý từ chối báo giá
         QuotationForCustomer rejectedQuotation = quotationService.rejectQuotation(quotationId, user.getUserId());
 
-        // 4️⃣ Trả về phản hồi cho FE
+        // Trả về phản hồi cho FE
         return ResponseEntity.ok(rejectedQuotation);
     }
 
