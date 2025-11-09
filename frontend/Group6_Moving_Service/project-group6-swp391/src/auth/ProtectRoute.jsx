@@ -15,7 +15,10 @@ const ProtectedRoute = ({ children, allowedRoles, requiredPosition }) => {
     console.log("ProtectedRoute: role=", role, "position=", position); // Debug
 
     const hasRole = allowedRoles.some(r => r.toLowerCase() === role.toLowerCase());
-    const hasPosition = !requiredPosition || position === requiredPosition;
+    const hasPosition =
+      !requiredPosition ||
+      (position &&
+        position.toLowerCase() === requiredPosition.toLowerCase());
 
     if (!hasRole || !hasPosition) {
       return <Navigate to="/access-denied" replace />;

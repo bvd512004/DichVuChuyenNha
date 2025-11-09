@@ -69,8 +69,11 @@ const LoginPage = () => {
         } else if (roleId === 2) { // manager
           navigate("/manager/dashboard");
         } else if (roleId === 3) { // employee
-          if (position === "Surveyer") {
+          const normalizedPosition = position ? position.toLowerCase() : "";
+          if (normalizedPosition === "surveyor" || normalizedPosition === "surveyer") {
             navigate("/survey-dashboard");
+          } else if (normalizedPosition === "driver" || normalizedPosition === "tài xế") {
+            navigate("/driver/dashboard");
           } else {
             navigate("/employee/dashboard");
           }

@@ -30,7 +30,6 @@ import {
   DollarOutlined,
   UserOutlined,
   CheckCircleOutlined,
-  ReloadOutlined,
   FileTextOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
@@ -142,7 +141,7 @@ export default function VehicleAssignment() {
     );
 
     if (isAlreadyAssigned) {
-      setAssignError("Xe này đã được gán cho hợp đồng này!");
+      setAssignError("Xe này đã được phân công cho hợp đồng này!");
       return;
     }
 
@@ -155,7 +154,7 @@ export default function VehicleAssignment() {
         driverId: selectedDriver,
       });
 
-      message.success("Gán xe thành công!");
+      message.success("Phân công xe thành công!");
       setAssignModalVisible(false);
       setSelectedVehicle(null);
       setSelectedDriver(null);
@@ -172,7 +171,7 @@ export default function VehicleAssignment() {
         err.response?.data?.message ||
         err.response?.data ||
         err.message ||
-        "Lỗi khi gán xe. Vui lòng thử lại.";
+        "Lỗi khi phân công xe. Vui lòng thử lại.";
       
       setAssignError(errorMessage);
       message.error(errorMessage);
@@ -267,7 +266,7 @@ export default function VehicleAssignment() {
   const handleUnassign = async (vehicleId) => {
     try {
       await vehicleApi.unassignVehicleFromContract(selectedContract, vehicleId);
-      message.success("Hủy gán xe thành công!");
+      message.success("Hủy phân công xe thành công!");
 
       const [detailRes, vehiclesRes, driversRes] = await Promise.all([
         ContractAPI.getById(selectedContract),
@@ -280,7 +279,7 @@ export default function VehicleAssignment() {
       setAvailableDrivers(driversRes.data || []);
     } catch (err) {
       message.error(
-        err.response?.data?.message || err.message || "Không thể hủy gán xe"
+        err.response?.data?.message || err.message || "Không thể hủy phân công xe"
       );
     }
   };
@@ -371,7 +370,7 @@ export default function VehicleAssignment() {
       ),
     },
     {
-      title: "Xe Đã Gán",
+      title: "Xe Đã Phân Công",
       key: "hasVehicles",
       width: 120,
       render: (_, record) => (
@@ -420,21 +419,14 @@ export default function VehicleAssignment() {
               </div>
               <div className="header-text">
                 <Title level={2} className="page-title">
-                  Quản Lý Gán Xe Cho Hợp Đồng
+                  Quản Lý Phân Công Xe Cho Hợp Đồng
                 </Title>
                 <Text className="page-subtitle">
                   Phân công và quản lý phương tiện vận chuyển cho các hợp đồng
                 </Text>
               </div>
             </div>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={loadContracts}
-              className="refresh-btn"
-              size="large"
-            >
-              Làm Mới
-            </Button>
+            
           </div>
         </div>
 
@@ -454,7 +446,7 @@ export default function VehicleAssignment() {
           <Col xs={24} sm={12} lg={8}>
             <Card className="stat-card stat-card-success" hoverable>
               <Statistic
-                title="Đã Gán Xe"
+                title="Đã Phân Công Xe"
                 value={assignedCount}
                 prefix={<CheckCircleOutlined />}
                 valueStyle={{ color: "#52c41a" }}
@@ -465,7 +457,7 @@ export default function VehicleAssignment() {
           <Col xs={24} sm={12} lg={8}>
             <Card className="stat-card stat-card-warning" hoverable>
               <Statistic
-                title="Chờ Gán Xe"
+                title="Chờ Phân Công Xe"
                 value={pendingCount}
                 prefix={<ClockCircleOutlined />}
                 valueStyle={{ color: "#faad14" }}
@@ -513,7 +505,7 @@ export default function VehicleAssignment() {
                 Chi Tiết Hợp Đồng #{contractDetail?.contractId}
               </Title>
               <Text type="secondary" className="modal-subtitle">
-                Thông tin hợp đồng và danh sách xe đã gán
+                Thông tin hợp đồng và danh sách xe đã phân công
               </Text>
             </div>
           </div>
@@ -611,7 +603,7 @@ export default function VehicleAssignment() {
                 title={
                   <div className="vehicles-card-title">
                     <CarOutlined className="vehicles-card-icon" />
-                    <span>Danh Sách Xe Đã Gán</span>
+                    <span>Danh Sách Xe Đã Phân Công</span>
                     <Badge count={assignedVehicles.length} showZero className="vehicles-badge" />
                   </div>
                 }
@@ -623,13 +615,13 @@ export default function VehicleAssignment() {
                     className="assign-btn"
                     size="large"
                   >
-                    Gán Xe Mới
+                    Phân Công Xe Mới
                   </Button>
                 }
               >
                 {assignedVehicles.length === 0 ? (
                   <Empty
-                    description="Chưa có xe nào được gán cho hợp đồng này"
+                    description="Chưa có xe nào được phân công cho hợp đồng này"
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                     className="empty-state"
                   >
@@ -638,7 +630,7 @@ export default function VehicleAssignment() {
                       icon={<PlusOutlined />}
                       onClick={handleOpenAssignModal}
                     >
-                      Gán Xe Ngay
+                      Phân Công Xe Ngay
                     </Button>
                   </Empty>
                 ) : (
@@ -694,8 +686,8 @@ export default function VehicleAssignment() {
                               {vehicle.driverUsername ? "Đổi tài xế" : "Phân công tài xế"}
                             </Button>
                             <Popconfirm
-                              title="Xác nhận hủy gán xe"
-                              description="Bạn có chắc chắn muốn hủy gán xe này khỏi hợp đồng không?"
+                              title="Xác nhận hủy phân công xe"
+                              description="Bạn có chắc chắn muốn hủy phân công xe này khỏi hợp đồng không?"
                               onConfirm={() => handleUnassign(vehicle.vehicleId)}
                               okText="Xác nhận"
                               cancelText="Hủy"
@@ -707,7 +699,7 @@ export default function VehicleAssignment() {
                                 className="remove-vehicle-btn"
                                 block
                               >
-                                Hủy Gán
+                                Hủy Phân Công
                               </Button>
                             </Popconfirm>
                           </Space>
@@ -731,7 +723,7 @@ export default function VehicleAssignment() {
             </div>
             <div>
               <Title level={4} className="modal-title">
-                Gán Xe Cho Hợp Đồng
+                Phân Công Xe Cho Hợp Đồng
               </Title>
               <Text type="secondary" className="modal-subtitle">
                 Chọn xe từ danh sách xe có sẵn
@@ -748,7 +740,7 @@ export default function VehicleAssignment() {
         }}
         onOk={handleAssign}
         confirmLoading={loading}
-        okText="Xác Nhận Gán"
+        okText="Xác Nhận Phân Công"
         cancelText="Hủy"
         okButtonProps={{
           disabled: !selectedVehicle || !selectedDriver || loading,

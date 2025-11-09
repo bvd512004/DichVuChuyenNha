@@ -46,7 +46,7 @@ const ManagerDashboard = () => {
     {
       key: "vehicle-assignment",
       icon: <CarOutlined />,
-      label: <Link to="vehicle-assignment">Gán xe cho hợp đồng</Link>,
+      label: <Link to="vehicle-assignment">Phân công xe cho hợp đồng</Link>,
     },
     {
       key: "manager/work-progress",
