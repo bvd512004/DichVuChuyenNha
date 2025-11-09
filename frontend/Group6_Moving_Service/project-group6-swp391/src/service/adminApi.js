@@ -1,13 +1,13 @@
+// src/service/adminApi.js
 import axios from "axios";
 
-const API_BASE = "http://localhost:8080/api/admin";
+const API_BASE = "http://localhost:8080";
 
-// Tạo instance
+// Tạo instance chung
 const api = axios.create({
     baseURL: API_BASE,
 });
 
-// Interceptor để set token dynamic từ localStorage mỗi request
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -16,14 +16,13 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Thêm interceptor xử lý error (ví dụ 401 logout)
 api.interceptors.response.use(
     (res) => res,
     (err) => {
         if (err.response?.status === 401) {
-            // Có thể redirect to login
             console.error("Unauthorized - Token expired");
             localStorage.removeItem("token");
+            window.location.href = "/login";
         }
         return Promise.reject(err);
     }
@@ -31,24 +30,24 @@ api.interceptors.response.use(
 
 export const adminApi = {
     // Users
-    getUsers: () => api.get("/users").then((res) => res.data.result || []),
-    updateUser: (id, data) => api.put(`/users/${id}`, data),
-    deleteUser: (id) => api.delete(`/users/${id}`),
+    getUsers: () => api.get("/api/admin/users").then(r => r.data.result || []),
+    updateUser: (id, data) => api.put(`/api/admin/users/${id}`, data),
+    deleteUser: (id) => api.delete(`/api/admin/users/${id}`),
 
-    // Roles
-    getRoles: () => api.get("/roles").then((res) => res.data.result || []),
+    // Roles - DÙNG API CÔNG KHAI
+    getRoles: () => api.get("/api/roles").then(r => r.data.result || []),
 
     // Vehicles
-    getVehicles: () => api.get("/vehicles").then((res) => res.data.result || []),
+    getVehicles: () => api.get("/api/admin/vehicles").then(r => r.data.result || []),
 
     // Audit Logs
-    getAuditLogs: () => api.get("/logs").then((res) => res.data.result || []),
+    getAuditLogs: () => api.get("/api/admin/logs").then(r => r.data.result || []),
 
     // Login History
     getLoginHistory: (userId) =>
-        api.get(`/users/${userId}/login-history`).then((res) => res.data.result || []),
+        api.get(`/api/admin/users/${userId}/login-history`).then(r => r.data.result || []),
 
     // Create
-    createAdmin: (data) => api.post("/users", data),
-    createEmployee: (data) => api.post("/employees", data),
+    createAdmin: (data) => api.post("/api/admin/users", data),
+    createEmployee: (data) => api.post("/api/admin/employees", data),
 };

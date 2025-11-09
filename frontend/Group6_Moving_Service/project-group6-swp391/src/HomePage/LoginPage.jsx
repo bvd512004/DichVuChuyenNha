@@ -15,12 +15,15 @@ const LoginPage = () => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1);
-    const { login } = useAuth(); // ✅ lấy login từ context
+  const { login } = useAuth(); // ✅ lấy login từ context
 
 
   const validationSchema = Yup.object({
-    email: Yup.string().email("Invalid email").required("Email is required"),
-    password: Yup.string().required("Password is required"),
+    // Cho phép cả email và username (backend hỗ trợ cả 2)
+    email: Yup.string()
+      .required("Email hoặc Username là bắt buộc")
+      .min(3, "Email/Username phải có ít nhất 3 ký tự"),
+    password: Yup.string().required("Mật khẩu là bắt buộc"),
   });
 
   const formik = useFormik({
@@ -28,34 +31,84 @@ const LoginPage = () => {
     validationSchema,
     onSubmit: async (values) => {
       formik.setSubmitting(true);
+      
+      // Log để debug
+      console.log("Sending login request:", values);
+      
       try {
-        const response = await axios.post("http://localhost:8080/api/auth/login", values);
-       const { token, roleId, position } = response.data.result;
-      // ✅ gọi context login
-      login(token);
+        const response = await axios.post("http://localhost:8080/api/auth/login", values, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        
+        console.log("Login response:", response.data);
 
-      // Navigate tùy role
-   
-      if (roleId === 3 && position === "Surveyer") {
-        navigate("/survey-dashboard");
-      } else if (roleId === 3) {
-        navigate("/employee/dashboard");
-      } else if (roleId === 4 || roleId === 5) {
-        navigate("/customer-page");
-      } else if (roleId === 2) {
-        navigate("/manager/dashboard");
-      } else if (roleId === 1) {
-        navigate("/admin-dashboard");
-      } else {
-        navigate("/");
+        // ĐÚNG: response.data.result
+        const result = response.data.result;
+        const token = result.token;
+        const roleId = result.roleId; // Sử dụng roleId để check
+        const position = result.position;
+
+        // Lưu token và roleName (✅ Thêm dòng này, lưu lowercase để dễ check)
+        localStorage.setItem("token", token);
+        localStorage.setItem("roleName", result.roleName.toLowerCase()); // Ví dụ: 'admin'
+
+        // Đọc scope từ JWT (để xác nhận) - giữ để debug nhưng không dùng cho redirect
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          console.log("JWT payload:", payload);  // Log để debug
+          const roleFromJwt = payload.roles?.[0]?.toLowerCase() || "";  // Sửa claim thành "roles"
+        } catch (err) {
+          console.error("Invalid JWT format:", err);  // Sửa message
+        }
+
+        // CHUYỂN HƯỚNG dựa trên roleId (an toàn hơn, vì id không đổi case)
+        if (roleId === 1) { // admin
+          navigate("/admin-dashboard");
+        } else if (roleId === 2) { // manager
+          navigate("/manager/dashboard");
+        } else if (roleId === 3) { // employee
+          const normalizedPosition = position ? position.toLowerCase() : "";
+          if (normalizedPosition === "surveyor" || normalizedPosition === "surveyer") {
+            navigate("/survey-dashboard");
+          } else if (normalizedPosition === "driver" || normalizedPosition === "tài xế") {
+            navigate("/driver/dashboard");
+          } else {
+            navigate("/employee/dashboard");
+          }
+        } else if (roleId === 4 || roleId === 5) { // customer_individual hoặc customer_company
+          navigate("/customer-page");
+        } else {
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+        
+        // Xử lý các loại lỗi khác nhau
+        let errorMessage = "Đăng nhập thất bại";
+        
+        if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+          errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra backend có đang chạy không.";
+        } else if (error.response) {
+          // Backend đã trả về response
+          const errorData = error.response.data;
+          errorMessage = errorData?.message || errorData?.result || `Lỗi ${error.response.status}: ${error.response.statusText}`;
+          
+          // Log chi tiết để debug
+          console.error("Error response:", errorData);
+        } else if (error.request) {
+          // Request đã được gửi nhưng không nhận được response
+          errorMessage = "Không nhận được phản hồi từ server.";
+        } else {
+          errorMessage = error.message || "Đã xảy ra lỗi không xác định";
+        }
+        
+        alert(errorMessage);
+      } finally {
+        formik.setSubmitting(false);
       }
-
-    } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
-      setSubmitting(false);
-    }
-  },
-
+    },
   });
 
   const handleSendOtp = async () => {
@@ -114,15 +167,15 @@ const LoginPage = () => {
       <p className="auth-subtitle">Hãy đăng nhập tài khoản của bạn</p>
 
       <Form onFinish={formik.handleSubmit} layout="vertical">
-        {/* Email */}
+        {/* Email hoặc Username */}
         <Form.Item
-          label="Email"
+          label="Email hoặc Username"
           validateStatus={formik.errors.email && formik.touched.email ? "error" : ""}
           help={formik.errors.email && formik.touched.email ? formik.errors.email : null}
         >
           <Input
             name="email"
-            placeholder="Enter your email"
+            placeholder="Nhập email hoặc username"
             value={formik.values.email}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}

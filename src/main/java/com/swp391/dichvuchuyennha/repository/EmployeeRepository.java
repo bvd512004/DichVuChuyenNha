@@ -43,4 +43,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 """)
     List<EmployeeDTO> findFreeEmployeeDTO();
 
+    @Query("""
+        SELECT e FROM Employee e
+        LEFT JOIN FETCH e.user u
+        WHERE LOWER(e.position) LIKE LOWER(CONCAT('%', :position, '%'))
+        AND (e.status IS NULL OR LOWER(e.status) = LOWER(:status))
+    """)
+    List<Employee> findDriversWithStatus(String position, String status);
+
 }//end

@@ -5,17 +5,22 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class VehicleResponse {
+public class DriverScheduleResponse {
+    private Integer contractId;
+    private String contractStatus;
     private Integer vehicleId;
     private String vehicleType;
     private String licensePlate;
     private Double capacity;
-    private String status;
-    private Integer quotationId;
-    private Integer driverId;
-    private String driverUsername; // Thêm username của driver
+    private LocalDate movingDay;
+    private String pickupAddress;
+    private String destinationAddress;
 }
+
+

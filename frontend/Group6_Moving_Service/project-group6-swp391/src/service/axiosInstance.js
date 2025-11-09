@@ -23,6 +23,18 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error("Axios error:", error);
+    
+    // Xử lý lỗi 401 Unauthorized
+    if (error.response?.status === 401) {
+      // Token hết hạn hoặc không hợp lệ
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      // Chỉ redirect nếu không phải trang login
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
+      }
+    }
+    
     return Promise.reject(error);
   }
 );

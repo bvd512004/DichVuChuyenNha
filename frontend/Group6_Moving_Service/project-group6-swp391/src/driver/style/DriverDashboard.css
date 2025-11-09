@@ -1,0 +1,126 @@
+.driver-dashboard {
+  min-height: 100vh;
+  padding: 24px;
+  background-color: #f5f7fa;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.driver-dashboard__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.driver-dashboard__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.stats-card {
+  border-radius: 16px;
+  min-height: 120px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+.stats-card.upcoming {
+  background: linear-gradient(135deg, #fff7e6, #ffe7ba);
+}
+
+.stats-card.total {
+  background: linear-gradient(135deg, #e6f7ff, #bae7ff);
+}
+
+.stats-card__title {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stats-card__icon {
+  font-size: 28px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.driver-dashboard__alert {
+  margin-top: -8px;
+}
+
+.driver-dashboard__table-card {
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.1);
+}
+
+.driver-dashboard__loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 48px 0;
+}
+
+.driver-dashboard__table .ant-table-thead > tr > th {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  background-color: #fafafa;
+}
+
+.driver-dashboard__vehicle {
+  display: flex;
+  flex-direction: column;
+}
+
+.driver-dashboard__vehicle .ant-typography {
+  margin-bottom: 4px;
+}
+
+.driver-dashboard__route {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.route-point {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.route-divider {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0) 0%, rgba(24, 144, 255, 0.6) 50%, rgba(0, 0, 0, 0) 100%);
+}
+
+.route-icon {
+  font-size: 16px;
+}
+
+.route-icon.pickup {
+  color: #52c41a;
+}
+
+.route-icon.dropoff {
+  color: #ff4d4f;
+}
+
+@media (max-width: 768px) {
+  .driver-dashboard {
+    padding: 16px;
+  }
+
+  .driver-dashboard__route {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .route-divider {
+    width: 100%;
+  }
+}
+
+

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.swp391.dichvuchuyennha.dto.request.ApiResponse;
 import com.swp391.dichvuchuyennha.dto.request.AuthenticationRequest;
 import com.swp391.dichvuchuyennha.dto.response.AuthenticationResponse;
+import com.swp391.dichvuchuyennha.exception.ErrorCode;
 import com.swp391.dichvuchuyennha.service.AuthenticationService;
 
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,20 @@ public class AuthenticationController {
         @PostMapping("/login")
         public ResponseEntity<ApiResponse<AuthenticationResponse>> login(
                         @RequestBody AuthenticationRequest request) {
+                // Log để debug
+                System.out.println("=== LOGIN REQUEST ===");
+                System.out.println("Request: " + request);
+                System.out.println("Email: " + (request != null ? request.getEmail() : "null"));
+                System.out.println("Password: " + (request != null ? (request.getPassword() != null ? "***" : "null") : "null"));
+                
+                if (request == null || request.getEmail() == null || request.getPassword() == null) {
+                        System.out.println("ERROR: Request body is invalid");
+                        return ResponseEntity.badRequest().body(
+                                        ApiResponse.<AuthenticationResponse>builder()
+                                                        .code(ErrorCode.INVALID_REQUEST.getCode())
+                                                        .message("Email and password are required")
+                                                        .build());
+                }
                 var result = authenticationService.authenticate(request);
                 return ResponseEntity.ok(
                                 ApiResponse.<AuthenticationResponse>builder()
