@@ -154,6 +154,9 @@ public class SecurityConfig {
                                 .requestMatchers("/api/work-progress/**")
                                 .hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
 
+                                // Driver endpoints
+                                .requestMatchers("/api/driver/**").hasRole("EMPLOYEE")
+
                                 .requestMatchers("/api/roles").hasRole("ADMIN")
 
                                 // Public endpoints

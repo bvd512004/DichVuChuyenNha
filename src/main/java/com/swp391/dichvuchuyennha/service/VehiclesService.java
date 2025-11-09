@@ -2,10 +2,12 @@ package com.swp391.dichvuchuyennha.service;
 
 import com.swp391.dichvuchuyennha.dto.request.VehicleAssignRequest;
 import com.swp391.dichvuchuyennha.dto.response.DriverResponse;
+import com.swp391.dichvuchuyennha.dto.response.DriverScheduleResponse;
 import com.swp391.dichvuchuyennha.dto.response.VehicleResponse;
 import com.swp391.dichvuchuyennha.entity.Contract;
 import com.swp391.dichvuchuyennha.entity.Employee;
 import com.swp391.dichvuchuyennha.entity.Quotations;
+import com.swp391.dichvuchuyennha.entity.Requests;
 import com.swp391.dichvuchuyennha.entity.Vehicles;
 import com.swp391.dichvuchuyennha.repository.ContractRepository;
 import com.swp391.dichvuchuyennha.repository.EmployeeRepository;
@@ -14,7 +16,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -179,6 +186,26 @@ public class VehiclesService {
         return toVehicleResponse(saved);
     }
 
+    @Transactional(readOnly = true)
+    public List<DriverScheduleResponse> getDriverSchedulesForDriver(Long userId) {
+        Employee driver = employeeRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new RuntimeException("Driver profile not found for user id: " + userId));
+
+        if (driver.getPosition() == null ||
+                (!driver.getPosition().equalsIgnoreCase("driver") && !driver.getPosition().equalsIgnoreCase("tài xế"))) {
+            throw new RuntimeException("User is not registered as a driver");
+        }
+
+        List<Vehicles> vehicles = vehiclesRepository.findByDriver_EmployeeId(driver.getEmployeeId());
+
+        return vehicles.stream()
+                .map(vehicle -> toDriverScheduleResponse(vehicle, driver.getEmployeeId()))
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparing(DriverScheduleResponse::getMovingDay,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+    }
+
     /**
      * Hủy gán xe khỏi hợp đồng
      */
@@ -249,6 +276,48 @@ public class VehiclesService {
                 .fullName(employee.getUser() != null ? employee.getUser().getUsername() : null)
                 .phone(employee.getPhone())
                 .status(employee.getStatus())
+                .build();
+    }
+
+    private DriverScheduleResponse toDriverScheduleResponse(Vehicles vehicle, Integer driverId) {
+        if (vehicle.getQuotation() == null) {
+            return null;
+        }
+
+        Contract contract = vehicle.getQuotation().getContracts() != null
+                ? vehicle.getQuotation().getContracts().stream()
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null)
+                : null;
+
+        if (contract == null) {
+            return null;
+        }
+
+        Requests request = null;
+        if (vehicle.getQuotation().getSurvey() != null) {
+            request = vehicle.getQuotation().getSurvey().getRequest();
+        }
+
+        Date movingDayRaw = request != null ? request.getMovingDay() : null;
+        LocalDate movingDay = null;
+        if (movingDayRaw != null) {
+            movingDay = movingDayRaw.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+        }
+
+        return DriverScheduleResponse.builder()
+                .contractId(contract.getContractId())
+                .contractStatus(contract.getStatus())
+                .vehicleId(vehicle.getVehicleId())
+                .vehicleType(vehicle.getVehicleType())
+                .licensePlate(vehicle.getLicensePlate())
+                .capacity(vehicle.getCapacity())
+                .movingDay(movingDay)
+                .pickupAddress(request != null ? request.getPickupAddress() : null)
+                .destinationAddress(request != null ? request.getDestinationAddress() : null)
                 .build();
     }
 }

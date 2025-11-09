@@ -39,6 +39,7 @@ import PaymentCancelPage from "../customer/PaymentCancelPage";
 import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
 import ServicePrice from "../admin/components/ServicePrice";
 import ServiceDetail from "../admin/components/ServiceDetail";
+import DriverDashboard from "../driver/DriverDashboard";
 
 const Router = () => {
   const router = createBrowserRouter([
@@ -119,6 +120,14 @@ const Router = () => {
           children: [
             { path: "work-progress", element: <WorkProgressPage /> },
           ],
+        },
+        {
+          path: "driver/dashboard",
+          element: (
+            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Driver">
+              <DriverDashboard />
+            </ProtectedRoute>
+          ),
         },
         {
           path: "manager/dashboard",

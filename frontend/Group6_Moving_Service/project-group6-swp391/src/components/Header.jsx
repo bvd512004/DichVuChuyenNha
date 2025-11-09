@@ -14,6 +14,19 @@ const Header = () => {
   const dropdownRef = useRef(null);
   const roleName = localStorage.getItem("roleName"); // Lấy từ localStorage (sẽ là 'admin' lowercase sau fix)
 
+  const getPositionFromToken = () => {
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload?.position || null;
+    } catch (error) {
+      console.error("Failed to parse token for position", error);
+      return null;
+    }
+  };
+
+  const position = getPositionFromToken();
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -78,6 +91,20 @@ const Header = () => {
           label: "Manager Dashboard",
           onClick: () => {
             navigate("/manager/dashboard/contract-assignment");
+            setIsDropdownVisible(false);
+          },
+        },
+      ]
+      : []),
+    ...(roleName?.toLowerCase() === "employee" &&
+    position &&
+    (position.toLowerCase() === "driver" || position.toLowerCase() === "tài xế")
+      ? [
+        {
+          key: "driver-dashboard",
+          label: "Driver Dashboard",
+          onClick: () => {
+            navigate("/driver/dashboard");
             setIsDropdownVisible(false);
           },
         },

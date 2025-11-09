@@ -1,6 +1,7 @@
 package com.swp391.dichvuchuyennha.repository;
 
 import com.swp391.dichvuchuyennha.entity.Vehicles;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -22,4 +23,12 @@ public interface VehiclesRepository extends JpaRepository<Vehicles, Integer> {
     Optional<Vehicles> findByVehicleId(Integer vehicleId);
 
     boolean existsByDriver_EmployeeIdAndStatusNotIgnoreCase(Integer driverId, String status);
+
+    @EntityGraph(attributePaths = {
+            "quotation",
+            "quotation.survey",
+            "quotation.survey.request",
+            "quotation.contracts"
+    })
+    List<Vehicles> findByDriver_EmployeeId(Integer driverId);
 }
