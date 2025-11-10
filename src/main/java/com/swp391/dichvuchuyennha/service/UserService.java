@@ -41,13 +41,13 @@ public class UserService {
         }
 
         Users saved = userRepository.save(user);
-        return new UserResponse(
-                saved.getUserId(),
-                saved.getUsername(),
-                saved.getEmail(),
-                saved.getPhone(),
-                saved.getRole().getRoleName()
-        );
+        return UserResponse.builder()
+                .userId(saved.getUserId())
+                .username(saved.getUsername())
+                .email(saved.getEmail())
+                .phone(saved.getPhone())
+                .roleName(saved.getRole() != null ? saved.getRole().getRoleName() : null)
+                .build();
     }
 
     public List<UserResponse> getAllUsers() {
