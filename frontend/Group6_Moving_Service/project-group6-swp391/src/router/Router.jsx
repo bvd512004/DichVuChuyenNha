@@ -39,6 +39,7 @@ import PaymentCancelPage from "../customer/PaymentCancelPage";
 import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
 import ServicePrice from "../admin/ServicePrice";
 import ServiceDetail from "../admin/ServiceDetail";
+import PaymentSuccessFinalPage from "../customer/PaymentSuccessFinalPage";
 const Router = () => {
   const router = createBrowserRouter([
     {
@@ -157,6 +158,10 @@ const Router = () => {
         {
           path: "/payment/cancel",
           element: <PaymentCancelPage />,
+        },
+        {
+          path: "/payment/final/success",
+          element: <PaymentSuccessFinalPage/>,
         },
         
          {

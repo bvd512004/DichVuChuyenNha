@@ -28,6 +28,7 @@ const UserContractsPage = () => {
   const [agreeTerms, setAgreeTerms] = useState(false); // Đồng ý điều khoản
   const [signing, setSigning] = useState(false); // Trạng thái ký hợp đồng
   const [paymentData, setPaymentData] = useState(null); // Dữ liệu thanh toán (mã QR, checkoutUrl...)
+  const [showTerms, setShowTerms] = useState(false);
 
   // Tải danh sách hợp đồng chưa ký
   const fetchContracts = async () => {
@@ -377,16 +378,7 @@ const UserContractsPage = () => {
                     />
                   </div>
 
-                  <Text
-                    strong
-                    style={{ fontSize: 20, color: "#ff4d4f", marginTop: 16 }}
-                  >
-                    Số tiền: {paymentData.amount?.toLocaleString("vi-VN")} ₫
-                  </Text>
-                  <Text
-                    strong
-                    style={{ fontSize: 20, color: "#ff4d4f", marginTop: 16 }}
-                  >
+                  <Text strong style={{ fontSize: 20, color: "#ff4d4f", marginTop: 16 }}>
                     Số tiền: {paymentData.amount?.toLocaleString("vi-VN")} ₫
                   </Text>
 
@@ -399,7 +391,6 @@ const UserContractsPage = () => {
                         : "Chưa có thông tin"}
                     </Text>
                   </Text>
-
 
                   <Button
                     type="primary"
@@ -435,17 +426,89 @@ const UserContractsPage = () => {
                 </Space>
               </Card>
             ) : (
-              !paymentData && (
-                <div style={{ padding: "10px 0" }}>
-                  <Checkbox
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                  >
-                    Tôi <strong>đã đọc và đồng ý</strong> với tất cả các điều khoản
-                    và điều kiện của hợp đồng này.
-                  </Checkbox>
-                </div>
-              )
+              <div style={{ padding: "10px 0" }}>
+                <Card
+                  title="🧾 Điều khoản và điều kiện hợp đồng dịch vụ chuyển nhà"
+                  size="small"
+                  style={{
+                    background: "#fafafa",
+                    borderRadius: 8,
+                    marginBottom: 16,
+                  }}
+                  extra={
+                    <a onClick={() => setShowTerms((prev) => !prev)}>
+                      {showTerms ? "Ẩn bớt" : "Xem chi tiết"}
+                    </a>
+                  }
+                >
+                  {showTerms && (
+                    <div style={{ fontSize: 14, lineHeight: 1.6 }}>
+                      <p><strong>1. Thông tin các bên</strong></p>
+                      <p>
+                        <strong>Bên Khách hàng:</strong> Là người đặt dịch vụ chuyển nhà thông qua hệ thống.<br />
+                        <strong>Bên Công ty cung cấp dịch vụ:</strong> Đơn vị sở hữu nền tảng và thực hiện dịch vụ vận chuyển, tháo lắp, sắp xếp, v.v.
+                      </p>
+
+                      <p><strong>2. Phạm vi dịch vụ</strong></p>
+                      <p>
+                        Dịch vụ bao gồm: tư vấn, khảo sát, đóng gói, vận chuyển, bốc dỡ, sắp xếp lại đồ đạc theo yêu cầu của khách hàng.<br />
+                        Các dịch vụ phát sinh (nếu có) như nâng tầng, chờ thang máy, hoặc chuyển ngoài giờ sẽ được tính riêng theo báo giá đã được duyệt.
+                      </p>
+
+                      <p><strong>3. Nghĩa vụ và trách nhiệm</strong></p>
+                      <ul>
+                        <li><strong>Bên Khách hàng:</strong> Cung cấp thông tin địa chỉ, thời gian, và tài sản cần vận chuyển chính xác.</li>
+                        <li>Thanh toán đầy đủ chi phí dịch vụ theo hợp đồng.</li>
+                        <li>Hợp tác trong quá trình vận chuyển để đảm bảo tiến độ.</li>
+                      </ul>
+                      <ul>
+                        <li><strong>Bên Công ty:</strong> Cung cấp dịch vụ đúng phạm vi, thời gian, và chi phí đã thỏa thuận.</li>
+                        <li>Đảm bảo an toàn tài sản trong quá trình vận chuyển.</li>
+                        <li>Thông báo ngay cho khách hàng nếu phát sinh sự cố hoặc thay đổi lịch trình.</li>
+                      </ul>
+
+                      <p><strong>4. Thanh toán</strong></p>
+                      <ul>
+                        <li>Khách hàng thanh toán 50% giá trị hợp đồng (đặt cọc) sau khi ký điện tử.</li>
+                        <li>Phần còn lại thanh toán sau khi hoàn tất công việc.</li>
+                        <li>Hình thức thanh toán: quét mã QR (PayOS) hoặc các phương thức được hỗ trợ.</li>
+                      </ul>
+
+                      <p><strong>5. Hủy và hoàn tiền</strong></p>
+                      <ul>
+                        <li>Hủy trước 24h: hoàn 80% tiền đặt cọc.</li>
+                        <li>Hủy sau 24h: không hoàn tiền.</li>
+                        <li>Nếu công ty không thể cung cấp dịch vụ: hoàn 100% tiền đặt cọc.</li>
+                      </ul>
+
+                      <p><strong>6. Xử lý thiệt hại</strong></p>
+                      <ul>
+                        <li>Bồi thường nếu lỗi do nhân viên công ty.</li>
+                        <li>Không vượt quá giá trị thực tế của tài sản.</li>
+                        <li>Trường hợp bất khả kháng: hai bên thương lượng.</li>
+                      </ul>
+
+                      <p><strong>7. Bảo mật thông tin</strong></p>
+                      <p>Mọi thông tin của khách hàng được bảo mật tuyệt đối.</p>
+
+                      <p><strong>8. Điều khoản chung</strong></p>
+                      <ul>
+                        <li>Hợp đồng điện tử có giá trị pháp lý tương đương hợp đồng giấy.</li>
+                        <li>Việc tick chọn “Tôi đồng ý...” là xác nhận chấp thuận toàn bộ điều khoản.</li>
+                        <li>Tranh chấp (nếu có) sẽ do tòa án nơi công ty đặt trụ sở xử lý.</li>
+                      </ul>
+                    </div>
+
+                  )}
+                </Card>
+
+                <Checkbox
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                >
+                  Tôi <strong>đã đọc và đồng ý</strong> với tất cả các điều khoản và điều kiện của hợp đồng này.
+                </Checkbox>
+              </div>
             )}
           </Space>
         )}
@@ -455,4 +518,3 @@ const UserContractsPage = () => {
 };
 
 export default UserContractsPage;
-//s
