@@ -133,10 +133,49 @@ public class QuotationService {
     }
 
     // --- Các hàm xử lý Quotation khác ---
+    @Transactional(readOnly = true)
     public List<QuotationResponse> getQuotationsByCurrentEmployee() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return quotationRepository.findBySurvey_Request_AssignedEmployees_Employee_User_Username(username)
-                .stream().map(quotationMapper::toResponse).collect(Collectors.toList());
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            if (username == null || username.isEmpty()) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+            
+            List<Quotations> quotations = quotationRepository.findBySurvey_Request_AssignedEmployees_Employee_User_Username(username);
+            
+            if (quotations == null || quotations.isEmpty()) {
+                return List.of();
+            }
+            
+            return quotations.stream()
+                    .filter(q -> {
+                        try {
+                            return q != null && 
+                                   q.getSurvey() != null && 
+                                   q.getSurvey().getRequest() != null &&
+                                   q.getSurvey().getRequest().getUser() != null;
+                        } catch (Exception e) {
+                            // Bỏ qua quotation có lỗi khi truy cập lazy loading
+                            return false;
+                        }
+                    })
+                    .map(q -> {
+                        try {
+                            return quotationMapper.toResponse(q);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            // Trả về null nếu có lỗi mapping, sẽ được filter bỏ
+                            return null;
+                        }
+                    })
+                    .filter(r -> r != null)
+                    .collect(Collectors.toList());
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi lấy danh sách báo giá: " + e.getMessage(), e);
+        }
     }
 
     public List<QuotationForCustomer> getPendingQuotationsByUserId(Integer userId) {

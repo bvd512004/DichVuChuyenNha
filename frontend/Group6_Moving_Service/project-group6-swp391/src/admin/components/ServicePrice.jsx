@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axiosInstance from '../service/axiosInstance';
+import axiosInstance from '../../service/axiosInstance';
 import { Card, Button, Modal, Form, Input, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 

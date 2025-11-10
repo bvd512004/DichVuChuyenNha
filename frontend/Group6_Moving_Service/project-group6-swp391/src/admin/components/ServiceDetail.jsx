@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axiosInstance from '../service/axiosInstance';
+import axiosInstance from '../../service/axiosInstance';
 import { Card, Table, Spin, Typography, Form, Input, InputNumber, Button, message } from 'antd';
 
 const { Title, Paragraph } = Typography;
@@ -12,11 +12,17 @@ const ServiceDetail = () => {
   const [form] = Form.useForm();
 
   const fetchServiceDetail = async () => {
+    if (!id || id === 'undefined') {
+      message.error('ID dịch vụ không hợp lệ');
+      setLoading(false);
+      return;
+    }
     try {
       const res = await axiosInstance.get(`/prices/${id}`);
       setService(res.data);
     } catch (error) {
       console.error('Error fetching service detail', error);
+      message.error('Lỗi tải chi tiết dịch vụ');
     } finally {
       setLoading(false);
     }

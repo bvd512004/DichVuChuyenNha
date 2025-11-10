@@ -7,8 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/survey-floors")
 @RequiredArgsConstructor
@@ -28,5 +26,14 @@ public class SurveyFloorController {
     public ResponseEntity<Void> deleteSurveyFloor(@PathVariable Integer id) {
         surveyFloorService.deleteSurveyFloor(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/area")
+    public ResponseEntity<SurveyFloor> updateFloorArea(
+            @PathVariable Integer id,
+            @RequestParam Double area
+    ) {
+        SurveyFloor updated = surveyFloorService.updateSurveyFloorArea(id, area);
+        return ResponseEntity.ok(updated);
     }
 }
