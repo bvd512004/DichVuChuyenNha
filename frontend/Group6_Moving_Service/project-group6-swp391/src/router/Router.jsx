@@ -37,9 +37,15 @@ import VehicleAssignment from "../manager/VehicleAssignment";
 import PaymentSuccessPage from "../customer/PaymentSuccessPage";
 import PaymentCancelPage from "../customer/PaymentCancelPage";
 import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
+
+import ServicePrice from "../admin/ServicePrice";
+import ServiceDetail from "../admin/ServiceDetail";
+import PaymentSuccessFinalPage from "../customer/PaymentSuccessFinalPage";
+
 import ServicePrice from "../admin/components/ServicePrice";
 import ServiceDetail from "../admin/components/ServiceDetail";
 import DriverDashboard from "../driver/DriverDashboard";
+
 
 const Router = () => {
   const router = createBrowserRouter([
@@ -48,7 +54,146 @@ const Router = () => {
       element: <Layout />,
       children: [
         { index: true, element: <LandingPage /> },
+
+
+        {
+          path: "",
+          element: <HomePage />
+        },
+        //         {
+        //   path: "contract-assignment",
+        //   element: (
+
+        //       <ContractAssignment />
+
+        //   ),
+
+        // },
+        {
+          path: "user-profile",
+          element: <ProfilePage />
+        },
+        {
+          path: "assign-surveyer",
+          element: <AssignSurveyer />
+        },
+        {
+          path: "survey-dashboard",
+          element: (
+            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Surveyer">
+              <SurveyDashboard />
+            </ProtectedRoute>
+          ),
+        },
+
+        {
+          path: "price-service",
+          element: <PriceTable />
+        },
+        {
+          path: "add-services",
+          element: <QuotationAddServices />
+        },
+        {
+          path: "quotations-services",
+          element: <QuotationServiceManager />
+        },
+        {
+          path: "quotations-services-list",
+          element: <QuotationServiceList />
+        },
+        {
+          path: "review-quotations",
+          element: <ReviewQuotationManagement />
+        },
+        
+
+        // },
+        {
+          path: "user-profile",
+          element: <ProfilePage />
+        },
+        {
+          path: "assign-surveyer",
+          element: <AssignSurveyer />
+        },
+        {
+          path: "survey-dashboard",
+          element: (
+            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Surveyer">
+              <SurveyDashboard />
+            </ProtectedRoute>
+          ),
+        },
+
+        {
+          path: "price-service",
+          element: <PriceTable />
+        },
+        {
+          path: "add-services",
+          element: <QuotationAddServices />
+        },
+        {
+          path: "quotations-services",
+          element: <QuotationServiceManager />
+        },
+        {
+          path: "quotations-services-list",
+          element: <QuotationServiceList />
+        },
+        //  {
+        //   path:"review-quotations",
+        //   element: <ReviewQuotationManagement/>
+        // },
+        {
+
+          path: "quotation-for-customer",
+          element: <QuotationApproval />
+        },
+        {
+          path: "contracts-list-manager",
+          element: <QuotationContractList />
+
+        },
+        //payment deposit routes
+        {
+          path: "/payment/success",
+          element: <PaymentSuccessPage />,
+
+
+        },
+        {
+          path: "/payment/cancel",
+          element: <PaymentCancelPage />,
+        },
+        {
+          path: "/payment/final/success",
+          element: <PaymentSuccessFinalPage/>,
+        },
+        
+         {
+          path: "/customer/final-payments",
+          element: <UserFinalPaymentPage />,
+        },
+          {
+          path: "service-admin",
+          element: <ServicePrice/>,
+        },
+        {
+          path:"services/:id",
+          element:<ServiceDetail/>
+        },
+
+
+
+
+
+
+
+
         { path: "", element: <HomePage /> },
+
         {
           path: "login",
           element: (

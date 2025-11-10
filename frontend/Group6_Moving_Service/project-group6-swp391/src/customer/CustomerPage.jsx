@@ -18,9 +18,13 @@ import QuotationApproval from "./QuotationApproval";
 import UserRequestsPage from "./UserRequestsPage";
 import UserContractsPage from "./UserContractPage";
 import CustpmerWorkProgressPage from "./WorkProgressCustomerPage";
+import UserFinalPaymentPage from "./UserFinalPaymentPage";
+import { Badge } from "antd";
+import PaymentAPI from "../service/payment";
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
+
 
 // Hàm định dạng tiền tệ
 const formatCurrency = (amount) => amount?.toLocaleString("vi-VN") + " đ";
@@ -28,7 +32,7 @@ const formatCurrency = (amount) => amount?.toLocaleString("vi-VN") + " đ";
 const CustomerDashboard = () => {
     const navigate = useNavigate();
     const [selectedKey, setSelectedKey] = useState("my-requests");
-
+    const [pendingPayments, setPendingPayments] = useState(0);
     /*** STATE LỊCH SỬ HỢP ĐỒNG ***/
     const [signedContracts, setSignedContracts] = useState([]);
     const [loadingContracts, setLoadingContracts] = useState(false);
@@ -45,12 +49,30 @@ const CustomerDashboard = () => {
             setLoadingContracts(false);
         }
     };
+    // ✅ Lấy số lượng thanh toán đang chờ
+    const fetchPendingPayments = async () => {
+        try {
+            const res = await PaymentAPI.getFinalPaymentsForUser();
+            const data = typeof res === "string" ? JSON.parse(res) : res;
+            const pending = (data.payments || []).filter(p => p.status === "pending").length;
+            setPendingPayments(pending);
+        } catch (err) {
+            console.error("Lỗi khi lấy danh sách thanh toán:", err);
+        }
+    };
+
 
     useEffect(() => {
         if (selectedKey === "signed-contracts") {
             fetchSignedContracts();
         }
     }, [selectedKey]);
+    useEffect(() => {
+        fetchPendingPayments(); // Gọi khi load trang
+        const interval = setInterval(fetchPendingPayments, 30000); // Gọi lại mỗi 30 giây
+        return () => clearInterval(interval);
+    }, []);
+
 
     // CẤU HÌNH CỘT CHO BẢNG LỊCH SỬ HỢP ĐỒNG
     const signedContractsColumns = [
@@ -203,6 +225,8 @@ const CustomerDashboard = () => {
                 return <UserContractsPage />;
             case "customer/work-progress":
                 return <CustpmerWorkProgressPage />;
+            case "/customer/final-payments":
+                return <UserFinalPaymentPage />
             case "signed-contracts":
                 return (
                     <Card
@@ -273,7 +297,32 @@ const CustomerDashboard = () => {
                         { key: "quotation-approval", icon: <FileTextOutlined />, label: "💰 Báo giá chờ duyệt" },
                         { key: "unsigned-contracts", icon: <ScheduleOutlined />, label: "✍️ Hợp đồng chờ ký" },
                         { key: "customer/work-progress", icon: <ScheduleOutlined />, label: "🚚 Tiến trình chuyển đồ" },
+                        {
+                            key: "/customer/final-payments",
+                            icon: (
+                                <Badge
+                                    count={pendingPayments}
+                                    size="small"
+                                    color="red"
+                                    offset={[10, 0]}
+                                >
+                                    <QrcodeOutlined />
+                                </Badge>
+                            ),
+                            label: (
+                                <span
+                                    style={{
+                                        fontWeight: pendingPayments > 0 ? "bold" : "normal",
+                                        color: pendingPayments > 0 ? "red" : "inherit",
+                                    }}
+                                >
+                                    💳 Thanh toán
+                                </span>
+                            ),
+                        },
+
                         { key: "signed-contracts", icon: <HistoryOutlined />, label: "📖 Lịch sử HĐ đã ký" },
+
                         { type: "divider" },
                         { key: "logout", label: "Đăng xuất", danger: true, onClick: () => { /* Logic đăng xuất */ } },
                     ]}

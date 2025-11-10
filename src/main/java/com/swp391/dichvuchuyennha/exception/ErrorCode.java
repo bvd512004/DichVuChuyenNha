@@ -43,8 +43,8 @@ public enum ErrorCode {
 
 
 
-    VEHICLE_NOT_FOUND(1029,"Vehicle not found" , HttpStatus.NOT_FOUND),
-    ROLE_NOT_ASSIGNED(1030,"Role not assigned" , HttpStatus.NOT_FOUND );
+    VEHICLE_NOT_FOUND(1031,"Vehicle not found" , HttpStatus.NOT_FOUND),
+    ROLE_NOT_ASSIGNED(1032,"Role not assigned" , HttpStatus.NOT_FOUND );
 
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
