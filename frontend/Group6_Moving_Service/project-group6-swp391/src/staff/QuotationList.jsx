@@ -48,7 +48,7 @@ export const QuotationList = ({
     };
     const [loadingId, setLoadingId] = useState(null);
 const statusColors = {
-    DRAFT:    "#722ed1",   // Tím đậm - Bản nháp, chưa hoàn thiện
+    REVIEW:    "#722ed1",   // Tím đậm - Bản nháp, chưa hoàn thiện
     REVIEWED: "#fa8c16",   // Cam đậm (AntD: orange) - Đang chờ duyệt quan trọng
     PENDING:  "#1890ff",   // Xanh dương - Đã gửi khách, chờ phản hồi
     APPROVED: "#52c41a",   // Xanh lá - Thành công, khách đồng ý
@@ -59,7 +59,7 @@ const statusColors = {
 
 // ============== TEXT RÕ RÀNG, DỄ HIỂU CHO MỌI NGƯỜI ==============
 const statusText = {
-    DRAFT:    "Bản nháp – Chưa gửi duyệt",
+    REVIEW:    "Bản nháp – Chưa gửi duyệt",
     REVIEWED: "Đang chờ quản lý duyệt",
     PENDING:  "Đã gửi khách – Chờ chấp thuận",
     APPROVED: "Khách đã chấp thuận",
@@ -182,7 +182,7 @@ const statusText = {
                             </Space>
                         </Col>
                        <Col>
-    {["DRAFT", "REJECTED"].includes(record.status) ? (
+    {["REVIEW", "REJECTED"].includes(record.status) ? (
         <Button
             type="primary"
             size="large"
