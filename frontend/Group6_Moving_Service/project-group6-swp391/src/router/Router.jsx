@@ -38,14 +38,13 @@ import PaymentSuccessPage from "../customer/PaymentSuccessPage";
 import PaymentCancelPage from "../customer/PaymentCancelPage";
 import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
 
-import ServicePrice from "../admin/ServicePrice";
-import ServiceDetail from "../admin/ServiceDetail";
-import PaymentSuccessFinalPage from "../customer/PaymentSuccessFinalPage";
+
 
 import ServicePrice from "../admin/components/ServicePrice";
 import ServiceDetail from "../admin/components/ServiceDetail";
 import DriverDashboard from "../driver/DriverDashboard";
 import PaymentList from "../manager/PaymentList";
+import PaymentSuccessFinalPage from "../customer/PaymentSuccessFinalPage";
 
 
 const Router = () => {
