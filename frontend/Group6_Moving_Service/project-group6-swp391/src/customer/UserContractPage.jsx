@@ -247,7 +247,7 @@ const UserContractsPage = () => {
             disabled={!agreeTerms}
             onClick={() => handleSign(selectedContract?.contractId)}
           >
-            {signing ? "Đang ký..." : "Ký hợp đồng điện tử"}
+            {signing ? "Đang ký..." : "Xác nhận hợp đồng"}
           </Button>,
         ]}
         width={900}

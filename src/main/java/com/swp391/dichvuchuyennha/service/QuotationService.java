@@ -206,8 +206,30 @@ public class QuotationService {
         if (!"PENDING".equalsIgnoreCase(quotation.getStatus()))
             throw new AppException(ErrorCode.INVALID_STATUS);
 
-        quotation.setStatus("REJECTED");
+        quotation.setStatus("CANCEL");
         quotationRepository.save(quotation);
         return quotationForCustomerMapper.toInfo(quotation);
     }
+    /**
+     * Nhân viên đánh dấu báo giá là ĐÃ XEM / ĐANG XỬ LÝ (REVIEWED)
+     * Dùng khi nhân viên mở báo giá để xem chi tiết, chuẩn bị chỉnh sửa hoặc gửi lại
+     */
+    @Transactional
+    public QuotationResponse markAsReviewedByEmployee(Integer quotationId) {
+        Quotations quotation = quotationRepository.findById(quotationId)
+                .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
+
+        // Chỉ cho phép chuyển sang REVIEWED nếu hiện tại là PENDING hoặc REJECTED (để gửi lại)
+        if (!Set.of("PENDING", "REJECTED").contains(quotation.getStatus().toUpperCase())) {
+            throw new AppException(ErrorCode.INVALID_STATUS
+                    );
+        }
+
+        quotation.setStatus("REVIEWED");
+
+        Quotations saved = quotationRepository.save(quotation);
+        return quotationMapper.toResponse(saved);
+    }
+
+
 }

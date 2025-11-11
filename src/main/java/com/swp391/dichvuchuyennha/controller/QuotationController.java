@@ -1,5 +1,6 @@
 package com.swp391.dichvuchuyennha.controller;
 
+import com.swp391.dichvuchuyennha.dto.request.ApiResponse;
 import com.swp391.dichvuchuyennha.dto.request.QuotationCreateRequest;
 import com.swp391.dichvuchuyennha.dto.response.QuotationForCustomer;
 import com.swp391.dichvuchuyennha.dto.response.QuotationResponse;
@@ -95,6 +96,22 @@ public class QuotationController {
         return approvedQuotations.stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
+    }
+    @PreAuthorize("hasRole('EMPLOYEE') and @employeePositionService.hasPositionSurveyer(authentication)")
+
+    @PutMapping("/{quotationId}/status/reviewed")
+    public ResponseEntity<ApiResponse<QuotationResponse>> markAsReviewedByEmployee(
+            @PathVariable Integer quotationId) {
+
+        QuotationResponse result = quotationService.markAsReviewedByEmployee(quotationId);
+
+        ApiResponse<QuotationResponse> response = ApiResponse.<QuotationResponse>builder()
+                .code(1000)
+                .message("Báo giá đã được đánh dấu là đang xử lý")
+                .result(result)
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
 }

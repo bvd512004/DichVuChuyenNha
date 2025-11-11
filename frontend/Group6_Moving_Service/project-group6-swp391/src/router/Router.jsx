@@ -40,8 +40,15 @@ import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
 
 import PaymentSuccessFinalPage from "../customer/PaymentSuccessFinalPage";
 import ServiceDetail from "../admin/components/ServiceDetail";
+
 import ServicePrice from "../admin/components/ServicePrice";
 import AllFeedbacksPage from "../components/AllFeedbacksPage";
+
+import DriverDashboard from "../driver/DriverDashboard";
+import PaymentList from "../manager/PaymentList";
+
+
+
 const Router = () => {
   const router = createBrowserRouter([
     {
@@ -223,6 +230,7 @@ const Router = () => {
         // { path: "services/:id", element: <ServiceDetail /> },
         { path: "assign-surveyer", element: <AssignSurveyer /> },
         { path: "review-quotations", element: <ReviewQuotationManagement /> },
+            {path:"payments",element:<PaymentList/>},
 
         // Protected routes
         {

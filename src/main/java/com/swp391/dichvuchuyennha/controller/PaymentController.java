@@ -1,10 +1,13 @@
 package com.swp391.dichvuchuyennha.controller;
 
+import com.swp391.dichvuchuyennha.dto.response.ListPaymentResponse;
 import com.swp391.dichvuchuyennha.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -14,7 +17,10 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-
+    @GetMapping
+    public ResponseEntity<List<ListPaymentResponse>> getAllPayments() {
+        return ResponseEntity.ok(paymentService.getAllPayments());
+    }
     @PostMapping("/deposit/{contractId}")
     public String createDepositPayment(@PathVariable Integer contractId) {
         JSONObject response = paymentService.createDepositPayment(contractId);
