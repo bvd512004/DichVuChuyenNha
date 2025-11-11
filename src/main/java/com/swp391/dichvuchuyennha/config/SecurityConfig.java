@@ -176,42 +176,6 @@ public class SecurityConfig {
 
 
     @Bean
-
-        public CorsFilter corsFilter() {
-                CorsConfiguration corsConfiguration = new CorsConfiguration();
-                corsConfiguration.addAllowedHeader("*");
-                corsConfiguration.addAllowedMethod("*");
-                corsConfiguration.addAllowedOrigin("http://localhost:5173");
-            corsConfiguration.setAllowCredentials(true); // quan trọng nếu gửi JWT qua cookie
-
-            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", corsConfiguration);
-                return new CorsFilter(source);
-        }
-
-        @Bean
-        public JavaMailSender javaMailSender() {
-                JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-                mailSender.setHost("smtp.gmail.com");
-                mailSender.setPort(587);
-                mailSender.setUsername("your-email@gmail.com");
-                mailSender.setPassword("your-app-password");
-
-                Properties props = mailSender.getJavaMailProperties();
-                props.put("mail.transport.protocol", "smtp");
-                props.put("mail.smtp.auth", "true");
-                props.put("mail.smtp.starttls.enable", "true");
-                props.put("mail.debug", "true"); // để debug
-
-                return mailSender;
-        }
-
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-//                 return new BCryptPasswordEncoder(); // Đổi sang BCrypt
-        return NoOpPasswordEncoder.getInstance();
-        }
-
     public CorsFilter corsFilter() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.addAllowedHeader("*");
