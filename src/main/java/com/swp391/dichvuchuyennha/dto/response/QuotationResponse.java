@@ -31,6 +31,7 @@ public class QuotationResponse {
     private String employeeName;
    private String employeePhone;
    private String employeeEmail;
+   private String reason;
 
 }
 

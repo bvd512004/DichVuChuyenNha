@@ -3,14 +3,17 @@ package com.swp391.dichvuchuyennha.service;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.SignedJWT;
+import com.swp391.dichvuchuyennha.dto.response.ListPaymentResponse;
 import com.swp391.dichvuchuyennha.entity.Contract;
 import com.swp391.dichvuchuyennha.entity.Payment;
 import com.swp391.dichvuchuyennha.exception.AppException;
 import com.swp391.dichvuchuyennha.exception.ErrorCode;
+import com.swp391.dichvuchuyennha.mapper.ListPaymentMapper;
 import com.swp391.dichvuchuyennha.repository.ContractRepository;
 import com.swp391.dichvuchuyennha.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +32,8 @@ public class PaymentService {
     private final PayOSService payOSService;
     private final PaymentRepository paymentRepository;
     private final ContractRepository contractRepository;
-
+    @Autowired
+    private ListPaymentMapper listPaymentMapper;
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -302,5 +307,13 @@ public class PaymentService {
         result.put("dueDate", payment.getDueDate());
         return result;
     }
+
+    public List<ListPaymentResponse> getAllPayments() {
+        List<Payment> payments = paymentRepository.findAll();
+        return payments.stream()
+                .map(listPaymentMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
 
 }

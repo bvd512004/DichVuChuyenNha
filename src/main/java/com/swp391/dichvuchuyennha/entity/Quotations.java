@@ -30,6 +30,9 @@ public class Quotations {
     @Column(name = "total_price")
     private Double totalPrice;
 
+    @Column(name = "reason")
+    private String reason;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

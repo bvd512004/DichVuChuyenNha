@@ -45,6 +45,7 @@ import PaymentSuccessFinalPage from "../customer/PaymentSuccessFinalPage";
 import ServicePrice from "../admin/components/ServicePrice";
 import ServiceDetail from "../admin/components/ServiceDetail";
 import DriverDashboard from "../driver/DriverDashboard";
+import PaymentList from "../manager/PaymentList";
 
 
 const Router = () => {
@@ -228,6 +229,7 @@ const Router = () => {
         { path: "services/:id", element: <ServiceDetail /> },
         { path: "assign-surveyer", element: <AssignSurveyer /> },
         { path: "review-quotations", element: <ReviewQuotationManagement /> },
+            {path:"payments",element:<PaymentList/>},
 
         // Protected routes
         {
