@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Tag, message, Space, Card, Row, Col, Statistic, Popconfirm, Divider } from "antd";
+import { Table, Button, Tag, message, Space, Card, Row, Col, Statistic, Popconfirm, Divider,Modal,Input } from "antd";
 import { CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined, DollarOutlined, FileTextOutlined, CalendarOutlined, UserOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined, ShopOutlined } from '@ant-design/icons';
 import axiosInstance from "../service/axiosInstance";
 import dayjs from "dayjs";
@@ -150,6 +150,9 @@ const ExpandedRowRender = (record) => (
 const ReviewQuotationManagement = () => {
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
+const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
+const [rejectReason, setRejectReason] = useState("");
+const [selectedQuotationId, setSelectedQuotationId] = useState(null);
 
   const fetchQuotations = async () => {
     setLoading(true);
@@ -295,22 +298,20 @@ const ReviewQuotationManagement = () => {
             </Button>
           </Popconfirm>
           
-          <Popconfirm
-            title="Xác nhận từ chối báo giá?"
-            description={`Bạn có chắc muốn từ chối báo giá #${record.quotationId} không?`}
-            onConfirm={() => rejectQuotation(record.quotationId)}
-            okText="Từ chối"
-            cancelText="Hủy"
-        
-          >
+       
             <Button
-              danger 
-              icon={<CloseCircleOutlined />}
-              style={{ borderRadius: '6px' }}
-            >
-              Từ chối
-            </Button>
-          </Popconfirm>
+  danger
+  icon={<CloseCircleOutlined />}
+  style={{ borderRadius: '6px' }}
+  onClick={() => {
+    setSelectedQuotationId(record.quotationId);
+    setIsRejectModalVisible(true);
+  }}
+>
+  Từ chối
+</Button>
+
+          
         </Space>
       ),
     },
@@ -350,6 +351,43 @@ const ReviewQuotationManagement = () => {
       {/* Thống kê tổng quan */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col xs={24} sm={12} lg={8}>
+        <Modal
+  title={`Nhập lý do từ chối báo giá #${selectedQuotationId}`}
+  open={isRejectModalVisible}
+  onCancel={() => {
+    setIsRejectModalVisible(false);
+    setRejectReason("");
+  }}
+  onOk={async () => {
+    if (!rejectReason.trim()) {
+      message.warning("Vui lòng nhập lý do từ chối!");
+      return;
+    }
+
+    try {
+      await axiosInstance.put(`/manager/quotations/${selectedQuotationId}/reject`, {
+        reason: rejectReason,
+      });
+      message.success(`Đã từ chối báo giá #${selectedQuotationId}!`);
+      setIsRejectModalVisible(false);
+      setRejectReason("");
+      fetchQuotations();
+    } catch (err) {
+      console.error(err);
+      message.error("Không thể từ chối báo giá. Vui lòng thử lại.");
+    }
+  }}
+  okText="Xác nhận"
+  cancelText="Hủy"
+>
+  <Input.TextArea
+    rows={4}
+    placeholder="Nhập lý do từ chối..."
+    value={rejectReason}
+    onChange={(e) => setRejectReason(e.target.value)}
+  />
+</Modal>
+
           <Card 
             style={{ 
               borderRadius: '12px',

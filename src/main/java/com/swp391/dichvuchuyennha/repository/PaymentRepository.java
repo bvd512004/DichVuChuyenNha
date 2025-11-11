@@ -14,4 +14,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     Optional<Payment> findByOrderCode(Long orderCode);
     List<Payment> findByStatus(String status);
 
+
 }

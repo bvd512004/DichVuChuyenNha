@@ -29,6 +29,7 @@ import {
     FileTextOutlined,
     LockOutlined,
     WarningOutlined,
+    CloseCircleOutlined,
 } from '@ant-design/icons';
 import axiosInstance from "../service/axiosInstance"; 
 import dayjs from "dayjs";
@@ -45,26 +46,27 @@ export const QuotationList = ({
     const showMessage = (type, content) => {
         message[type](content);
     };
+    const [loadingId, setLoadingId] = useState(null);
+const statusColors = {
+    DRAFT:    "#722ed1",   // Tím đậm - Bản nháp, chưa hoàn thiện
+    REVIEWED: "#fa8c16",   // Cam đậm (AntD: orange) - Đang chờ duyệt quan trọng
+    PENDING:  "#1890ff",   // Xanh dương - Đã gửi khách, chờ phản hồi
+    APPROVED: "#52c41a",   // Xanh lá - Thành công, khách đồng ý
+    REJECTED: "#ff4d4f",   // Đỏ - Bị từ chối (cả quản lý và khách)
+    CREATED:  "#13c2c2",   // Xanh ngọc - Đã tạo hợp đồng (bước cuối)
+    CANCEL:   "#8c8c8c",   // Xám - Hủy bỏ, kết thúc tiêu cực
+};
 
-    const statusColors = {
-        APPROVED: "#52c41a",
-        SENT: "#1890ff",
-        REVIEW: "#faad14",
-        
-        PENDING: "#722ed1",
-        CREATED: "#13c2c2",
-        REJECTED: "#ff4d4f", // ✅ Thêm màu cho REJECTED
-    };
-
-    const statusText = {
-        APPROVED: "Đã chấp nhận",
-        PENDING: "Đang chờ sự chấp thuận từ khách hàng",
-        SENT: "Đã gửi",
-        REVIEW: "Đang chờ sự xem xét từ quản lí bộ phận",
-        CREATED: "Đã được quản lí bộ phận tạo hợp đồng",
-        REJECTED: "Đã bị từ chối", // ✅ Thêm text cho REJECTED
-    };
-
+// ============== TEXT RÕ RÀNG, DỄ HIỂU CHO MỌI NGƯỜI ==============
+const statusText = {
+    DRAFT:    "Bản nháp – Chưa gửi duyệt",
+    REVIEWED: "Đang chờ quản lý duyệt",
+    PENDING:  "Đã gửi khách – Chờ chấp thuận",
+    APPROVED: "Khách đã chấp thuận",
+    REJECTED: "Bị từ chối – Cần chỉnh sửa",
+    CREATED:  "Đã tạo hợp đồng",
+    CANCEL:   "Đã bị hủy",
+};
     const renderQuotationDetails = (record) => {
         if (!record) {
             return (
@@ -179,20 +181,41 @@ export const QuotationList = ({
                                 </Tag>
                             </Space>
                         </Col>
-                        <Col>
-                            <Button 
-                                type="primary" 
-                                style={{ 
-                                    borderRadius: 6,
-                                    background: '#fff',
-                                    color: '#262626',
-                                    border: 'none',
-                                    fontWeight: 600
-                                }}
-                            >
-                                Duyệt báo giá
-                            </Button>
-                        </Col>
+                       <Col>
+    {["DRAFT", "REJECTED"].includes(record.status) ? (
+        <Button
+            type="primary"
+            size="large"
+            icon={<CheckCircleOutlined />}
+            loading={loadingId === record.quotationId}
+            onClick={async (e) => {
+                e.stopPropagation();
+                setLoadingId(record.quotationId);
+                try {
+                    await axiosInstance.put(`/quotations/${record.quotationId}/status/reviewed`);
+                    message.success("Đã gửi báo giá lên quản lí xem xét");
+                    fetchQuotations?.();
+                } catch (err) {
+                    message.error(err.response?.data?.message || "Cập nhật trạng thái thất bại!");
+                } finally {
+                    setLoadingId(null);
+                }
+            }}
+            style={{
+                background: "#faad14",
+                border: "none",
+                fontWeight: 600,
+                boxShadow: "0 4px 12px rgba(250, 173, 20, 0.25)",
+            }}
+        >
+            Gửi lên quản lí xem xét
+        </Button>
+    ) : (
+        // Khi đã ở REVIEWED, APPROVED, v.v. → KHÔNG HIỂN THỊ GÌ Ở ĐÂY
+        // Vì trạng thái đã được hiển thị rõ ràng bằng Tag ở bên trái rồi
+        null
+    )}
+</Col>
                     </Row>
                 </Card>
 
@@ -234,6 +257,33 @@ export const QuotationList = ({
                             style={{ marginBottom: 24 }}
                         />
                     )}
+
+                    {/* ✅ Hiển thị lý do bị từ chối nếu có */}
+{record.status === "REJECTED" && record.reason && (
+  <Card
+    size="small"
+    style={{
+      marginBottom: 24,
+      borderRadius: 8,
+      background: "#fff1f0",
+      border: "1px solid #ffa39e",
+    }}
+    bodyStyle={{ padding: "16px 20px" }}
+  >
+    <Space direction="vertical" size={6} style={{ width: "100%" }}>
+      <Space>
+        <CloseCircleOutlined style={{ color: "#cf1322", fontSize: 18 }} />
+        <Text strong style={{ color: "#cf1322" }}>
+          Lý do bị từ chối
+        </Text>
+      </Space>
+      <Text style={{ color: "#595959", whiteSpace: "pre-wrap" }}>
+        {record.reason}
+      </Text>
+    </Space>
+  </Card>
+)}
+
 
                     {/* Thông tin khách hàng */}
                     <Row gutter={[24, 24]}>

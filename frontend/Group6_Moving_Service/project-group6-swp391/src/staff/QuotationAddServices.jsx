@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, message, Tag } from "antd";
+import { Table, Button, message, Tag, Space } from "antd";
 import axiosInstance from "../service/axiosInstance";
 import AddServiceModal from "./AddServiceModal";
 import dayjs from "dayjs";
 
+import { 
+    FileTextOutlined,     // DRAFT
+    ClockCircleOutlined,  // REVIEWED
+    SendOutlined,         // PENDING
+    CheckCircleOutlined,  // APPROVED
+    CloseCircleOutlined,  // REJECTED
+    FileDoneOutlined,     // CREATED
+    StopOutlined          // CANCEL
+} from "@ant-design/icons";
 const QuotationAddServices = () => {
     const [quotations, setQuotations] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -28,42 +37,79 @@ const QuotationAddServices = () => {
 
     // ✨ HÀM ÁNH XẠ TRẠNG THÁI (Đã sửa lỗi)
     const getStatusTag = (status) => {
-        let color = 'default';
-        let text = status;
-
-        switch (status) {
-            case 'DRAFT':
-                color = 'warning'; // Màu cam cho bản nháp
-                text = 'Bản nháp';
-                break;
-            case 'REVIEW':
-        
-                color = 'geekblue'; // Màu xanh dương cho đang chờ/xem xét
-                text = 'Đang xem xét từ quản lí bộ phận ';
-                break;
-            case 'PENDING':
-                color = 'processing';
-                text = 'Chờ sự đồng ý từ khách hàng';
-                break;
-            case 'APPROVED':
-                color = 'green';
-                text = 'Đã chấp thuận';
-                break;
-            case 'REJECTED':
-                color = 'error';
-                text = 'Đã từ chối';
-                break;
-            case 'CREATED':
-                color = 'magenta';
-                text = 'Đã tạo HĐ';
-                break;
-            default:
-                color = 'default';
-                text = status;
+    const config = {
+        DRAFT: {
+            color: "purple",
+            icon: <FileTextOutlined />,
+            text: "Bản nháp",
+            description: "Chưa gửi duyệt"
+        },
+        REVIEWED: {
+            color: "orange",
+            icon: <ClockCircleOutlined />,
+            text: "Chờ duyệt",
+            description: "Quản lý đang xem xét"
+        },
+        PENDING: {
+            color: "blue",
+            icon: <SendOutlined />,
+            text: "Đã gửi khách",
+            description: "Chờ khách chấp thuận"
+        },
+        APPROVED: {
+            color: "green",
+            icon: <CheckCircleOutlined />,
+            text: "Khách đã duyệt",
+            description: "Thành công"
+        },
+        REJECTED: {
+            color: "red",
+            icon: <CloseCircleOutlined />,
+            text: "Bị từ chối",
+            description: "Cần chỉnh sửa lại"
+        },
+        CREATED: {
+            color: "cyan",
+            icon: <FileDoneOutlined />,
+            text: "Đã tạo HĐ",
+            description: "Hoàn tất"
+        },
+        CANCEL: {
+            color: "default",
+            icon: <StopOutlined />,
+            text: "Đã hủy",
+            description: "Đã bị hủy"
         }
-
-        return <Tag color={color} style={{ borderRadius: 4, fontWeight: 'bold' }}>{text}</Tag>;
     };
+
+    const item = config[status] || { 
+        color: "default", 
+        icon: null, 
+        text: status,
+        description: ""
+    };
+
+    return (
+        <Tag
+            color={item.color}
+            style={{
+                borderRadius: 8,
+                fontWeight: 600,
+                fontSize: 13,
+                padding: "6px 12px",
+                minWidth: 110,
+                textAlign: "center",
+                border: "none",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.08)"
+            }}
+        >
+            <Space size={4}>
+                {item.icon && <span style={{ fontSize: 15 }}>{item.icon}</span>}
+                <span>{item.text}</span>
+            </Space>
+        </Tag>
+    );
+};
     // ------------------------------------
 
     const columns = [
@@ -106,7 +152,7 @@ const QuotationAddServices = () => {
             key: "action",
             render: (_, record) => {
                 // ✨ CHỈ CHO PHÉP THÊM/SỬA DỊCH VỤ KHI Ở DRAFT, REVIEW, hoặc PENDING
-                const isEditable = record.status === "DRAFT" || record.status === "REVIEW" || record.status === "REJECTED";
+                const isEditable =  record.status === "DRAFT" || record.status === "REJECTED";
                 
                 return (
                     <Button

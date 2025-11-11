@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/manager/quotations")
@@ -29,8 +30,13 @@ public class QuotationReviewController {
         return ResponseEntity.ok(updated);
     }
     @PutMapping("/{quotationId}/reject")
-    public ResponseEntity<QuotationResponse> rejectQuotation(@PathVariable Integer quotationId) {
-        QuotationResponse updated = quotationReviewService.rejectReviewQuotation(quotationId);
+    public ResponseEntity<QuotationResponse> rejectQuotation(
+            @PathVariable Integer quotationId,
+            @RequestBody Map<String, String> body) {
+
+        String reason = body.get("reason");
+        QuotationResponse updated = quotationReviewService.rejectReviewQuotation(quotationId, reason);
         return ResponseEntity.ok(updated);
     }
+
 }
