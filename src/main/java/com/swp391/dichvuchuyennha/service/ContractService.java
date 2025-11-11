@@ -104,8 +104,8 @@ public class ContractService {
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Contract> contracts = contractRepository.findByQuotation_Survey_Request_User_UserIdAndStatus(
-                user.getUserId(), "SIGNED"
+        List<Contract> contracts = contractRepository.findByQuotation_Survey_Request_User_UserIdAndStatusIn(
+                user.getUserId(), List.of("SIGNED", "DEPOSIT_PAID", "FINAL_COMPLETED")
         );
 
         return contracts.stream()
