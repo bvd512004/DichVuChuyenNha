@@ -40,7 +40,10 @@ public class AssignmentService {
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
         Employee employee = employeeRepo.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
-
+        // 🔹 Chỉ cho phép nhân viên có position = 'Worker'
+        if (!"Worker".equalsIgnoreCase(employee.getPosition())) {
+            throw new RuntimeException("Only Worker employees can be assigned to contracts");
+        }
         // 🔹 Lấy ngày moving_day thông qua native query (JOIN sâu)
         Date movingDayRaw = contractRepo.findMovingDayByContractId(contractId);
         if (movingDayRaw == null) {

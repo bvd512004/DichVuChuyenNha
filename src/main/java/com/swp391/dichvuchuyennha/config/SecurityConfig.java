@@ -246,5 +246,4 @@ public class SecurityConfig {
 //                 return new BCryptPasswordEncoder(); // Đổi sang BCrypt
         return NoOpPasswordEncoder.getInstance();
     }
-
 }

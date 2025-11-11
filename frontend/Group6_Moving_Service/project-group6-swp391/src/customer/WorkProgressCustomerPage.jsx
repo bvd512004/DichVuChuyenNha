@@ -28,6 +28,28 @@ import "./style/WorkProgressCustomerPage.css";
 const { TextArea } = Input;
 const { Title } = Typography;
 
+// ✅ Helper: Chuyển status sang tiếng Việt
+const getStatusText = (status) => {
+  const statusMap = {
+    pending_manager: "Chờ quản lý duyệt",
+    pending_customer: "Chờ bạn duyệt",
+    approved: "Đã duyệt",
+    rejected: "Đã từ chối",
+  };
+  return statusMap[status] || status;
+};
+
+// ✅ Helper: Màu sắc cho tag status
+const getStatusColor = (status) => {
+  const colorMap = {
+    pending_manager: "blue",
+    pending_customer: "gold",
+    approved: "green",
+    rejected: "red",
+  };
+  return colorMap[status] || "default";
+};
+
 function WorkProgressCustomerPage() {
   const [progressList, setProgressList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +58,6 @@ function WorkProgressCustomerPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [visibleFeedback, setVisibleFeedback] = useState({});
 
-  // 📡 Gọi API lấy tiến độ khách hàng
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -52,7 +73,6 @@ function WorkProgressCustomerPage() {
     fetchData();
   }, []);
 
-  // 🎨 Màu trạng thái hiển thị tiến độ công việc
   const getStatusConfig = (status) => {
     const statusMap = {
       pending: { color: "warning", icon: <ClockCircleOutlined />, text: "Đang chờ" },
@@ -62,7 +82,7 @@ function WorkProgressCustomerPage() {
     return statusMap[status] || { color: "default", icon: <ClockCircleOutlined />, text: status };
   };
 
-  // 🧾 Gửi phản hồi cho Damage (Khách hàng duyệt / từ chối)
+  // ✅ Khách hàng duyệt thiệt hại (sau khi quản lý duyệt)
   const handleFeedback = async (damageId, action) => {
     try {
       if (action === "reject" && !rejectReason.trim()) {
@@ -75,18 +95,17 @@ function WorkProgressCustomerPage() {
         customerFeedback:
           action === "reject"
             ? rejectReason
-            : "Khách hàng đã đồng ý thiệt hại (chờ quản lý duyệt)",
+            : "Khách hàng đã đồng ý",
       };
 
       await damageApi.sendCustomerFeedback(damageId, payload);
 
       message.success(
         action === "approve"
-          ? "✅ Đã đồng ý thiệt hại, chờ quản lý duyệt"
+          ? "✅ Đã đồng ý thiệt hại"
           : "❌ Đã gửi phản hồi từ chối"
       );
 
-      // Cập nhật lại UI local
       setProgressList((prev) =>
         prev.map((p) => ({
           ...p,
@@ -94,11 +113,11 @@ function WorkProgressCustomerPage() {
             d.damageId === damageId
               ? {
                   ...d,
-                  status: action === "approve" ? "pending_manager" : "rejected",
+                  status: action === "approve" ? "approved" : "rejected",
                   customerFeedback:
                     action === "reject"
                       ? rejectReason
-                      : "Đã đồng ý thiệt hại (chờ quản lý duyệt)",
+                      : "Khách hàng đã đồng ý",
                 }
               : d
           ),
@@ -114,13 +133,11 @@ function WorkProgressCustomerPage() {
     }
   };
 
-  // 🧱 Hiển thị modal khi khách hàng từ chối
   const showRejectModal = (damage) => {
     setSelectedDamage(damage);
     setIsRejectModalVisible(true);
   };
 
-  // 👁️ Toggle hiển thị phản hồi
   const toggleFeedbackView = (damageId) => {
     setVisibleFeedback((prev) => ({
       ...prev,
@@ -140,7 +157,6 @@ function WorkProgressCustomerPage() {
 
   return (
     <div className="work-progress-customer-page">
-      {/* Header */}
       <div className="work-progress-header">
         <h1 className="work-progress-header-title">📦 Tiến độ công việc của bạn</h1>
         <p className="work-progress-header-subtitle">
@@ -148,7 +164,6 @@ function WorkProgressCustomerPage() {
         </p>
       </div>
 
-      {/* Content */}
       {progressList.length === 0 ? (
         <div className="work-progress-empty">
           <Empty description="Hiện tại chưa có tiến độ công việc nào" />
@@ -160,7 +175,6 @@ function WorkProgressCustomerPage() {
 
             return (
               <Card key={item.progressId} className="work-progress-card" hoverable>
-                {/* Header */}
                 <div className="work-progress-card-header">
                   <h2 className="work-progress-card-title">
                     Hợp đồng #{item.contractId}
@@ -174,7 +188,6 @@ function WorkProgressCustomerPage() {
                   </Tag>
                 </div>
 
-                {/* Info */}
                 <div className="work-progress-info-grid">
                   <div className="work-progress-info-item">
                     <CalendarOutlined /> Ngày cập nhật:{" "}
@@ -189,7 +202,6 @@ function WorkProgressCustomerPage() {
                   </div>
                 </div>
 
-                {/* Task description */}
                 <div className="work-progress-description">
                   <div className="work-progress-description-title">
                     <FileTextOutlined /> Mô tả công việc
@@ -197,7 +209,6 @@ function WorkProgressCustomerPage() {
                   <p>{item.taskDescription || "Chưa có mô tả"}</p>
                 </div>
 
-                {/* Danh sách thiệt hại */}
                 {item.damages && item.damages.length > 0 && (
                   <>
                     <Divider />
@@ -223,7 +234,7 @@ function WorkProgressCustomerPage() {
                         <p>
                           📷 <b>Ảnh:</b>{" "}
                           {dmg.imageUrl ? (
-                            <a href={dmg.imageUrl} target="_blank">
+                            <a href={dmg.imageUrl} target="_blank" rel="noreferrer">
                               Xem ảnh
                             </a>
                           ) : (
@@ -232,34 +243,14 @@ function WorkProgressCustomerPage() {
                         </p>
                         <p>
                           🏷️ <b>Trạng thái:</b>{" "}
-                          <Tag
-                            color={
-                              dmg.status === "pending_customer"
-                                ? "gold"
-                                : dmg.status === "pending_manager"
-                                ? "blue"
-                                : dmg.status === "approved"
-                                ? "green"
-                                : dmg.status === "rejected"
-                                ? "red"
-                                : "default"
-                            }
-                          >
-                            {dmg.status === "pending_customer"
-                              ? "Chờ khách hàng"
-                              : dmg.status === "pending_manager"
-                              ? "Chờ quản lý"
-                              : dmg.status === "approved"
-                              ? "Đã duyệt"
-                              : dmg.status === "rejected"
-                              ? "Đã từ chối"
-                              : "Không xác định"}
+                          <Tag color={getStatusColor(dmg.status)}>
+                            {getStatusText(dmg.status)}
                           </Tag>
                         </p>
 
-                        {/* Nếu đang chờ phản hồi từ khách hàng */}
+                        {/* ✅ Chỉ hiển thị nút khi đang chờ khách hàng duyệt */}
                         {dmg.status === "pending_customer" && (
-                          <div style={{ display: "flex", gap: "10px" }}>
+                          <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
                             <Button
                               type="primary"
                               onClick={() =>
@@ -275,11 +266,12 @@ function WorkProgressCustomerPage() {
                         )}
 
                         {/* Nút hiển thị phản hồi */}
-                        {dmg.status !== "pending_customer" && (
+                        {dmg.status !== "pending_customer" && dmg.status !== "pending_manager" && (
                           <Button
                             type="default"
                             icon={<MessageOutlined />}
                             onClick={() => toggleFeedbackView(dmg.damageId)}
+                            style={{ marginTop: "10px" }}
                           >
                             {visibleFeedback[dmg.damageId]
                               ? "Ẩn phản hồi"
@@ -287,7 +279,7 @@ function WorkProgressCustomerPage() {
                           </Button>
                         )}
 
-                        {/* Hiển thị phản hồi cả 2 bên */}
+                        {/* Hiển thị phản hồi */}
                         {visibleFeedback[dmg.damageId] && (
                           <div
                             style={{
@@ -297,16 +289,16 @@ function WorkProgressCustomerPage() {
                               borderRadius: "6px",
                             }}
                           >
-                            {dmg.customerFeedback && (
-                              <p>
-                                💬 <b>Phản hồi của bạn:</b>{" "}
-                                {dmg.customerFeedback}
-                              </p>
-                            )}
                             {dmg.managerFeedback && (
                               <p>
                                 🧑‍💼 <b>Phản hồi quản lý:</b>{" "}
                                 {dmg.managerFeedback}
+                              </p>
+                            )}
+                            {dmg.customerFeedback && (
+                              <p>
+                                💬 <b>Phản hồi của bạn:</b>{" "}
+                                {dmg.customerFeedback}
                               </p>
                             )}
                           </div>
@@ -345,4 +337,3 @@ function WorkProgressCustomerPage() {
 }
 
 export default WorkProgressCustomerPage;
-//fix end

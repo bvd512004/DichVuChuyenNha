@@ -35,7 +35,6 @@ import "./style/WorkProgressPage.css";
 
 const { Title } = Typography;
 
-// ===================== Helper function để format ngày =====================
 const formatDate = (dateString) => {
   if (!dateString) return "—";
   const date = new Date(dateString);
@@ -46,6 +45,27 @@ const formatDate = (dateString) => {
 };
 
 const WorkProgressPage = () => {
+  // ✅ Helper: Chuyển status sang tiếng Việt
+  const getStatusText = (status) => {
+    const statusMap = {
+      pending_manager: "Chờ quản lý duyệt",
+      pending_customer: "Chờ khách hàng duyệt",
+      approved: "Đã duyệt",
+      rejected: "Đã từ chối",
+    };
+    return statusMap[status] || status;
+  };
+
+  // ✅ Helper: Màu sắc cho tag status
+  const getStatusColor = (status) => {
+    const colorMap = {
+      pending_manager: "blue",
+      pending_customer: "gold",
+      approved: "green",
+      rejected: "red",
+    };
+    return colorMap[status] || "default";
+  };
   const [progressList, setProgressList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -57,7 +77,6 @@ const WorkProgressPage = () => {
   const [damageList, setDamageList] = useState([]);
   const [damageForm] = Form.useForm();
 
-  // 🚀 Lấy danh sách tiến độ của nhân viên
   const fetchProgressList = async () => {
     try {
       setLoading(true);
@@ -76,7 +95,6 @@ const WorkProgressPage = () => {
     fetchProgressList();
   }, []);
 
-  // 📦 Lấy danh sách damage theo hợp đồng
   const fetchDamagesByContract = async (contractId) => {
     try {
       const res = await damageApi.getByContract(contractId);
@@ -87,13 +105,12 @@ const WorkProgressPage = () => {
     }
   };
 
-  // ➕ Tạo thiệt hại mới
   const openDamageModal = (contractId) => {
     setSelectedContractId(contractId);
     setIsDamageModalVisible(true);
   };
 
-  // ✅ Nhân viên tạo thiệt hại (bước 1)
+  // ✅ Tạo thiệt hại mới → gửi cho quản lý duyệt trước
   const handleCreateDamage = async (values) => {
     try {
       const payload = {
@@ -101,13 +118,10 @@ const WorkProgressPage = () => {
         cause: values.cause,
         cost: parseFloat(values.cost),
         imageUrl: values.imageUrl || null,
-        status: "pending_customer", // ✅ Bắt đầu quy trình
-        customerFeedback: null,
-        managerFeedback: null,
       };
 
       await damageApi.create(payload);
-      message.success("✅ Tạo thiệt hại thành công, chờ khách hàng phản hồi!");
+      message.success("✅ Tạo thiệt hại thành công, đang chờ quản lý duyệt!");
       setIsDamageModalVisible(false);
       damageForm.resetFields();
       fetchDamagesByContract(selectedContractId);
@@ -117,14 +131,12 @@ const WorkProgressPage = () => {
     }
   };
 
-  // 👁️ Xem danh sách thiệt hại theo hợp đồng
   const openViewDamageModal = async (contractId) => {
     setSelectedContractId(contractId);
     await fetchDamagesByContract(contractId);
     setIsViewDamageVisible(true);
   };
 
-  // ✏️ Mở modal chỉnh sửa damage khi bị từ chối
   const openEditDamageModal = (damage) => {
     setEditingDamageId(damage.damageId);
     damageForm.setFieldsValue({
@@ -135,40 +147,33 @@ const WorkProgressPage = () => {
     setIsEditDamageVisible(true);
   };
 
-  // ✅ Gửi cập nhật lại thiệt hại sau khi bị từ chối
+  // ✅ Cập nhật lại thiệt hại → reset về pending_manager
   const handleEditDamage = async (values) => {
     try {
-      await damageApi.update(editingDamageId, {
-        ...values,
-        status: "pending_customer",
-        customerFeedback: null,
-        managerFeedback: null,
-      });
-      message.success("Đã cập nhật và gửi lại thiệt hại cho khách hàng duyệt!");
+      await damageApi.update(editingDamageId, values);
+      message.success("Đã cập nhật và gửi lại thiệt hại cho quản lý duyệt!");
       setIsEditDamageVisible(false);
       fetchDamagesByContract(selectedContractId);
     } catch (err) {
       message.error("Không thể cập nhật thiệt hại");
     }
   };
-  // ⚙️ Cập nhật trạng thái tiến độ
-const handleUpdateStatus = async (progressId, nextStatus) => {
-  try {
-    await workProgressApi.updateStatus(progressId, nextStatus);
-    message.success(
-      nextStatus === "in_progress"
-        ? "🚀 Bắt đầu công việc!"
-        : "✅ Hoàn thành công việc!"
-    );
-    fetchProgressList(); // load lại danh sách
-  } catch (err) {
-    console.error("Error updating status:", err);
-    message.error("Không thể cập nhật trạng thái công việc!");
-  }
-};
 
+  const handleUpdateStatus = async (progressId, nextStatus) => {
+    try {
+      await workProgressApi.updateStatus(progressId, nextStatus);
+      message.success(
+        nextStatus === "in_progress"
+          ? "🚀 Bắt đầu công việc!"
+          : "✅ Hoàn thành công việc!"
+      );
+      fetchProgressList();
+    } catch (err) {
+      console.error("Error updating status:", err);
+      message.error("Không thể cập nhật trạng thái công việc!");
+    }
+  };
 
-  // 🎨 Hiển thị trạng thái tiến độ công việc
   const renderStatus = (status) => {
     const statusMap = {
       pending: { color: "orange", icon: <ClockCircleOutlined />, text: "Đang chờ" },
@@ -183,7 +188,6 @@ const handleUpdateStatus = async (progressId, nextStatus) => {
     );
   };
 
-  // 🧾 Cột hiển thị bảng tiến độ
   const columns = [
     {
       title: "#",
@@ -236,59 +240,54 @@ const handleUpdateStatus = async (progressId, nextStatus) => {
       width: 150,
       render: (status) => renderStatus(status),
     },
-  {
-  title: "Hành Động",
-  key: "action",
-  width: 380,
-  render: (_, record) => {
-    const status = record.progressStatus;
-    return (
-      <Space>
-        {/* Nút tạo thiệt hại */}
-        <Button
-          type="dashed"
-          icon={<PlusOutlined />}
-          onClick={() => openDamageModal(record.contractId)}
-        >
-          Tạo Thiệt Hại
-        </Button>
+    {
+      title: "Hành Động",
+      key: "action",
+      width: 380,
+      render: (_, record) => {
+        const status = record.progressStatus;
+        return (
+          <Space>
+            <Button
+              type="dashed"
+              icon={<PlusOutlined />}
+              onClick={() => openDamageModal(record.contractId)}
+            >
+              Tạo Thiệt Hại
+            </Button>
 
-        {/* Nút xem thiệt hại */}
-        <Button
-          type="primary"
-          icon={<EyeOutlined />}
-          onClick={() => openViewDamageModal(record.contractId)}
-        >
-          Xem Thiệt Hại
-        </Button>
+            <Button
+              type="primary"
+              icon={<EyeOutlined />}
+              onClick={() => openViewDamageModal(record.contractId)}
+            >
+              Xem Thiệt Hại
+            </Button>
 
-        {/* ➕ Nút BẮT ĐẦU (từ đang chờ -> đang làm) */}
-        {status === "pending" && (
-          <Button
-            type="default"
-            icon={<SyncOutlined />}
-            onClick={() => handleUpdateStatus(record.progressId, "in_progress")}
-          >
-            Bắt đầu
-          </Button>
-        )}
+            {status === "pending" && (
+              <Button
+                type="default"
+                icon={<SyncOutlined />}
+                onClick={() => handleUpdateStatus(record.progressId, "in_progress")}
+              >
+                Bắt đầu
+              </Button>
+            )}
 
-        {/* ✅ Nút HOÀN THÀNH (từ đang làm -> hoàn thành) */}
-        {status === "in_progress" && (
-          <Button
-            type="primary"
-            danger
-            icon={<CheckCircleOutlined />}
-            onClick={() => handleUpdateStatus(record.progressId, "completed")}
-          >
-            Hoàn thành
-          </Button>
-        )}
-      </Space>
-    );
-  },
-},
-
+            {status === "in_progress" && (
+              <Button
+                type="primary"
+                danger
+                icon={<CheckCircleOutlined />}
+                onClick={() => handleUpdateStatus(record.progressId, "completed")}
+              >
+                Hoàn thành
+              </Button>
+            )}
+          </Space>
+        );
+      },
+    },
   ];
 
   if (loading)
@@ -325,7 +324,6 @@ const handleUpdateStatus = async (progressId, nextStatus) => {
         </Button>
       </div>
 
-      {/* Bảng tiến độ */}
       <Card className="table-card">
         <Title level={4}>Chi Tiết Công Việc</Title>
         <Table
@@ -336,7 +334,7 @@ const handleUpdateStatus = async (progressId, nextStatus) => {
         />
       </Card>
 
-      {/* ➕ Modal: Tạo thiệt hại */}
+      {/* Modal: Tạo thiệt hại */}
       <Modal
         title="Tạo Báo Cáo Thiệt Hại"
         open={isDamageModalVisible}
@@ -420,7 +418,7 @@ const handleUpdateStatus = async (progressId, nextStatus) => {
         </Form>
       </Modal>
 
-      {/* 👁️ Modal: Xem Thiệt Hại */}
+      {/* Modal: Xem Thiệt Hại */}
       <Modal
         title="Danh Sách Thiệt Hại"
         open={isViewDamageVisible}
@@ -456,32 +454,11 @@ const handleUpdateStatus = async (progressId, nextStatus) => {
               <p>👷 <b>Nhân Viên:</b> {dmg.employeeName}</p>
               <p>
                 🏷️ <b>Trạng Thái:</b>{" "}
-                <Tag
-                  color={
-                    dmg.status === "pending_customer"
-                      ? "gold"
-                      : dmg.status === "pending_manager"
-                        ? "blue"
-                        : dmg.status === "approved"
-                          ? "green"
-                          : dmg.status === "rejected"
-                            ? "red"
-                            : "default"
-                  }
-                >
-                  {dmg.status === "pending_customer"
-                    ? "Chờ khách hàng"
-                    : dmg.status === "pending_manager"
-                      ? "Chờ quản lý"
-                      : dmg.status === "approved"
-                        ? "Đã duyệt"
-                        : dmg.status === "rejected"
-                          ? "Đã từ chối"
-                          : dmg.status}
+                <Tag color={getStatusColor(dmg.status)}>
+                  {getStatusText(dmg.status)}
                 </Tag>
               </p>
 
-              {/* Hiển thị feedback */}
               {(dmg.customerFeedback || dmg.managerFeedback) && (
                 <div
                   style={{
@@ -492,50 +469,29 @@ const handleUpdateStatus = async (progressId, nextStatus) => {
                     border: "1px solid #eaeaea",
                   }}
                 >
-                  {/* Hiển thị phản hồi của khách hàng */}
-                  {dmg.customerFeedback && (
-                    <p
-                      style={{
-                        color:
-                          dmg.status === "rejected"
-                            ? "#d4380d" // đỏ cảnh báo nếu khách từ chối
-                            : "#1677ff", // xanh nếu khách duyệt
-                        marginBottom: 6,
-                      }}
-                    >
-                      💬 <b>Phản hồi khách hàng:</b>{" "}
-                      {dmg.customerFeedback.includes("Approved")
-                        ? "✅ " + dmg.customerFeedback
-                        : "❌ " + dmg.customerFeedback}
+                  {dmg.managerFeedback && (
+                    <p style={{ color: dmg.status === "rejected" ? "#d4380d" : "#1677ff", marginBottom: 6 }}>
+                      🧑‍💼 <b>Phản hồi quản lý:</b>{" "}
+                      {dmg.managerFeedback.includes("duyệt") ? "✅ " : "❌ "}
+                      {dmg.managerFeedback}
                     </p>
                   )}
 
-                  {/* Hiển thị phản hồi của quản lý */}
-                  {dmg.managerFeedback && (
-                    <p
-                      style={{
-                        color:
-                          dmg.status === "rejected"
-                            ? "#cf1322" // đỏ nếu bị từ chối
-                            : "#52c41a", // xanh lá nếu được duyệt
-                        marginBottom: 0,
-                      }}
-                    >
-                      🧑‍💼 <b>Phản hồi quản lý:</b>{" "}
-                      {dmg.managerFeedback.includes("Approved")
-                        ? "✅ " + dmg.managerFeedback
-                        : "❌ " + dmg.managerFeedback}
+                  {dmg.customerFeedback && (
+                    <p style={{ color: dmg.status === "rejected" ? "#cf1322" : "#52c41a", marginBottom: 0 }}>
+                      💬 <b>Phản hồi khách hàng:</b>{" "}
+                      {dmg.customerFeedback.includes("đồng ý") ? "✅ " : "❌ "}
+                      {dmg.customerFeedback}
                     </p>
                   )}
                 </div>
               )}
-
             </Card>
           ))
         )}
       </Modal>
 
-      {/* ✏️ Modal: Chỉnh sửa thiệt hại */}
+      {/* Modal: Chỉnh sửa thiệt hại */}
       <Modal
         title="Chỉnh Sửa Thiệt Hại"
         open={isEditDamageVisible}
@@ -559,4 +515,3 @@ const handleUpdateStatus = async (progressId, nextStatus) => {
 };
 
 export default WorkProgressPage;
-//fix end
