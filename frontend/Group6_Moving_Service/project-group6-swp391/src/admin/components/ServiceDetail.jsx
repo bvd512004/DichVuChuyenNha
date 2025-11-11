@@ -107,7 +107,7 @@ const ServiceDetail = () => {
         </div>
       </Card>
 
-      <Link to="/manage-price">← Quay lại danh sách dịch vụ</Link>
+      <Link to="/service-admin">← Quay lại danh sách dịch vụ</Link>
     </div>
   );
 };

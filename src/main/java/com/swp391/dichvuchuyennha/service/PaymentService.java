@@ -71,10 +71,10 @@ public class PaymentService {
         // 1. Lấy userId từ token
         Long userId = extractUserIdFromToken(authHeader);
 
-        // 2. ✅ Tìm tất cả contracts của customer này
+        // 2. Tìm tất cả contracts của customer này
         List<Contract> userContracts = contractRepository.findContractsByCustomerUserId(userId);
 
-        // 3. ✅ Lấy tất cả final payments từ các contracts đó
+        // 3. Lấy tất cả final payments từ các contracts đó
         List<Payment> finalPayments = new ArrayList<>();
         for (Contract contract : userContracts) {
             Optional<Payment> paymentOpt = paymentRepository
@@ -82,9 +82,19 @@ public class PaymentService {
             paymentOpt.ifPresent(finalPayments::add);
         }
 
-        // 4. ✅ Convert sang JSON array
+        // 4. Convert sang JSON array với đầy đủ thông tin
         org.json.JSONArray paymentsArray = new org.json.JSONArray();
         for (Payment payment : finalPayments) {
+            Contract contract = payment.getContract();
+
+            // ✅ Tính tổng tiền thiệt hại
+            double damageCost = contract.getDamages() != null
+                    ? contract.getDamages().stream()
+                    .filter(d -> "approved".equalsIgnoreCase(d.getStatus()) && d.getCost() != null)
+                    .mapToDouble(d -> d.getCost().doubleValue())
+                    .sum()
+                    : 0.0;
+
             JSONObject paymentJson = new JSONObject();
             paymentJson.put("paymentId", payment.getPaymentId());
             paymentJson.put("orderCode", payment.getOrderCode());
@@ -94,11 +104,17 @@ public class PaymentService {
             paymentJson.put("checkoutUrl", payment.getCheckoutUrl());
             paymentJson.put("dueDate", payment.getDueDate() != null ? payment.getDueDate().toString() : null);
             paymentJson.put("paymentDate", payment.getPaymentDate() != null ? payment.getPaymentDate().toString() : null);
-            paymentJson.put("contractId", payment.getContract().getContractId());
+            paymentJson.put("contractId", contract.getContractId());
+
+            // ✅ Thêm thông tin chi tiết hợp đồng
+            paymentJson.put("totalAmount", contract.getTotalAmount());
+            paymentJson.put("depositAmount", contract.getDepositAmount());
+            paymentJson.put("damageCost", damageCost);
+
             paymentsArray.put(paymentJson);
         }
 
-        // 5. ✅ Trả về đúng format
+        // 5. Trả về đúng format
         JSONObject result = new JSONObject();
         result.put("success", true);
         result.put("userId", userId);

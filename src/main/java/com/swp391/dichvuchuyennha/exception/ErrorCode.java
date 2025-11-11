@@ -38,7 +38,7 @@ public enum ErrorCode {
     INVALID_PARAMETER(1029, "Invalid parameter", HttpStatus.BAD_REQUEST),
     INVALID_STATUS_TRANSITION(1030, "Invalid status transition", HttpStatus.BAD_REQUEST),
 
-    // ===== INVOICE ERRORS (1031 - 1037) =====
+
     INVALID_INVOICE_TYPE(1031, "Loại hóa đơn không hợp lệ. Chỉ chấp nhận 'deposit' hoặc 'final'", HttpStatus.BAD_REQUEST),
     CONTRACT_NOT_IN_DEPOSIT_PENDING(1032, "Hợp đồng chưa ở trạng thái chờ đặt cọc (DEPOSIT_PENDING)", HttpStatus.BAD_REQUEST),
     CONTRACT_NOT_IN_FINAL_COMPLETED(1033, "Hợp đồng chưa hoàn thành để xuất hóa đơn cuối (FINAL_COMPLETED)", HttpStatus.BAD_REQUEST),
@@ -51,6 +51,8 @@ public enum ErrorCode {
     VEHICLE_NOT_FOUND(1038, "Vehicle not found", HttpStatus.NOT_FOUND),
     ROLE_NOT_ASSIGNED(1039, "Role not assigned to user", HttpStatus.BAD_REQUEST),
     FORBIDDEN(1040, "Forbidden - Bạn không có quyền thực hiện hành động này", HttpStatus.FORBIDDEN);
+    VEHICLE_NOT_FOUND(1031,"Vehicle not found" , HttpStatus.NOT_FOUND),
+    ROLE_NOT_ASSIGNED(1032,"Role not assigned" , HttpStatus.NOT_FOUND );
 
     private final int code;
     private final String message;

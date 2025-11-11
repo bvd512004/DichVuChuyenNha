@@ -73,17 +73,24 @@ export default function ContractAssignment() {
       setLoading(false);
     }
   };
-
+//them
   const handleOpenAssignModal = async () => {
-    try {
-      const res = await assignmentApi.getEmployees();
-      setFreeEmployees(res.data);
-      setAssignModalVisible(true);
-      setAssignError(null);
-    } catch {
-      message.error("Failed to load employees");
-    }
-  };
+  try {
+    const res = await assignmentApi.getEmployees();
+    
+    // 🔹 Chỉ giữ lại nhân viên có position = "Worker"
+    const workerOnly = res.data.filter(
+      (emp) => emp.position?.toLowerCase() === "worker"
+    );
+
+    setFreeEmployees(workerOnly);
+    setAssignModalVisible(true);
+    setAssignError(null);
+  } catch {
+    message.error("Failed to load employees");
+  }
+};
+
 
   const handleAssign = async () => {
     if (!selectedEmployee) {

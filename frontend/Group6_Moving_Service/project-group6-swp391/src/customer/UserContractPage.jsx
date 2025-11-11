@@ -93,7 +93,7 @@ const UserContractsPage = () => {
       setSelectedContract((prev) => ({
         ...prev,
         signed: true,
-payment: {
+        payment: {
           checkoutUrl: paymentRes.checkoutUrl,
           qrCode: paymentRes.qrCode || paymentRes.checkoutUrl,
           amount: paymentRes.amount,
@@ -210,7 +210,7 @@ payment: {
         <Empty
           description={
             <Text type="secondary">
-Bạn không có hợp đồng nào đang chờ ký kết.
+              Bạn không có hợp đồng nào đang chờ ký kết.
             </Text>
           }
           style={{ padding: "50px 0" }}
@@ -292,7 +292,7 @@ Bạn không có hợp đồng nào đang chờ ký kết.
                   {selectedContract.endLocation}
                 </Text>
                 <Text>
-<strong>Trạng thái:</strong>{" "}
+                  <strong>Trạng thái:</strong>{" "}
                   <Text type={paymentData ? "success" : "warning"}>
                     {paymentData ? "Đã ký - Chờ thanh toán" : selectedContract.status || "Chưa ký"}
                   </Text>
@@ -365,7 +365,7 @@ Bạn không có hợp đồng nào đang chờ ký kết.
                   <div
                     style={{
                       padding: 20,
-background: "white",
+                      background: "white",
                       borderRadius: 8,
                       boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                     }}
