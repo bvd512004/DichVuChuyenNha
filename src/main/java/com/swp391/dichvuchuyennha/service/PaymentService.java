@@ -325,8 +325,9 @@ public class PaymentService {
     }
 
     public List<ListPaymentResponse> getAllPayments() {
-        List<Payment> payments = paymentRepository.findAll();
-        return payments.stream()
+        List<Payment> finalPayments = paymentRepository.findByPaymentType("final");
+
+        return finalPayments.stream()
                 .map(listPaymentMapper::toResponse)
                 .collect(Collectors.toList());
     }

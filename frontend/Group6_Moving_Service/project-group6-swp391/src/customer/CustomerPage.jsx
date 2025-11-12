@@ -21,7 +21,8 @@ import CustpmerWorkProgressPage from "./WorkProgressCustomerPage";
 import UserFinalPaymentPage from "./UserFinalPaymentPage";
 import { Badge } from "antd";
 import PaymentAPI from "../service/payment";
-
+// Đầu file, thêm dòng này
+import InvoiceList from "./InvoiceList";  // Đảm bảo đường dẫn đúng
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
@@ -227,6 +228,8 @@ const CustomerDashboard = () => {
                 return <CustpmerWorkProgressPage />;
             case "/customer/final-payments":
                 return <UserFinalPaymentPage />
+                case "invoices":
+  return <InvoiceList />;
             case "signed-contracts":
                 return (
                     <Card
@@ -322,7 +325,11 @@ const CustomerDashboard = () => {
                         },
 
                         { key: "signed-contracts", icon: <HistoryOutlined />, label: "📖 Lịch sử HĐ đã ký" },
-
+{
+  key: "invoices",
+  icon: <FileTextOutlined />,
+  label: " Xem hóa đơn",
+},
                         { type: "divider" },
                         { key: "logout", label: "Đăng xuất", danger: true, onClick: () => { /* Logic đăng xuất */ } },
                     ]}

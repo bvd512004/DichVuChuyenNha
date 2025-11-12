@@ -59,7 +59,7 @@ const statusColors = {
 
 // ============== TEXT RÕ RÀNG, DỄ HIỂU CHO MỌI NGƯỜI ==============
 const statusText = {
-   REVIEW:    "Bản nháp – Chưa gửi duyệt",
+    REVIEW:    "Bản nháp – Chưa gửi duyệt",
     REVIEWED: "Đang chờ quản lý duyệt",
     PENDING:  "Đã gửi khách – Chờ chấp thuận",
     APPROVED: "Khách đã chấp thuận",
@@ -182,7 +182,7 @@ const statusText = {
                             </Space>
                         </Col>
                        <Col>
-    {["DRAFT", "REJECTED"].includes(record.status) ? (
+    {["REVIEW", "REJECTED"].includes(record.status) ? (
         <Button
             type="primary"
             size="large"

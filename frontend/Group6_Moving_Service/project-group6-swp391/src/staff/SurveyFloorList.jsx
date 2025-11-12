@@ -549,7 +549,7 @@ const SurveyFloorList = ({ onSurveyUpdate }) => {
         width={700}
         footer={[
           <Button key="analyze"onClick={handleAnalyzeImage} loading={analyzing}>
-             Phân tích AI
+             Phân tích
           </Button>,
           <Button key="cancel" onClick={() => {
             setIsUploadModalOpen(false);
