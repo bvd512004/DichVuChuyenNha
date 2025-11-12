@@ -44,6 +44,8 @@ import PaymentSuccessFinalPage from "../customer/PaymentSuccessFinalPage";
 import ServicePrice from "../admin/components/ServicePrice";
 import ServiceDetail from "../admin/components/ServiceDetail";
 import DriverDashboard from "../driver/DriverDashboard";
+import AboutPage from "../HomePage/AboutPage";
+import ContactPage from "../HomePage/ContactPage";
 
 
 const Router = () => {
@@ -54,6 +56,14 @@ const Router = () => {
       children: [
         { index: true, element: <LandingPage /> },
 
+        {
+          path: "about",
+          element: <AboutPage />
+        },
+        {
+          path: "contact",
+          element: <ContactPage />
+        },
 
         {
           path: "",

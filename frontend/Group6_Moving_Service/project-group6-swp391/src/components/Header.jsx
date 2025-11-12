@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button, message } from "antd";
-import { UserOutlined, PhoneOutlined, DownOutlined } from "@ant-design/icons";
+import { UserOutlined, PhoneOutlined, DownOutlined, MenuOutlined, CloseOutlined } from "@ant-design/icons";
 import api from "../service/axiosInstance"; // Thống nhất dùng api
 import { useNavigate, useLocation } from "react-router-dom";
 import "./Header.css";
@@ -11,6 +11,7 @@ const Header = () => {
   const token = localStorage.getItem("token");
   const isLoggedIn = !!token;
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const roleName = localStorage.getItem("roleName"); // Lấy từ localStorage (sẽ là 'admin' lowercase sau fix)
 
@@ -39,6 +40,20 @@ const Header = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+
+  const handleNavClick = (path) => {
+    navigate(path);
+    setIsMobileMenuOpen(false);
+  };
 
   const handleLogout = async () => {
     if (!token) {
@@ -126,49 +141,72 @@ const Header = () => {
   ];
 
   return (
-    <header className="navbar">
+    <header className={`navbar ${isMobileMenuOpen ? "mobile-menu-open" : ""}`}>
       <div className="navbar-container">
         {/* Logo and Company Name */}
         <div className="navbar-brand" onClick={() => navigate("/")}>
           <div className="logo">
-            <div className="logo-icon">P</div>
+            <div 
+              className="logo-icon"
+              style={{
+                color: '#000000',
+                background: '#ffffff',
+                border: '2px solid #000000',
+                WebkitTextFillColor: '#000000',
+              }}
+            >
+              P
+            </div>
           </div>
           <div className="brand-text">
             <div className="company-name">ProMove Commercial</div>
             <div className="company-tagline">Dịch Vụ Chuyển Nhà Chuyên Nghiệp</div>
           </div>
         </div>
-        {/* Navigation Links */}
-        <nav className="navbar-nav">
-          <a onClick={() => navigate("/price-service")} className="nav-link" style={{ cursor: "pointer" }}>
+
+        {/* Desktop Navigation Links */}
+        <nav className="navbar-nav desktop-nav">
+          <a 
+            onClick={() => handleNavClick("/price-service")} 
+            className={`nav-link ${isActive("/price-service") ? "active" : ""}`}
+          >
             Dịch Vụ
           </a>
-          <a href="#about" className="nav-link">
+          <a 
+            onClick={() => handleNavClick("/about")} 
+            className={`nav-link ${isActive("/about") ? "active" : ""}`}
+          >
             Giới Thiệu
           </a>
-          <a href="#reviews" className="nav-link">
-            Đánh Giá
-          </a>
-          <a href="#contact" className="nav-link">
+          <a 
+            onClick={() => handleNavClick("/contact")} 
+            className={`nav-link ${isActive("/contact") ? "active" : ""}`}
+          >
             Liên Hệ
           </a>
-          <Link to="/feedback-admin" className="nav-link">
-            FeedBack
+          <Link 
+            to="/feedback-admin" 
+            className={`nav-link ${isActive("/feedback-admin") ? "active" : ""}`}
+          >
+            Đánh giá
           </Link>
         </nav>
+
         {/* Right Section */}
         <div className="navbar-actions">
-          {/* Phone Number */}
-          <div className="phone-info">
+          {/* Phone Number - Desktop Only */}
+          <div className="phone-info desktop-only">
             <PhoneOutlined className="phone-icon" />
-            <span className="phone-number">(555) 123-4567</span>
+            <a href="tel:0123456789" className="phone-number">0123456789</a>
           </div>
+          
           {/* User Actions */}
           {isLoggedIn ? (
             <div className="user-menu" ref={dropdownRef}>
               <button className="user-button" onClick={handleUserMenuClick}>
                 <UserOutlined className="user-icon" />
-                <DownOutlined className="dropdown-icon" />
+                <span className="user-text">Tài khoản</span>
+                <DownOutlined className={`dropdown-icon ${isDropdownVisible ? "open" : ""}`} />
               </button>
               {isDropdownVisible && (
                 <div className="user-dropdown">
@@ -190,7 +228,81 @@ const Header = () => {
               </Button>
             </div>
           )}
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="mobile-menu-toggle"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
+          </button>
         </div>
+      </div>
+
+      {/* Mobile Menu */}
+      <div className={`mobile-menu ${isMobileMenuOpen ? "open" : ""}`}>
+        <nav className="mobile-nav">
+          <a 
+            onClick={() => handleNavClick("/price-service")} 
+            className={`mobile-nav-link ${isActive("/price-service") ? "active" : ""}`}
+          >
+            Dịch Vụ
+          </a>
+          <a 
+            onClick={() => handleNavClick("/about")} 
+            className={`mobile-nav-link ${isActive("/about") ? "active" : ""}`}
+          >
+            Giới Thiệu
+          </a>
+          <a 
+            onClick={() => handleNavClick("/contact")} 
+            className={`mobile-nav-link ${isActive("/contact") ? "active" : ""}`}
+          >
+            Liên Hệ
+          </a>
+          <Link 
+            to="/feedback-admin" 
+            className={`mobile-nav-link ${isActive("/feedback-admin") ? "active" : ""}`}
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Đánh giá
+          </Link>
+          
+          {/* Mobile Phone Info */}
+          <div className="mobile-phone-info">
+            <PhoneOutlined className="phone-icon" />
+            <a href="tel:0123456789" className="phone-number">0123456789</a>
+          </div>
+
+          {/* Mobile Auth Buttons */}
+          {!isLoggedIn && (
+            <div className="mobile-auth-buttons">
+              <Button 
+                type="default" 
+                className="mobile-login-btn" 
+                block
+                onClick={() => {
+                  navigate("/login");
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Đăng Nhập
+              </Button>
+              <Button 
+                type="primary" 
+                className="mobile-register-btn" 
+                block
+                onClick={() => {
+                  navigate("/customer-register");
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Đăng Ký
+              </Button>
+            </div>
+          )}
+        </nav>
       </div>
     </header>
   );
