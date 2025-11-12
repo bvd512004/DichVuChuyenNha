@@ -43,7 +43,7 @@ public class QuotationService {
         Quotations quotation = new Quotations();
         quotation.setSurvey(survey);
         quotation.setCreatedAt(LocalDateTime.now());
-        quotation.setStatus("DRAFT");
+        quotation.setStatus("REVIEW");
 
         List<QuotationServices> quotationServices = new ArrayList<>();
         double total = 0.0;
@@ -220,7 +220,7 @@ public class QuotationService {
                 .orElseThrow(() -> new AppException(ErrorCode.QUOTATION_NOT_FOUND));
 
         // Chỉ cho phép chuyển sang REVIEWED nếu hiện tại là PENDING hoặc REJECTED (để gửi lại)
-        if (!Set.of("PENDING", "REJECTED").contains(quotation.getStatus().toUpperCase())) {
+        if (!Set.of("REVIEW", "REJECTED").contains(quotation.getStatus().toUpperCase())) {
             throw new AppException(ErrorCode.INVALID_STATUS
                     );
         }
