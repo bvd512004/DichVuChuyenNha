@@ -30,4 +30,6 @@ public interface ContractRepository extends JpaRepository<Contract, Integer> {
     @Query("SELECT c FROM Contract c " +
             "WHERE c.quotation.survey.request.user.userId = :userId")
     List<Contract> findContractsByCustomerUserId(@Param("userId") Long userId);
+    List<Contract> findByQuotation_Survey_Request_User_UserIdAndStatusIn(Integer userId, List<String> statuses);
+
 }

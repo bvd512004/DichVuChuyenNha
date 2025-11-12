@@ -510,6 +510,19 @@ background: "white",
                   Tôi <strong>đã đọc và đồng ý</strong> với tất cả các điều khoản và điều kiện của hợp đồng này.
                 </Checkbox>
               </div>
+//
+//               !paymentData && (
+//                 <div style={{ padding: "10px 0" }}>
+//                   <Checkbox
+//                     checked={agreeTerms}
+//                     onChange={(e) => setAgreeTerms(e.target.checked)}
+//                   >
+// Tôi <strong>đã đọc và đồng ý</strong> với tất cả các điều khoản
+//                     và điều kiện của hợp đồng này.
+//                   </Checkbox>
+//                 </div>
+//               )
+
             )}
           </Space>
         )}

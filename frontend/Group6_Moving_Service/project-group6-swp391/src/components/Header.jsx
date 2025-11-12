@@ -4,7 +4,7 @@ import { UserOutlined, PhoneOutlined, DownOutlined } from "@ant-design/icons";
 import api from "../service/axiosInstance"; // Thống nhất dùng api
 import { useNavigate, useLocation } from "react-router-dom";
 import "./Header.css";
-
+import { Link } from 'react-router-dom';
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -97,8 +97,8 @@ const Header = () => {
       ]
       : []),
     ...(roleName?.toLowerCase() === "employee" &&
-    position &&
-    (position.toLowerCase() === "driver" || position.toLowerCase() === "tài xế")
+      position &&
+      (position.toLowerCase() === "driver" || position.toLowerCase() === "tài xế")
       ? [
         {
           key: "driver-dashboard",
@@ -152,6 +152,9 @@ const Header = () => {
           <a href="#contact" className="nav-link">
             Liên Hệ
           </a>
+          <Link to="/feedback-admin" className="nav-link">
+            FeedBack
+          </Link>
         </nav>
         {/* Right Section */}
         <div className="navbar-actions">

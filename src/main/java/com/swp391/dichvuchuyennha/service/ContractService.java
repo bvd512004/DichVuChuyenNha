@@ -38,6 +38,7 @@ public class ContractService {
         Contract contract = new Contract();
         contract.setQuotation(quotation);
         contract.setStartDate(request.getStartDate());
+        contract.setEndDate(request.getEndDate());
         contract.setDepositAmount(request.getDepositAmount());
         contract.setTotalAmount(quotation.getTotalPrice());
         contract.setStatus("UNSIGNED");
@@ -60,8 +61,7 @@ public class ContractService {
                 .toList();
     }
 
-    /** ✅ Ký hợp đồng */
-    /** ✅ Ký hợp đồng */
+
     @Transactional
     public ContractResponse signContract(Integer contractId, Integer userId) {
         Users user = userRepository.findById(userId)
@@ -104,8 +104,8 @@ public class ContractService {
         Users user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Contract> contracts = contractRepository.findByQuotation_Survey_Request_User_UserIdAndStatus(
-                user.getUserId(), "SIGNED"
+        List<Contract> contracts = contractRepository.findByQuotation_Survey_Request_User_UserIdAndStatusIn(
+                user.getUserId(), List.of("SIGNED", "DEPOSIT_PAID", "FINAL_COMPLETED")
         );
 
         return contracts.stream()

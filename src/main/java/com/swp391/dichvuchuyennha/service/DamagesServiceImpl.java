@@ -40,23 +40,44 @@ public class DamagesServiceImpl implements DamagesService {
         damage.setCause(request.getCause());
         damage.setCost(request.getCost());
         damage.setImageUrl(request.getImageUrl());
-        damage.setStatus("pending_customer");
+        damage.setStatus("pending_manager"); // ✅ Bắt đầu từ quản lý duyệt
 
         return toResponse(damagesRepository.save(damage));
     }
 
+    // ✅ QUẢN LÝ DUYỆT TRƯỚC (Bước 1)
+    @Override
+    public DamageResponse updateManagerStatus(Integer damageId, DamageFeedbackRequest feedback) {
+        Damages damage = damagesRepository.findById(damageId)
+                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
+
+        if ("approve".equalsIgnoreCase(feedback.getAction())) {
+            // ✅ Quản lý đồng ý → chuyển cho khách hàng duyệt
+            damage.setManagerFeedback("Quản lý đã duyệt");
+            damage.setStatus("pending_customer");
+
+        } else if ("reject".equalsIgnoreCase(feedback.getAction())) {
+            // ❌ Quản lý từ chối → nhân viên phải sửa lại
+            damage.setManagerFeedback(feedback.getManagerFeedback());
+            damage.setStatus("rejected");
+        }
+
+        return toResponse(damagesRepository.save(damage));
+    }
+
+    // ✅ KHÁCH HÀNG DUYỆT SAU (Bước 2)
     @Override
     public DamageResponse updateStatus(Integer damageId, DamageFeedbackRequest feedback) {
         Damages damage = damagesRepository.findById(damageId)
                 .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
 
         if ("approve".equalsIgnoreCase(feedback.getAction())) {
-            // ✅ Khách đồng ý → chờ quản lý duyệt
-            damage.setCustomerFeedback("Approved by Customer");
-            damage.setStatus("pending_manager");
+            // ✅ Khách đồng ý → hoàn tất
+            damage.setCustomerFeedback("Khách hàng đã đồng ý");
+            damage.setStatus("approved");
 
         } else if ("reject".equalsIgnoreCase(feedback.getAction())) {
-            // ❌ Khách từ chối → chờ nhân viên sửa
+            // ❌ Khách từ chối → nhân viên phải sửa lại
             damage.setStatus("rejected");
             damage.setCustomerFeedback(feedback.getCustomerFeedback());
         }
@@ -64,9 +85,7 @@ public class DamagesServiceImpl implements DamagesService {
         return toResponse(damagesRepository.save(damage));
     }
 
-
-
-    // cap nhat
+    // ✅ NHÂN VIÊN CẬP NHẬT LẠI (sau khi bị từ chối)
     @Override
     public DamageResponse updateDamage(Integer damageId, DamageRequest request) {
         Damages damage = damagesRepository.findById(damageId)
@@ -76,33 +95,13 @@ public class DamagesServiceImpl implements DamagesService {
         damage.setCost(request.getCost());
         damage.setImageUrl(request.getImageUrl());
 
-        // 🔁 Reset lại quy trình sau khi chỉnh sửa
-        damage.setStatus("pending_customer"); // gửi lại cho khách duyệt
+        // 🔁 Reset lại quy trình: quản lý duyệt lại từ đầu
+        damage.setStatus("pending_manager");
         damage.setCustomerFeedback(null);
         damage.setManagerFeedback(null);
 
         return toResponse(damagesRepository.save(damage));
     }
-
-    // xu li manager status
-@Override
-public DamageResponse updateManagerStatus(Integer damageId, DamageFeedbackRequest feedback) {
-    Damages damage = damagesRepository.findById(damageId)
-            .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
-
-    if ("approve".equalsIgnoreCase(feedback.getAction())) {
-        damage.setManagerFeedback("Approved by Manager");
-        damage.setStatus("approved");
-
-    } else if ("reject".equalsIgnoreCase(feedback.getAction())) {
-        damage.setManagerFeedback(feedback.getManagerFeedback());
-        damage.setStatus("rejected");
-    }
-
-    return toResponse(damagesRepository.save(damage));
-}
-
-
 
     @Override
     public List<DamageResponse> getByContractId(Integer contractId) {
@@ -127,4 +126,3 @@ public DamageResponse updateManagerStatus(Integer damageId, DamageFeedbackReques
                 .build();
     }
 }
-//fix end
