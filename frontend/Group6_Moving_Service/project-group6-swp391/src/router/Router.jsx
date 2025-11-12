@@ -38,15 +38,12 @@ import PaymentSuccessPage from "../customer/PaymentSuccessPage";
 import PaymentCancelPage from "../customer/PaymentCancelPage";
 import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
 
+
 import PaymentSuccessFinalPage from "../customer/PaymentSuccessFinalPage";
-import ServiceDetail from "../admin/components/ServiceDetail";
 
 import ServicePrice from "../admin/components/ServicePrice";
-import AllFeedbacksPage from "../components/AllFeedbacksPage";
-
+import ServiceDetail from "../admin/components/ServiceDetail";
 import DriverDashboard from "../driver/DriverDashboard";
-import PaymentList from "../manager/PaymentList";
-
 
 
 const Router = () => {
@@ -56,6 +53,7 @@ const Router = () => {
       element: <Layout />,
       children: [
         { index: true, element: <LandingPage /> },
+
 
         {
           path: "",
@@ -70,10 +68,6 @@ const Router = () => {
         //   ),
 
         // },
-        {
-          path: "feedback-admin",
-          element: <AllFeedbacksPage />
-        },
         {
           path: "user-profile",
           element: <ProfilePage />
@@ -196,6 +190,9 @@ const Router = () => {
 
 
 
+
+        { path: "", element: <HomePage /> },
+
         {
           path: "login",
           element: (
@@ -226,11 +223,10 @@ const Router = () => {
         { path: "/payment/success", element: <PaymentSuccessPage /> },
         { path: "/payment/cancel", element: <PaymentCancelPage /> },
         { path: "/customer/final-payments", element: <UserFinalPaymentPage /> },
-        // { path: "service-admin", element: <ServicePrice /> },
-        // { path: "services/:id", element: <ServiceDetail /> },
+        { path: "service-admin", element: <ServicePrice /> },
+        { path: "services/:id", element: <ServiceDetail /> },
         { path: "assign-surveyer", element: <AssignSurveyer /> },
         { path: "review-quotations", element: <ReviewQuotationManagement /> },
-            {path:"payments",element:<PaymentList/>},
 
         // Protected routes
         {
@@ -269,14 +265,14 @@ const Router = () => {
             { path: "work-progress", element: <WorkProgressPage /> },
           ],
         },
-        // {
-        //   path: "driver/dashboard",
-        //   element: (
-        //     <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Driver">
-        //       <DriverDashboard />
-        //     </ProtectedRoute>
-        //   ),
-        // },
+        {
+          path: "driver/dashboard",
+          element: (
+            <ProtectedRoute allowedRoles={["employee"]} requiredPosition="Driver">
+              <DriverDashboard />
+            </ProtectedRoute>
+          ),
+        },
         {
           path: "manager/dashboard",
           element: <ManagerDashboard />,

@@ -16,10 +16,8 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -72,7 +70,6 @@ public class SecurityConfig {
             "/api/damages/**",
             "/images/damages/**",
             "/api/payments/**",
-            "/api/feedback/**",
             "/api/chat-ai"};
 
 
@@ -87,8 +84,7 @@ public class SecurityConfig {
                 .cors(cors -> {
                 })
                 .authorizeHttpRequests(auth -> auth
-                                // Public endpoints
-                                .requestMatchers(PUBLIC_URL).permitAll()
+
 
                                 // Admin endpoints
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -98,7 +94,7 @@ public class SecurityConfig {
 //                                                .requestMatchers("/api/assignments/**").hasRole("MANAGER") //moi
                                 // Assignment endpoints
 //                                                .requestMatchers(POST, "/api/assignments/assign").hasRole("MANAGER")
-                                .requestMatchers("PATCH", "/api/work-progress/**/status").hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
+                                .requestMatchers("PATCH", "/api/work-progress/{progressId}/status").hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
 //                                                .requestMatchers("/api/assignments").hasRole("ADMIN")
                                 // ✅ Customer có thể tạo payment
 
@@ -127,24 +123,45 @@ public class SecurityConfig {
                                 .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY")
                                 .requestMatchers(GET, "/api/requests/my")
                                 .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY")
+                                .requestMatchers(GET, "/api/requests/my-requests")
+                                .hasRole("EMPLOYEE") // ✅ Cho phép EMPLOYEE với position Surveyer
                                 .requestMatchers(GET, "/api/requests").hasAnyRole("MANAGER", "ADMIN")
 
                                 // Survey endpoints
-                                .requestMatchers(POST, "/api/surveys").hasRole("MANAGER")
+                                .requestMatchers(POST, "/api/surveys")
+                                .hasAnyRole("EMPLOYEE", "MANAGER") // ✅ Cho phép EMPLOYEE và MANAGER (chi tiết kiểm tra trong @PreAuthorize)
+                                .requestMatchers(GET, "/api/surveys/my")
+                                .hasRole("EMPLOYEE") // ✅ Cho phép EMPLOYEE với position Surveyer
                                 .requestMatchers(GET, "/api/surveys").hasAnyRole("MANAGER", "ADMIN")
+
+                                // Quotation endpoints
+                                .requestMatchers(GET, "/api/quotations/me")
+                                .hasRole("EMPLOYEE") // ✅ Cho phép EMPLOYEE với position Surveyer
 
                                 // User endpoints
                                 .requestMatchers(GET, "/api/users/me").authenticated()
                                 .requestMatchers(PUT, "/api/users/me").authenticated()
                                 .requestMatchers(POST, "/api/users/create").hasRole("ADMIN")
+                                .requestMatchers(GET, "/api/users/roles").permitAll() // ✅ Cho phép public để đăng ký
 
-                                // Vehicles CRUD - temporarily disabled for testing
-                                // .requestMatchers("/api/vehicles/**").hasAnyRole("MANAGER", "ADMIN")
+                                // Vehicles endpoints - chỉ manager mới có thể gán xe
+                                .requestMatchers(GET, "/api/vehicles/available").hasRole("MANAGER")
+                                .requestMatchers(GET, "/api/vehicles/contract/**").hasRole("MANAGER")
+                                .requestMatchers(POST, "/api/vehicles/assign").hasRole("MANAGER")
+                                .requestMatchers(DELETE, "/api/vehicles/assign/**").hasRole("MANAGER")
 
                                 // WorkProgress (nếu có)
                                 .requestMatchers("/api/work-progress/**")
                                 .hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
 
+                                // Driver endpoints
+                                .requestMatchers("/api/driver/**").hasRole("EMPLOYEE")
+
+                                .requestMatchers("/api/roles").hasRole("ADMIN")
+
+                                // Public endpoints
+                                .requestMatchers(PUBLIC_URL).permitAll()
+                                .requestMatchers("/api/roles").permitAll()
                         // Default
                 )
                 .sessionManagement(session -> session
@@ -176,6 +193,42 @@ public class SecurityConfig {
 
 
     @Bean
+
+//        public CorsFilter corsFilter() {
+//                CorsConfiguration corsConfiguration = new CorsConfiguration();
+//                corsConfiguration.addAllowedHeader("*");
+//                corsConfiguration.addAllowedMethod("*");
+//                corsConfiguration.addAllowedOrigin("http://localhost:5173");
+//            corsConfiguration.setAllowCredentials(true); // quan trọng nếu gửi JWT qua cookie
+//
+//            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//                source.registerCorsConfiguration("/**", corsConfiguration);
+//                return new CorsFilter(source);
+//        }
+//
+//        @Bean
+//        public JavaMailSender javaMailSender() {
+//                JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+//                mailSender.setHost("smtp.gmail.com");
+//                mailSender.setPort(587);
+//                mailSender.setUsername("your-email@gmail.com");
+//                mailSender.setPassword("your-app-password");
+//
+//                Properties props = mailSender.getJavaMailProperties();
+//                props.put("mail.transport.protocol", "smtp");
+//                props.put("mail.smtp.auth", "true");
+//                props.put("mail.smtp.starttls.enable", "true");
+//                props.put("mail.debug", "true"); // để debug
+//
+//                return mailSender;
+//        }
+//
+//        @Bean
+//        public PasswordEncoder passwordEncoder() {
+////                 return new BCryptPasswordEncoder(); // Đổi sang BCrypt
+//        return NoOpPasswordEncoder.getInstance();
+//        }
+
     public CorsFilter corsFilter() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.addAllowedHeader("*");
@@ -207,7 +260,8 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-                 return new BCryptPasswordEncoder(); // Đổi sang BCrypt
-//        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder(); // ✅ Dùng BCrypt để mã hóa password
+        // return NoOpPasswordEncoder.getInstance(); // ❌ Không an toàn - chỉ dùng để test
     }
+
 }

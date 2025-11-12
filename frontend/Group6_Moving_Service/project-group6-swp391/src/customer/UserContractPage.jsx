@@ -93,7 +93,7 @@ const UserContractsPage = () => {
       setSelectedContract((prev) => ({
         ...prev,
         signed: true,
-        payment: {
+payment: {
           checkoutUrl: paymentRes.checkoutUrl,
           qrCode: paymentRes.qrCode || paymentRes.checkoutUrl,
           amount: paymentRes.amount,
@@ -210,7 +210,7 @@ const UserContractsPage = () => {
         <Empty
           description={
             <Text type="secondary">
-              Bạn không có hợp đồng nào đang chờ ký kết.
+Bạn không có hợp đồng nào đang chờ ký kết.
             </Text>
           }
           style={{ padding: "50px 0" }}
@@ -247,7 +247,7 @@ const UserContractsPage = () => {
             disabled={!agreeTerms}
             onClick={() => handleSign(selectedContract?.contractId)}
           >
-            {signing ? "Đang ký..." : "Xác nhận hợp đồng"}
+            {signing ? "Đang ký..." : "Ký hợp đồng điện tử"}
           </Button>,
         ]}
         width={900}
@@ -292,7 +292,7 @@ const UserContractsPage = () => {
                   {selectedContract.endLocation}
                 </Text>
                 <Text>
-                  <strong>Trạng thái:</strong>{" "}
+<strong>Trạng thái:</strong>{" "}
                   <Text type={paymentData ? "success" : "warning"}>
                     {paymentData ? "Đã ký - Chờ thanh toán" : selectedContract.status || "Chưa ký"}
                   </Text>
@@ -365,7 +365,7 @@ const UserContractsPage = () => {
                   <div
                     style={{
                       padding: 20,
-                      background: "white",
+background: "white",
                       borderRadius: 8,
                       boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                     }}
@@ -510,7 +510,7 @@ const UserContractsPage = () => {
                   Tôi <strong>đã đọc và đồng ý</strong> với tất cả các điều khoản và điều kiện của hợp đồng này.
                 </Checkbox>
               </div>
-
+//
 //               !paymentData && (
 //                 <div style={{ padding: "10px 0" }}>
 //                   <Checkbox
