@@ -14,7 +14,7 @@ import {
   CarOutlined,
 } from "@ant-design/icons";
 import "./style/ManagerDashboard.css";
-
+import PaymentList from "./PaymentList"; // Đảm bảo đường dẫn đúng
 const { Sider, Content } = Layout;
 
 const ManagerDashboard = () => {
@@ -63,6 +63,11 @@ const ManagerDashboard = () => {
       icon: <BarChartOutlined />,
       label: <Link to="reports">Báo cáo</Link>,
     },
+    {
+  key: "payments",
+  icon: <DollarOutlined />,
+  label: <Link to="payments">Danh sách thanh toán - Xuất hóa đơn cho khách hàng</Link>,
+},
   ];
 
   // Get active key from current path

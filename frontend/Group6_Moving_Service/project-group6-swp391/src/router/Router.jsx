@@ -44,8 +44,14 @@ import PaymentSuccessFinalPage from "../customer/PaymentSuccessFinalPage";
 import ServicePrice from "../admin/components/ServicePrice";
 import ServiceDetail from "../admin/components/ServiceDetail";
 import DriverDashboard from "../driver/DriverDashboard";
+
+import PaymentList from "../manager/PaymentList";
+import InvoiceList from "../customer/InvoiceList";
+
+
 import AboutPage from "../HomePage/AboutPage";
 import ContactPage from "../HomePage/ContactPage";
+
 
 
 const Router = () => {
@@ -150,6 +156,10 @@ const Router = () => {
         {
           path: "quotations-services-list",
           element: <QuotationServiceList />
+        },
+        {
+          path: "invoices",
+          element: <InvoiceList />
         },
         //  {
         //   path:"review-quotations",
@@ -296,6 +306,7 @@ const Router = () => {
             { path: "manager/work-progress", element: <ManagerWorkProgressPage /> },
             { path: "manager/work-progress-list", element: <WorkProgressList /> },
             { path: "reports", element: <div>Reports Page - Coming Soon</div> },
+            {path:"payments", element:<PaymentList/>}
           ],
         },
 

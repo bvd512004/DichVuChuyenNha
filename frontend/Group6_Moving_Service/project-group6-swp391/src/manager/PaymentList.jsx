@@ -33,21 +33,23 @@ const PaymentList = () => {
   const payload = {
     contractId: Number(record.contractId),
     paymentId: Number(record.paymentId),
-    vatNumber: record.vatNumber || "123456",
   };
   console.log("Payload gửi lên backend:", payload);
-
-  try {
-    const response = await axiosInstance.post("/invoices/create", payload, {
-      headers: { "Content-Type": "application/json" },
-    });
-    console.log("Response từ backend:", response.data);
+try {
+  const response = await axiosInstance.post("/invoices/create", payload, {
+    headers: { "Content-Type": "application/json" },
+  });
+  console.log("Status:", response.status, "Data:", response.data);
+  if (response.status === 200) {
     message.success("Xuất hóa đơn thành công!");
-  } catch (error) {
-    console.error("Lỗi xuất hóa đơn:", error.response || error);
+  } else {
     message.error("Xuất hóa đơn thất bại!");
   }
-};
+} catch (error) {
+  console.error("Lỗi xuất hóa đơn:", error.response || error);
+  message.error("Xuất hóa đơn thất bại!");
+}
+ };
 
 
   const columns = [
