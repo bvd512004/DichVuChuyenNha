@@ -91,18 +91,34 @@ const UserRequestsPage = ({ isEmbedded = false }) => {
         }
         setCreateLoading(true);
         try {
+            // Chuẩn bị dữ liệu gửi lên server
+            const requestData = {
+                description: values.description?.trim(),
+                pickupAddress: values.pickupAddress?.trim(),
+                destinationAddress: values.destinationAddress?.trim(),
+            };
+
+            // Chỉ thêm movingType nếu có giá trị
+            if (values.movingType) {
+                requestData.movingType = values.movingType;
+            }
+
+            // Chỉ thêm businessId nếu có giá trị
+            if (values.businessId) {
+                requestData.businessId = values.businessId;
+            }
+
+            // Chuyển đổi dayjs object sang timestamp (milliseconds) để Spring Boot parse thành java.util.Date
+            if (values.movingDay) {
+                // Gửi timestamp dưới dạng số (milliseconds) - Spring Boot sẽ tự động convert thành Date
+                requestData.movingDay = values.movingDay.valueOf();
+            }
+
+            console.log("Gửi dữ liệu:", requestData);
+
             const response = await api.post(
                 "/requests/create",
-                {
-                    description: values.description,
-                    businessId: values.businessId || null,
-                    pickupAddress: values.pickupAddress,
-                    destinationAddress: values.destinationAddress,
-                    movingType: values.movingType, // Đã thêm movingType
-                    estimatedDistance: values.estimatedDistance || null, // Đã thêm estimatedDistance
-                    // Chuyển đổi dayjs object sang ISO string hoặc null
-                    movingDay: values.movingDay ? values.movingDay.toISOString() : null,
-                },
+                requestData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -124,8 +140,29 @@ const UserRequestsPage = ({ isEmbedded = false }) => {
                 await fetchData(); // Fallback: tải lại toàn bộ
             }
         } catch (e) {
-            message.error("Tạo yêu cầu thất bại. Vui lòng thử lại.");
-            console.error(e);
+            console.error("Lỗi tạo yêu cầu:", e);
+            console.error("Response data:", e?.response?.data);
+            console.error("Response status:", e?.response?.status);
+            
+            // Lấy thông báo lỗi chi tiết từ server
+            let errorMessage = "Tạo yêu cầu thất bại. Vui lòng kiểm tra lại thông tin và thử lại.";
+            
+            if (e?.response?.data) {
+                const errorData = e.response.data;
+                // Kiểm tra các format lỗi phổ biến từ Spring Boot validation
+                if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
+                } else if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                } else if (Array.isArray(errorData.errors)) {
+                    // Lỗi validation từ Spring Boot
+                    errorMessage = errorData.errors.map(err => err.defaultMessage || err.message).join(', ');
+                }
+            }
+            
+            message.error(errorMessage);
         } finally {
             setCreateLoading(false);
         }
