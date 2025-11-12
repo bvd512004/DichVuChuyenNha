@@ -38,8 +38,7 @@ import PaymentSuccessPage from "../customer/PaymentSuccessPage";
 import PaymentCancelPage from "../customer/PaymentCancelPage";
 import UserFinalPaymentPage from "../customer/UserFinalPaymentPage";
 
-import ServicePrice from "../admin/ServicePrice";
-import ServiceDetail from "../admin/ServiceDetail";
+    
 import PaymentSuccessFinalPage from "../customer/PaymentSuccessFinalPage";
 
 import ServicePrice from "../admin/components/ServicePrice";
