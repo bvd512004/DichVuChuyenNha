@@ -46,6 +46,7 @@ import AllFeedbacksPage from "../components/AllFeedbacksPage";
 
 import DriverDashboard from "../driver/DriverDashboard";
 import PaymentList from "../manager/PaymentList";
+import InvoiceList from "../customer/InvoiceList";
 
 
 
@@ -146,6 +147,10 @@ const Router = () => {
         {
           path: "quotations-services-list",
           element: <QuotationServiceList />
+        },
+        {
+          path: "invoices",
+          element: <InvoiceList />
         },
         //  {
         //   path:"review-quotations",
@@ -290,6 +295,7 @@ const Router = () => {
             { path: "manager/work-progress", element: <ManagerWorkProgressPage /> },
             { path: "manager/work-progress-list", element: <WorkProgressList /> },
             { path: "reports", element: <div>Reports Page - Coming Soon</div> },
+            {path:"payments", element:<PaymentList/>}
           ],
         },
 
