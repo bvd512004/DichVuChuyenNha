@@ -268,7 +268,7 @@ const ManagerWorkProgressPage = () => {
 
   return (
     <div className="manager-work-progress-container">
-      <h2>📋 Quản lý Work Progress</h2>
+      <h2>📋 Quản lý Tiến Độ Chuyển Đồ</h2>
 
       <table className="contract-table">
         <thead>
