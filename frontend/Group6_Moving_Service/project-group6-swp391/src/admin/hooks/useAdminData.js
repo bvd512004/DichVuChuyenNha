@@ -52,6 +52,7 @@ export const useAdminData = () => {
     }, [navigate]);  // Thêm dependency
 
     const refetchUsers = () => adminApi.getUsers().then(setUsers).catch(err => message.error("Refetch users failed"));
+    const refetchVehicles = () => adminApi.getVehicles().then(setVehicles).catch(err => message.error("Refetch vehicles failed"));
 
     return {
         users,
@@ -60,5 +61,6 @@ export const useAdminData = () => {
         auditLogs,
         loading,
         refetchUsers,
+        refetchVehicles,
     };
 };

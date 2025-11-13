@@ -1,44 +1,424 @@
-
-
-/* Layout chính */
-.admin-dashboard {
-  background-color: #f8f9fa;
+/* Admin Dashboard Layout */
+.admin-dashboard-layout {
   min-height: 100vh;
+  background: #f0f2f5;
 }
 
-/* Card style (nếu dùng) */
-.admin-dashboard .card {
-  border: 2px solid #000;
-  border-radius: 12px;
+/* Sidebar */
+.admin-sidebar {
+  position: fixed;
+  left: 0;
+  top: 80px;
+  bottom: 0;
+  z-index: 100;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  height: calc(100vh - 80px);
 }
 
-/* Nav tabs (nếu dùng) */
-.admin-dashboard .nav-tabs .nav-link {
-  color: #000;
-  font-weight: 600;
+.sidebar-logo {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-logo > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-collapse-btn {
+  color: #fff !important;
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border: none;
-  padding: 12px 20px;
+  background: transparent;
+  transition: all 0.3s;
 }
-.admin-dashboard .nav-tabs .nav-link.active {
-  background-color: #000;
+
+.sidebar-collapse-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.logo-icon {
+  font-size: 24px;
   color: #fff;
-  border-radius: 8px 8px 0 0;
 }
 
-/* Table & Badge */
-.admin-dashboard .table {
-  margin-bottom: 0;
-}
-.admin-dashboard .badge {
-  font-size: 0.8em;
+.logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
 }
 
-/* ============================================================= */
-/* MODAL: Chỉ dùng .custom-modal để tránh ảnh hưởng modal khác */
-/* ============================================================= */
+.admin-menu {
+  border-right: none;
+  padding: 16px 0;
+}
+
+.admin-menu .ant-menu-item {
+  margin: 8px 12px;
+  border-radius: 8px;
+  height: 48px;
+  line-height: 48px;
+}
+
+.admin-menu .ant-menu-item-selected {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.admin-menu .ant-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Header - Remove unwanted classes */
+.admin-header.ant-layout-header,
+.admin-header[class*="css-dev-only-do-not-override"] {
+  all: unset;
+  display: flex !important;
+}
+
+.admin-header {
+  background: #fff !important;
+  padding: 0 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 99 !important;
+  height: 64px !important;
+  line-height: 64px !important;
+  margin: 0 !important;
+  border: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Remove Ant Design default header styles */
+.ant-layout-header.admin-header {
+  background: #fff !important;
+  padding: 0 24px !important;
+  height: 64px !important;
+  line-height: 64px !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.collapse-btn {
+  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-title {
+  margin: 0 !important;
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-avatar {
+  background: #1890ff;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.admin-avatar:hover {
+  transform: scale(1.1);
+}
+
+/* Content */
+.admin-layout-content {
+  margin-left: 260px;
+  transition: margin-left 0.2s;
+}
+
+.admin-sidebar.ant-layout-sider-collapsed ~ .admin-layout-content {
+  margin-left: 80px;
+}
+
+.admin-content {
+  padding: 24px;
+  min-height: calc(100vh - 64px);
+  position: relative;
+}
+
+
+.sidebar-toggle-btn {
+  position: fixed;
+  top: 100px;
+  left: 280px;
+  z-index: 1000;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.sidebar-toggle-btn:hover {
+  background: #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+.admin-sidebar.ant-layout-sider-collapsed ~ .admin-layout-content .sidebar-toggle-btn {
+  left: 100px;
+}
+
+/* Loading */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+/* Statistics Cards */
+.stat-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s;
+  border: none;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card-primary {
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+}
+
+.stat-card-success {
+  background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+}
+
+.stat-card-warning {
+  background: linear-gradient(135deg, #fffbe6 0%, #ffe58f 100%);
+}
+
+.stat-card-info {
+  background: linear-gradient(135deg, #f9f0ff 0%, #efdbff 100%);
+}
+
+.stat-card .ant-statistic-title {
+  font-size: 14px;
+  color: #595959;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.stat-card .ant-statistic-content {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.stat-footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Content Cards */
+.content-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: none;
+}
+
+.content-card .ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+}
+
+.content-card .ant-card-head-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.content-card .ant-card-body {
+  padding: 24px;
+}
+
+/* Recent Cards */
+.recent-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: none;
+  height: 100%;
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.3s;
+  border: 1px solid #f0f0f0;
+}
+
+.recent-item:hover {
+  background: #fafafa;
+  border-color: #d9d9d9;
+}
+
+.recent-avatar {
+  flex-shrink: 0;
+}
+
+.recent-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recent-info .ant-typography {
+  margin: 0;
+}
+
+/* Dashboard Content */
+.dashboard-content {
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Table Styles */
+.content-card .ant-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.content-card .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.content-card .ant-table-tbody > tr:hover > td {
+  background: #f5f5f5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    position: fixed;
+    z-index: 1000;
+  }
+
+  .admin-layout-content {
+    margin-left: 0;
+  }
+
+  .admin-sidebar.ant-layout-sider-collapsed ~ .admin-layout-content {
+    margin-left: 0;
+  }
+
+  .admin-content {
+    padding: 16px;
+  }
+
+  .stat-card {
+    margin-bottom: 16px;
+  }
+
+  .sidebar-toggle-btn {
+    left: 20px !important;
+    top: 16px;
+  }
+
+  .admin-sidebar.ant-layout-sider-collapsed ~ .admin-layout-content .sidebar-toggle-btn {
+    left: 20px !important;
+  }
+}
+
+/* Custom Modal Styles */
+.modal {
+  z-index: 1050 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.modal-backdrop {
+  z-index: 1040 !important;
+  background-color: rgba(0, 0, 0, 0.5);
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 .custom-modal .modal-dialog {
   max-width: 520px !important;
-  margin: 8vh auto !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  z-index: 1051 !important;
+  display: flex !important;
+  align-items: center !important;
+  min-height: calc(100% - 1rem);
+}
+
+.custom-modal.size-lg .modal-dialog {
+  max-width: 800px !important;
 }
 
 .custom-modal .modal-content {
@@ -47,9 +427,10 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   border: 1px solid #e0e0e0;
   background-color: #fff;
+  position: relative;
+  z-index: 1052 !important;
 }
 
-/* Ant Design Form trong Modal */
 .custom-modal .ant-form {
   width: 100%;
 }
@@ -79,7 +460,6 @@
   margin-top: 8px;
 }
 
-/* Fix Input.Password icon alignment */
 .custom-modal .ant-input-password .ant-input {
   height: 40px;
 }
