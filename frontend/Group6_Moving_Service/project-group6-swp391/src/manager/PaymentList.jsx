@@ -34,22 +34,27 @@ const PaymentList = () => {
     contractId: Number(record.contractId),
     paymentId: Number(record.paymentId),
   };
-  console.log("Payload gửi lên backend:", payload);
-try {
-  const response = await axiosInstance.post("/invoices/create", payload, {
-    headers: { "Content-Type": "application/json" },
-  });
-  console.log("Status:", response.status, "Data:", response.data);
-  if (response.status === 200) {
-    message.success("Xuất hóa đơn thành công!");
-  } else {
-    message.error("Xuất hóa đơn thất bại!");
+
+  try {
+    const response = await axiosInstance.post("/invoices/create", payload, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    console.log("Response:", response.data);
+
+    // ✅ Lấy message từ backend (ApiResponse)
+    if (response.data?.code === 1000) {
+      message.success(response.data.message || "Xuất hóa đơn thành công!");
+    } else {
+      message.error(response.data?.message || "Xuất hóa đơn thất bại!");
+    }
+  } catch (error) {
+    console.error("Lỗi xuất hóa đơn:", error.response || error);
+    const backendMsg = error.response?.data?.message;
+    message.error(backendMsg || "Xuất hóa đơn thất bại!");
   }
-} catch (error) {
-  console.error("Lỗi xuất hóa đơn:", error.response || error);
-  message.error("Xuất hóa đơn thất bại!");
-}
- };
+};
+
 
 
   const columns = [

@@ -16,6 +16,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -53,6 +54,7 @@ public class SecurityConfig {
             "/api/employees/**", // Employee endpoints - temporarily public for testing
             "/api/vehicles/**", // Vehicle endpoints - temporarily public for testing
             "/api/assignments/**",
+
             "/api/contracts/**",
             "/api/surveys/**",
             "/api/requests/**",
@@ -76,7 +78,15 @@ public class SecurityConfig {
             "/api/chat-ai"};
 
 
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers(
+                "/api/users/roles",
+                "/api/users/create"
 
+                // Thêm các endpoint public khác nếu cần
+        );
+    }
 
 
 
@@ -110,7 +120,6 @@ public class SecurityConfig {
                                 .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY")
                                 .requestMatchers("/api/contracts/sign/{contractId}")
                                 .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY", "MANAGER")
-                                .requestMatchers("/api/contracts/**").hasRole("MANAGER")
 
                                 // Damages endpoints
                                 .requestMatchers(POST, "/api/damages").hasAnyRole("EMPLOYEE", "MANAGER")
@@ -148,7 +157,6 @@ public class SecurityConfig {
                                 .requestMatchers(GET, "/api/users/me").authenticated()
                                 .requestMatchers(PUT, "/api/users/me").authenticated()
                                 .requestMatchers(POST, "/api/users/create").hasRole("ADMIN")
-                                .requestMatchers(GET, "/api/users/roles").permitAll() // ✅ Cho phép public để đăng ký
 
                                 // Vehicles endpoints - chỉ manager mới có thể gán xe
                                 .requestMatchers(GET, "/api/vehicles/available").hasRole("MANAGER")

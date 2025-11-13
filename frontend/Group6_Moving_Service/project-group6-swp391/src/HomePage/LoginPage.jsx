@@ -19,7 +19,7 @@ const LoginPage = () => {
 
 
   const validationSchema = Yup.object({
-    // Cho phép cả email và username (backend hỗ trợ cả 2)
+   
     email: Yup.string()
       .required("Email hoặc Username là bắt buộc")
       .min(3, "Email/Username phải có ít nhất 3 ký tự"),
@@ -169,7 +169,7 @@ const LoginPage = () => {
       <Form onFinish={formik.handleSubmit} layout="vertical">
         {/* Email hoặc Username */}
         <Form.Item
-          label="Email hoặc Username"
+          label="Email"
           validateStatus={formik.errors.email && formik.touched.email ? "error" : ""}
           help={formik.errors.email && formik.touched.email ? formik.errors.email : null}
         >

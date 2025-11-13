@@ -50,10 +50,10 @@ public enum ErrorCode {
     // ===== OTHER ERRORS =====
     VEHICLE_NOT_FOUND(1038, "Vehicle not found", HttpStatus.NOT_FOUND),
     ROLE_NOT_ASSIGNED(1039, "Role not assigned to user", HttpStatus.BAD_REQUEST),
-    FORBIDDEN(1040, "Forbidden - Bạn không có quyền thực hiện hành động này", HttpStatus.FORBIDDEN);
+    FORBIDDEN(1040, "Forbidden - Bạn không có quyền thực hiện hành động này", HttpStatus.FORBIDDEN),
 //    VEHICLE_NOT_FOUND(1031,"Vehicle not found" , HttpStatus.NOT_FOUND),
 //    ROLE_NOT_ASSIGNED(1032,"Role not assigned" , HttpStatus.NOT_FOUND );
-
+    EMAIL_NOT_EXISTED(1041,"Email không tồn tại!Vui lòng kiểm tra lại thông tin",HttpStatus.NOT_FOUND);
     private final int code;
     private final String message;
     private final HttpStatusCode statusCode;

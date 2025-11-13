@@ -1,5 +1,6 @@
 package com.swp391.dichvuchuyennha.controller;
 
+import com.swp391.dichvuchuyennha.dto.request.ApiResponse;
 import com.swp391.dichvuchuyennha.dto.request.CreateInvoiceRequest;
 import com.swp391.dichvuchuyennha.dto.response.InvoiceResponse;
 import com.swp391.dichvuchuyennha.service.InvoiceService;
@@ -18,14 +19,22 @@ public class InvoiceController {
 
     // Tạo hóa đơn mới
     @PostMapping("/create")
-    public ResponseEntity<InvoiceResponse> createInvoice(@RequestBody CreateInvoiceRequest request) {
+    public ResponseEntity<ApiResponse<InvoiceResponse>> createInvoice(@RequestBody CreateInvoiceRequest request) {
         InvoiceResponse invoiceResponse = invoiceService.createInvoice(
                 request.getContractId(),
                 request.getPaymentId(),
                 request.getVatNumber()
         );
-        return ResponseEntity.ok(invoiceResponse);
+
+        ApiResponse<InvoiceResponse> response = ApiResponse.<InvoiceResponse>builder()
+                .code(1000)
+                .message("✅ Xuất hóa đơn thành công!")
+                .result(invoiceResponse)
+                .build();
+
+        return ResponseEntity.ok(response);
     }
+
 
     // Lấy danh sách hóa đơn của user hiện tại
     @GetMapping("/me")
