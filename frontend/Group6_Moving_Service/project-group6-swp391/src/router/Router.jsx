@@ -122,6 +122,10 @@ const Router = () => {
           path: "review-quotations",
           element: <ReviewQuotationManagement />
         },
+        {
+          path: "feedback-admin",
+          element: <AllFeedbacksPage />
+        },
         
 
         // },

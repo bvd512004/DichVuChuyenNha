@@ -25,23 +25,14 @@ const EmployeeDashboard = () => {
     {
       key: "work-progress",
       icon: <CheckCircleOutlined />,
-      label: <Link to="work-progress">Work Progress</Link>,
+      label: <Link to="work-progress">Công Việc</Link>,
     },
     {
       key: "contracts",
       icon: <FileTextOutlined />,
-      label: <Link to="contracts">My Contracts</Link>,
+      label: <Link to="contracts">Hợp Đồng Phụ Trách</Link>,
     },
-    {
-      key: "feedbacks",
-      icon: <CommentOutlined />,
-      label: <Link to="feedbacks">Feedbacks</Link>,
-    },
-    {
-      key: "profile",
-      icon: <UserOutlined />,
-      label: <Link to="profile">Profile</Link>,
-    },
+    
   ];
 
   // Get active key from current path
@@ -113,7 +104,7 @@ const EmployeeDashboard = () => {
             </Title>
           </div>
 
-          <div className="header-right">
+          {/* <div className="header-right">
             <Dropdown
               menu={{ items: userMenuItems }}
               placement="bottomRight"
@@ -128,7 +119,7 @@ const EmployeeDashboard = () => {
                 <span className="username">Employee User</span>
               </Space>
             </Dropdown>
-          </div>
+          </div> */}
         </Header>
 
         {/* Main Content */}

@@ -102,7 +102,7 @@ const WorkProgressList = () => {
   // Cột dữ liệu cho bảng
   const columns = [
     {
-      title: "Contract ID",
+      title: "Mã Hợp Đồng",
       dataIndex: "contractId",
       key: "contractId",
       width: 120,
@@ -114,7 +114,7 @@ const WorkProgressList = () => {
       ),
     },
     {
-      title: "Employee",
+      title: "Nhân Viên Phụ Trách",
       dataIndex: "employeeName",
       key: "employeeName",
       width: 150,
@@ -126,7 +126,7 @@ const WorkProgressList = () => {
       ),
     },
     {
-      title: "Task Description",
+      title: "Mô Tả Công Việc",
       dataIndex: "taskDescription",
       key: "taskDescription",
       width: 250,
@@ -143,7 +143,7 @@ const WorkProgressList = () => {
       ),
     },
     {
-      title: "Status",
+      title: "Trạng Thái Tiến Độ",
       dataIndex: "progressStatus",
       key: "progressStatus",
       width: 140,
@@ -157,7 +157,7 @@ const WorkProgressList = () => {
       onFilter: (value, record) => record.progressStatus === value,
     },
     {
-      title: "Customer",
+      title: "Khách Hàng",
       dataIndex: "customerName",
       key: "customerName",
       width: 150,
@@ -166,7 +166,7 @@ const WorkProgressList = () => {
       ),
     },
     {
-      title: "Service",
+      title: "Dịch Vụ",
       dataIndex: "serviceName",
       key: "serviceName",
       width: 180,
@@ -175,7 +175,7 @@ const WorkProgressList = () => {
       ),
     },
     {
-      title: "Total Amount",
+      title: "Tổng Tiền (VND)",
       dataIndex: "totalAmount",
       key: "totalAmount",
       width: 150,
@@ -191,7 +191,7 @@ const WorkProgressList = () => {
       ),
     },
     {
-      title: "Action",
+      title: "Hành Động",
       key: "action",
       width: 120,
       fixed: "right",
@@ -204,7 +204,7 @@ const WorkProgressList = () => {
             onClick={() => handleViewDetails(record)}
             size="small"
           >
-            View
+            Xem
           </Button>
         </Tooltip>
       ),
@@ -217,9 +217,9 @@ const WorkProgressList = () => {
         <div className="header-content">
           <div className="header-title">
             <CalendarOutlined className="header-icon" />
-            <h2>Work Progress Management</h2>
+            <h2>Quản Lí Tất Cả Tiến Độ</h2>
           </div>
-          <p className="header-subtitle">Monitor and manage all work progress across contracts</p>
+          <p className="header-subtitle">quản lí có thể xem tất cả những công việc</p>
         </div>
       </div>
 
