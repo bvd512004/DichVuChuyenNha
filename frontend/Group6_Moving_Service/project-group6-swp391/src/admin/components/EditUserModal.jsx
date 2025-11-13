@@ -1,102 +1,108 @@
-import React from "react";
-import { Modal } from "react-bootstrap";
-import { Form, Input, Select, Button, message } from "antd";
+import React, { useState, useEffect } from "react";
+import { Modal, Form, Input, Select, message } from "antd";
 import { adminApi } from "../../service/adminApi";
 
 const { Item } = Form;
 
-export default function EditUserModal({ user, roles, onHide, onSuccess }) {
+export default function EditUserModal({ open, onCancel, user, roles, onSuccess }) {
     const [form] = Form.useForm();
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (user && open) {
+            form.setFieldsValue({
+                username: user.username,
+                email: user.email,
+                phone: user.phone,
+                roleId: user.roleId,
+            });
+        }
+    }, [user, open, form]);
 
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
+            setLoading(true);
             // Xóa password nếu không nhập
             if (!values.password?.trim()) {
                 delete values.password;
             }
             await adminApi.updateUser(user.userId, values);
             message.success("Cập nhật thành công!");
+            form.resetFields();
             onSuccess?.();
-            onHide();
+            onCancel();
         } catch (err) {
+            if (err.errorFields) {
+                return; // Validation errors
+            }
             message.error(err.response?.data?.message || "Cập nhật thất bại");
+        } finally {
+            setLoading(false);
         }
     };
 
-    // DÙNG TRỰC TIẾP user.roleId (từ API)
-    const initialRoleId = user.roleId;
+    const handleCancel = () => {
+        form.resetFields();
+        onCancel();
+    };
+
+    if (!user) return null;
 
     return (
-        <Modal centered show onHide={onHide} dialogClassName="custom-modal">
-            <Modal.Header closeButton>
-                <Modal.Title>Sửa Người Dùng</Modal.Title>
-            </Modal.Header>
-            <Modal.Body className="p-4">
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleSubmit}
-                    initialValues={{
-                        username: user.username,
-                        email: user.email,
-                        phone: user.phone,
-                        roleId: initialRoleId,
-                    }}
+        <Modal
+            title="Sửa Người Dùng"
+            open={open}
+            onCancel={handleCancel}
+            onOk={handleSubmit}
+            confirmLoading={loading}
+            okText="Lưu"
+            cancelText="Hủy"
+            width={600}
+        >
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+            >
+                <Item
+                    name="username"
+                    label="Username"
+                    rules={[{ required: true, message: "Vui lòng nhập username" }]}
                 >
-                    <Item
-                        name="username"
-                        label="Username"
-                        rules={[{ required: true, message: "Vui lòng nhập username" }]}
-                    >
-                        <Input />
-                    </Item>
+                    <Input placeholder="Nhập username" />
+                </Item>
 
-                    <Item
-                        name="email"
-                        label="Email"
-                        rules={[{ type: "email", message: "Email không hợp lệ" }]}
-                    >
-                        <Input />
-                    </Item>
+                <Item
+                    name="email"
+                    label="Email"
+                    rules={[{ type: "email", message: "Email không hợp lệ" }]}
+                >
+                    <Input placeholder="Nhập email" />
+                </Item>
 
-                    <Item name="phone" label="Số điện thoại">
-                        <Input />
-                    </Item>
+                <Item name="phone" label="Số điện thoại">
+                    <Input placeholder="Nhập số điện thoại" />
+                </Item>
 
-                    <Item
-                        name="roleId"
-                        label="Vai trò"
-                        rules={[{ required: true, message: "Vui lòng chọn vai trò" }]}
-                    >
-                        <Select
-                            placeholder="Chọn vai trò"
-                            getPopupContainer={(triggerNode) => triggerNode.parentNode}  // ✅ Fix: Render dropdown inside modal
-                        >
-                            {roles.map((r) => (
-                                <Select.Option key={r.roleId} value={r.roleId}>
-                                    {r.roleName}
-                                </Select.Option>
-                            ))}
-                        </Select>
-                    </Item>
+                <Item
+                    name="roleId"
+                    label="Vai trò"
+                    rules={[{ required: true, message: "Vui lòng chọn vai trò" }]}
+                >
+                    <Select placeholder="Chọn vai trò">
+                        {roles.map((r) => (
+                            <Select.Option key={r.roleId} value={r.roleId}>
+                                {r.roleName}
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Item>
 
-                    <Item name="password" label="Mật khẩu mới (để trống nếu không đổi)">
-                        <Input.Password placeholder="Nhập mật khẩu mới" />
-                    </Item>
-
-                    <Item>
-                        <Button
-                            type="primary"
-                            htmlType="submit"
-                            block
-                            style={{ height: 40, fontWeight: 600 }}
-                        >
-                            Lưu thay đổi
-                        </Button>
-                    </Item>
-                </Form>
-            </Modal.Body>
+                <Item name="password" label="Mật khẩu mới (để trống nếu không đổi)">
+                    <Input.Password placeholder="Nhập mật khẩu mới" />
+                </Item>
+            </Form>
         </Modal>
     );
 }

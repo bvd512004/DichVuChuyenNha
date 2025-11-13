@@ -39,6 +39,7 @@ export const adminApi = {
 
     // Vehicles
     getVehicles: () => api.get("/api/admin/vehicles").then(r => r.data.result || []),
+    createVehicle: (data) => api.post("/api/admin/vehicles", data),
 
     // Audit Logs
     getAuditLogs: () => api.get("/api/admin/logs").then(r => r.data.result || []),
