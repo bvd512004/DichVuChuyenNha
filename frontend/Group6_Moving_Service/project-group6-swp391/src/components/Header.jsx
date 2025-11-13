@@ -138,6 +138,20 @@ const Header = () => {
         },
       ]
       : []),
+    ...(roleName?.toLowerCase() === "employee" &&
+      position &&
+      (position.toLowerCase() === "surveyer" || position.toLowerCase() === "khảo sát")
+      ? [
+        {
+          key: "survey-dashboard",
+          label: "Survey Dashboard",
+          onClick: () => {
+            navigate("/survey-dashboard");
+            setIsDropdownVisible(false);
+          },
+        },
+      ]
+      : []),
     {
       key: "profile",
       label: "Thông tin cá nhân",
