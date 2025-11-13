@@ -132,6 +132,26 @@ const statusText = {
             }
         };
 
+        const handleUpdateDistance = async (serviceId, newDistance) => {
+            // ✅ KIỂM TRA QUYỀN TRƯỚC KHI CẬP NHẬT
+            if (!isEditable) {
+                message.warning("⚠️ Chỉ có thể chỉnh sửa báo giá ở trạng thái 'Đã bị từ chối'!");
+                return;
+            }
+
+            if (newDistance < 0) return;
+            
+            try {
+                // Lưu ý: Backend có thể cần hỗ trợ cập nhật distance
+                // Hiện tại chỉ hiển thị, chưa có API cập nhật
+                showMessage("info", "⚠️ Tính năng cập nhật số km đang được phát triển");
+                fetchQuotations?.();
+            } catch (error) {
+                console.error("Lỗi cập nhật số km:", error);
+                showMessage("error", "❌ Cập nhật thất bại!");
+            }
+        };
+
         const handleDeleteService = async (serviceId) => {
             // ✅ KIỂM TRA QUYỀN TRƯỚC KHI XÓA
             if (!isEditable) {
@@ -384,65 +404,214 @@ const statusText = {
                                                     <Text type="secondary">Đơn giá:</Text>
                                                     <Text strong>{s?.amount?.toLocaleString()} đ</Text>
                                                 </div>
-                                                <div style={{ 
-                                                    display: 'flex', 
-                                                    justifyContent: 'space-between',
-                                                    alignItems: 'center',
-                                                    gap: 8
-                                                }}>
-                                                    <Text type="secondary">Số lượng:</Text>
-                                                    <Space size={4}>
-                                                        {/* ✅ DISABLE NÚT TRỪ NẾU KHÔNG EDITABLE */}
-                                                        <Tooltip title={!isEditable ? "Không thể chỉnh sửa" : "Giảm số lượng"}>
-                                                            <Button
-                                                                icon={isEditable ? <MinusOutlined /> : <LockOutlined />}
-                                                                size="small"
-                                                                onClick={() => handleUpdateQuantity(s.id, s.quantity - 1)}
-                                                                disabled={!isEditable || s.quantity <= 1}
-                                                                style={{ borderRadius: 4 }}
-                                                            />
-                                                        </Tooltip>
+                                                {/* Kiểm tra nếu là dịch vụ "Cho thuê xe tải" thì hiển thị tách số lượng xe và số km */}
+                                                {s?.serviceName?.toLowerCase().includes('xe tải') || s?.serviceName?.toLowerCase().includes('cho thuê xe') ? (
+                                                    <>
+                                                        {/* Số lượng xe - Tính = Tổng tiền / (Số km × Đơn giá) */}
+                                                        <div style={{ 
+                                                            display: 'flex', 
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            gap: 8
+                                                        }}>
+                                                            <Text type="secondary">Số lượng xe:</Text>
+                                                            <Space size={4}>
+                                                                <Tooltip title={!isEditable ? "Không thể chỉnh sửa" : "Giảm số lượng xe"}>
+                                                                    <Button
+                                                                        icon={isEditable ? <MinusOutlined /> : <LockOutlined />}
+                                                                        size="small"
+                                                                        onClick={() => {
+                                                                            // Tính lại quantity dựa trên công thức
+                                                                            const distance = record.distanceKm || 0;
+                                                                            const amount = s.amount || 0;
+                                                                            const subtotal = s.subtotal || 0;
+                                                                            const currentVehicleCount = distance > 0 && amount > 0 
+                                                                                ? Math.round(subtotal / (distance * amount)) 
+                                                                                : s.quantity || 0;
+                                                                            if (currentVehicleCount > 1) {
+                                                                                const newSubtotal = (currentVehicleCount - 1) * distance * amount;
+                                                                                // Cần cập nhật subtotal thay vì quantity
+                                                                                handleUpdateQuantity(s.id, currentVehicleCount - 1);
+                                                                            }
+                                                                        }}
+                                                                        disabled={!isEditable || (() => {
+                                                                            const distance = record.distanceKm || 0;
+                                                                            const amount = s.amount || 0;
+                                                                            const subtotal = s.subtotal || 0;
+                                                                            const vehicleCount = distance > 0 && amount > 0 
+                                                                                ? Math.round(subtotal / (distance * amount)) 
+                                                                                : s.quantity || 0;
+                                                                            return vehicleCount <= 1;
+                                                                        })()}
+                                                                        style={{ borderRadius: 4 }}
+                                                                    />
+                                                                </Tooltip>
+                                                                <InputNumber
+                                                                    min={1}
+                                                                    size="small"
+                                                                    value={(() => {
+                                                                        // Tính số lượng xe = Tổng tiền / (Số km × Đơn giá)
+                                                                        const distance = record.distanceKm || 0;
+                                                                        const amount = s.amount || 0;
+                                                                        const subtotal = s.subtotal || 0;
+                                                                        if (distance > 0 && amount > 0) {
+                                                                            return Math.round(subtotal / (distance * amount));
+                                                                        }
+                                                                        return s.quantity || 0;
+                                                                    })()}
+                                                                    onChange={(value) => {
+                                                                        // Khi thay đổi số lượng xe, tính lại subtotal
+                                                                        const distance = record.distanceKm || 0;
+                                                                        const amount = s.amount || 0;
+                                                                        const newSubtotal = (value || 1) * distance * amount;
+                                                                        // Cập nhật quantity để backend tính lại subtotal
+                                                                        handleUpdateQuantity(s.id, value || 1);
+                                                                    }}
+                                                                    disabled={!isEditable}
+                                                                    style={{ 
+                                                                        width: 60, 
+                                                                        textAlign: 'center', 
+                                                                        borderRadius: 4,
+                                                                        cursor: !isEditable ? 'not-allowed' : 'text'
+                                                                    }}
+                                                                />
+                                                                <Tooltip title={!isEditable ? "Không thể chỉnh sửa" : "Tăng số lượng xe"}>
+                                                                    <Button
+                                                                        icon={isEditable ? <PlusOutlined /> : <LockOutlined />}
+                                                                        size="small"
+                                                                        onClick={() => {
+                                                                            const distance = record.distanceKm || 0;
+                                                                            const amount = s.amount || 0;
+                                                                            const subtotal = s.subtotal || 0;
+                                                                            const currentVehicleCount = distance > 0 && amount > 0 
+                                                                                ? Math.round(subtotal / (distance * amount)) 
+                                                                                : s.quantity || 0;
+                                                                            handleUpdateQuantity(s.id, currentVehicleCount + 1);
+                                                                        }}
+                                                                        disabled={!isEditable}
+                                                                        style={{ borderRadius: 4 }}
+                                                                    />
+                                                                </Tooltip>
+                                                            </Space>
+                                                        </div>
                                                         
-                                                        {/* ✅ DISABLE INPUT NẾU KHÔNG EDITABLE */}
-                                                        <InputNumber
-                                                            min={1}
-                                                            size="small"
-                                                            value={s.quantity}
-                                                            onChange={(value) => handleUpdateQuantity(s.id, value || 1)}
-                                                            disabled={!isEditable}
-                                                            style={{ 
-                                                                width: 60, 
-                                                                textAlign: 'center', 
-                                                                borderRadius: 4,
-                                                                cursor: !isEditable ? 'not-allowed' : 'text'
-                                                            }}
-                                                        />
+                                                        {/* Số km */}
+                                                        <div style={{ 
+                                                            display: 'flex', 
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            gap: 8
+                                                        }}>
+                                                            <Text type="secondary">Số km:</Text>
+                                                            <Space size={4}>
+                                                                <Tooltip title={!isEditable ? "Không thể chỉnh sửa" : "Giảm số km"}>
+                                                                    <Button
+                                                                        icon={isEditable ? <MinusOutlined /> : <LockOutlined />}
+                                                                        size="small"
+                                                                        onClick={() => handleUpdateDistance(s.id, (record.distanceKm || 0) - 1)}
+                                                                        disabled={!isEditable || (record.distanceKm || 0) <= 0}
+                                                                        style={{ borderRadius: 4 }}
+                                                                    />
+                                                                </Tooltip>
+                                                                <InputNumber
+                                                                    min={0}
+                                                                    size="small"
+                                                                    value={record.distanceKm || 0}
+                                                                    onChange={(value) => handleUpdateDistance(s.id, value || 0)}
+                                                                    disabled={!isEditable}
+                                                                    style={{ 
+                                                                        width: 60, 
+                                                                        textAlign: 'center', 
+                                                                        borderRadius: 4,
+                                                                        cursor: !isEditable ? 'not-allowed' : 'text'
+                                                                    }}
+                                                                />
+                                                                <Tooltip title={!isEditable ? "Không thể chỉnh sửa" : "Tăng số km"}>
+                                                                    <Button
+                                                                        icon={isEditable ? <PlusOutlined /> : <LockOutlined />}
+                                                                        size="small"
+                                                                        onClick={() => handleUpdateDistance(s.id, (record.distanceKm || 0) + 1)}
+                                                                        disabled={!isEditable}
+                                                                        style={{ borderRadius: 4 }}
+                                                                    />
+                                                                </Tooltip>
+                                                            </Space>
+                                                        </div>
                                                         
-                                                        {/* ✅ DISABLE NÚT CỘNG NẾU KHÔNG EDITABLE */}
-                                                        <Tooltip title={!isEditable ? "Không thể chỉnh sửa" : "Tăng số lượng"}>
-                                                            <Button
-                                                                icon={isEditable ? <PlusOutlined /> : <LockOutlined />}
+                                                        {/* Nút xóa */}
+                                                        <div style={{ 
+                                                            display: 'flex', 
+                                                            justifyContent: 'flex-end',
+                                                            alignItems: 'center',
+                                                            marginTop: 4
+                                                        }}>
+                                                            <Tooltip title={!isEditable ? "Không thể xóa" : "Xóa dịch vụ"}>
+                                                                <Button
+                                                                    danger={isEditable}
+                                                                    type="text"
+                                                                    size="small"
+                                                                    icon={isEditable ? <DeleteOutlined /> : <LockOutlined />}
+                                                                    onClick={() => handleDeleteService(s.id)}
+                                                                    disabled={!isEditable}
+                                                                    style={{ borderRadius: 4 }}
+                                                                />
+                                                            </Tooltip>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div style={{ 
+                                                        display: 'flex', 
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        gap: 8
+                                                    }}>
+                                                        <Text type="secondary">Số lượng:</Text>
+                                                        <Space size={4}>
+                                                            <Tooltip title={!isEditable ? "Không thể chỉnh sửa" : "Giảm số lượng"}>
+                                                                <Button
+                                                                    icon={isEditable ? <MinusOutlined /> : <LockOutlined />}
+                                                                    size="small"
+                                                                    onClick={() => handleUpdateQuantity(s.id, s.quantity - 1)}
+                                                                    disabled={!isEditable || s.quantity <= 1}
+                                                                    style={{ borderRadius: 4 }}
+                                                                />
+                                                            </Tooltip>
+                                                            <InputNumber
+                                                                min={1}
                                                                 size="small"
-                                                                onClick={() => handleUpdateQuantity(s.id, s.quantity + 1)}
+                                                                value={s.quantity}
+                                                                onChange={(value) => handleUpdateQuantity(s.id, value || 1)}
                                                                 disabled={!isEditable}
-                                                                style={{ borderRadius: 4 }}
+                                                                style={{ 
+                                                                    width: 60, 
+                                                                    textAlign: 'center', 
+                                                                    borderRadius: 4,
+                                                                    cursor: !isEditable ? 'not-allowed' : 'text'
+                                                                }}
                                                             />
-                                                        </Tooltip>
-                                                        
-                                                        {/* ✅ DISABLE NÚT XÓA NẾU KHÔNG EDITABLE */}
-                                                        <Tooltip title={!isEditable ? "Không thể xóa" : "Xóa dịch vụ"}>
-                                                            <Button
-                                                                danger={isEditable}
-                                                                type="text"
-                                                                size="small"
-                                                                icon={isEditable ? <DeleteOutlined /> : <LockOutlined />}
-                                                                onClick={() => handleDeleteService(s.id)}
-                                                                disabled={!isEditable}
-                                                                style={{ borderRadius: 4 }}
-                                                            />
-                                                        </Tooltip>
-                                                    </Space>
-                                                </div>
+                                                            <Tooltip title={!isEditable ? "Không thể chỉnh sửa" : "Tăng số lượng"}>
+                                                                <Button
+                                                                    icon={isEditable ? <PlusOutlined /> : <LockOutlined />}
+                                                                    size="small"
+                                                                    onClick={() => handleUpdateQuantity(s.id, s.quantity + 1)}
+                                                                    disabled={!isEditable}
+                                                                    style={{ borderRadius: 4 }}
+                                                                />
+                                                            </Tooltip>
+                                                            <Tooltip title={!isEditable ? "Không thể xóa" : "Xóa dịch vụ"}>
+                                                                <Button
+                                                                    danger={isEditable}
+                                                                    type="text"
+                                                                    size="small"
+                                                                    icon={isEditable ? <DeleteOutlined /> : <LockOutlined />}
+                                                                    onClick={() => handleDeleteService(s.id)}
+                                                                    disabled={!isEditable}
+                                                                    style={{ borderRadius: 4 }}
+                                                                />
+                                                            </Tooltip>
+                                                        </Space>
+                                                    </div>
+                                                )}
                                                 <Divider style={{ margin: '8px 0' }} />
                                                 <div style={{ 
                                                     display: 'flex', 
