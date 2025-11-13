@@ -67,7 +67,7 @@ const Header = () => {
       localStorage.removeItem("user");
       localStorage.removeItem("roleName"); // Thêm để clear role
       message.success("Đăng xuất thành công!");
-      navigate("/");
+      navigate("/login");
     } catch (err) {
       console.error("Logout error:", err);
       message.error("Lỗi đăng xuất");
@@ -185,8 +185,8 @@ const Header = () => {
             Liên Hệ
           </a>
           <Link 
-            to="/feedback-admin" 
-            className={`nav-link ${isActive("/feedback-admin") ? "active" : ""}`}
+            to="/feedback-page" 
+            className={`nav-link ${isActive("/feedback-page") ? "active" : ""}`}
           >
             Đánh giá
           </Link>

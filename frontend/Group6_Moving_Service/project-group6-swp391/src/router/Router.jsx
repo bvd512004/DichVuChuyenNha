@@ -208,6 +208,10 @@ const Router = () => {
           path:"services/:id",
           element:<ServiceDetail/>
         },
+         {
+          path:"feedback-page",
+          element:<AllFeedbacksPage/>
+        },
 
 
 

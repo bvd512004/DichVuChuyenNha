@@ -86,8 +86,8 @@ public class AuthenticationService {
     // === LOGIN CHÍNH ===
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         Users user = userRepository.findByEmail(request.getEmail())
-                .orElseGet(() -> userRepository.findByUsername(request.getEmail()) // fallback username nếu email fail
-                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
+
+                        .orElseThrow(() -> new AppException(ErrorCode.EMAIL_NOT_EXISTED));
 
         // Log để debug
         System.out.println("=== PASSWORD CHECK ===");

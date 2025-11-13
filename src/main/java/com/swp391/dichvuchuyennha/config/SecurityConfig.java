@@ -55,6 +55,7 @@ public class SecurityConfig {
             "/api/employees/**", // Employee endpoints - temporarily public for testing
             "/api/vehicles/**", // Vehicle endpoints - temporarily public for testing
             "/api/assignments/**",
+
             "/api/contracts/**",
             "/api/surveys/**",
             "/api/requests/**",
@@ -78,7 +79,15 @@ public class SecurityConfig {
             "/api/chat-ai"};
 
 
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers(
+                "/api/users/roles",
+                "/api/users/create"
 
+                // Thêm các endpoint public khác nếu cần
+        );
+    }
 
 
 
@@ -110,7 +119,6 @@ public class SecurityConfig {
                                 .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY")
                                 .requestMatchers("/api/contracts/sign/{contractId}")
                                 .hasAnyRole("CUSTOMER_INDIVIDUAL", "CUSTOMER_COMPANY", "MANAGER")
-                                .requestMatchers("/api/contracts/**").hasRole("MANAGER")
 
                                 // Damages endpoints
                                 .requestMatchers(POST, "/api/damages").hasAnyRole("EMPLOYEE", "MANAGER")
