@@ -154,8 +154,18 @@ public class SurveyImageController {
             }
 
             // Tìm quotation từ survey, nếu chưa có thì tự động tạo
-            var quotation = quotationRepository.findBySurvey_SurveyId(survey.getSurveyId())
-                    .orElse(null);
+            // Lấy quotation mới nhất nếu có nhiều quotations cho cùng survey
+            var quotations = quotationRepository.findBySurvey_SurveyId(survey.getSurveyId());
+            var quotation = quotations.isEmpty() 
+                    ? null 
+                    : quotations.stream()
+                            .max((q1, q2) -> {
+                                if (q1.getCreatedAt() == null && q2.getCreatedAt() == null) return 0;
+                                if (q1.getCreatedAt() == null) return -1;
+                                if (q2.getCreatedAt() == null) return 1;
+                                return q1.getCreatedAt().compareTo(q2.getCreatedAt());
+                            })
+                            .orElse(null);
 
             if (quotation == null) {
                 // Tự động tạo quotation nếu chưa có

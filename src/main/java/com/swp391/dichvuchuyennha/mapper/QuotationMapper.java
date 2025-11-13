@@ -14,7 +14,7 @@ public interface QuotationMapper {
     @Mapping(target = "quotationId",ignore =true)
     @Mapping(target = "survey",ignore=true)
     Quotations toEntity(QuotationCreateRequest request);
-    
+
     @Mapping(target = "quotationId", source = "quotationId", qualifiedByName = "toString")
     @Mapping(target = "surveyDate", expression = "java(getSurveyDate(quotations))")
     @Mapping(target = "addressFrom", expression = "java(getAddressFrom(quotations))")
@@ -32,92 +32,100 @@ public interface QuotationMapper {
     @Mapping(target = "assignedEmployeeName", ignore = true)
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "position", ignore = true)
+    @Mapping(target = "distanceKm", expression = "java(getDistanceKm(quotations))")
     QuotationResponse toResponse(Quotations quotations);
-    
+
     @Named("toString")
     default String toString(Integer value) {
         return value != null ? value.toString() : null;
     }
-    
+
     default java.time.LocalDateTime getSurveyDate(Quotations quotations) {
         if (quotations == null || quotations.getSurvey() == null) {
             return null;
         }
         return quotations.getSurvey().getSurveyDate();
     }
-    
+
     default String getAddressFrom(Quotations quotations) {
-        if (quotations == null || quotations.getSurvey() == null || 
-            quotations.getSurvey().getRequest() == null) {
+        if (quotations == null || quotations.getSurvey() == null ||
+                quotations.getSurvey().getRequest() == null) {
             return null;
         }
         return quotations.getSurvey().getRequest().getPickupAddress();
     }
-    
+
     default String getAddressTo(Quotations quotations) {
-        if (quotations == null || quotations.getSurvey() == null || 
-            quotations.getSurvey().getRequest() == null) {
+        if (quotations == null || quotations.getSurvey() == null ||
+                quotations.getSurvey().getRequest() == null) {
             return null;
         }
         return quotations.getSurvey().getRequest().getDestinationAddress();
     }
-    
+
     default String getUsername(Quotations quotations) {
-        if (quotations == null || quotations.getSurvey() == null || 
-            quotations.getSurvey().getRequest() == null ||
-            quotations.getSurvey().getRequest().getUser() == null) {
+        if (quotations == null || quotations.getSurvey() == null ||
+                quotations.getSurvey().getRequest() == null ||
+                quotations.getSurvey().getRequest().getUser() == null) {
             return null;
         }
         return quotations.getSurvey().getRequest().getUser().getUsername();
     }
-    
+
     default String getPhone(Quotations quotations) {
-        if (quotations == null || quotations.getSurvey() == null || 
-            quotations.getSurvey().getRequest() == null ||
-            quotations.getSurvey().getRequest().getUser() == null) {
+        if (quotations == null || quotations.getSurvey() == null ||
+                quotations.getSurvey().getRequest() == null ||
+                quotations.getSurvey().getRequest().getUser() == null) {
             return null;
         }
         return quotations.getSurvey().getRequest().getUser().getPhone();
     }
-    
+
     default String getCompanyName(Quotations quotations) {
-        if (quotations == null || quotations.getSurvey() == null || 
-            quotations.getSurvey().getRequest() == null ||
-            quotations.getSurvey().getRequest().getUser() == null ||
-            quotations.getSurvey().getRequest().getUser().getCustomerCompany() == null) {
+        if (quotations == null || quotations.getSurvey() == null ||
+                quotations.getSurvey().getRequest() == null ||
+                quotations.getSurvey().getRequest().getUser() == null ||
+                quotations.getSurvey().getRequest().getUser().getCustomerCompany() == null) {
             return null;
         }
         return quotations.getSurvey().getRequest().getUser().getCustomerCompany().getCompanyName();
     }
-    
+
     default String getEmployeeName(Quotations quotations) {
-        if (quotations == null || quotations.getSurvey() == null || 
-            quotations.getSurvey().getRequest() == null ||
-            quotations.getSurvey().getRequest().getAssignedEmployee() == null ||
-            quotations.getSurvey().getRequest().getAssignedEmployee().getUser() == null) {
+        if (quotations == null || quotations.getSurvey() == null ||
+                quotations.getSurvey().getRequest() == null ||
+                quotations.getSurvey().getRequest().getAssignedEmployee() == null ||
+                quotations.getSurvey().getRequest().getAssignedEmployee().getUser() == null) {
             return null;
         }
         return quotations.getSurvey().getRequest().getAssignedEmployee().getUser().getUsername();
     }
-    
+
     default String getEmployeePhone(Quotations quotations) {
-        if (quotations == null || quotations.getSurvey() == null || 
-            quotations.getSurvey().getRequest() == null ||
-            quotations.getSurvey().getRequest().getAssignedEmployee() == null ||
-            quotations.getSurvey().getRequest().getAssignedEmployee().getUser() == null) {
+        if (quotations == null || quotations.getSurvey() == null ||
+                quotations.getSurvey().getRequest() == null ||
+                quotations.getSurvey().getRequest().getAssignedEmployee() == null ||
+                quotations.getSurvey().getRequest().getAssignedEmployee().getUser() == null) {
             return null;
         }
         return quotations.getSurvey().getRequest().getAssignedEmployee().getUser().getPhone();
     }
-    
+
     default String getEmployeeEmail(Quotations quotations) {
-        if (quotations == null || quotations.getSurvey() == null || 
-            quotations.getSurvey().getRequest() == null ||
-            quotations.getSurvey().getRequest().getAssignedEmployee() == null ||
-            quotations.getSurvey().getRequest().getAssignedEmployee().getUser() == null) {
+        if (quotations == null || quotations.getSurvey() == null ||
+                quotations.getSurvey().getRequest() == null ||
+                quotations.getSurvey().getRequest().getAssignedEmployee() == null ||
+                quotations.getSurvey().getRequest().getAssignedEmployee().getUser() == null) {
             return null;
         }
         return quotations.getSurvey().getRequest().getAssignedEmployee().getUser().getEmail();
+    }
+
+    default Double getDistanceKm(Quotations quotations) {
+        if (quotations == null || quotations.getSurvey() == null) {
+            return null;
+        }
+        return quotations.getSurvey().getDistanceKm();
     }
 }
 
