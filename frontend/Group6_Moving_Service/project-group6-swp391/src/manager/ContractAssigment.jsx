@@ -174,14 +174,14 @@ export default function ContractAssignment() {
 
   const columns = [
     {
-      title: "Contract ID",
+      title: "Mã Hợp Đồng",
       dataIndex: "contractId",
       key: "contractId",
       width: 150,
       render: (id) => <Tag color="blue">#{id}</Tag>,
     },
     {
-      title: "Status",
+      title: "Trạng Thái",
       dataIndex: "status",
       key: "status",
       width: 150,
@@ -198,7 +198,7 @@ export default function ContractAssignment() {
       },
     },
     {
-      title: "Action",
+      title: "Hành Động",
       key: "action",
       width: 150,
       render: (_, record) => (
@@ -221,7 +221,7 @@ export default function ContractAssignment() {
           <div className="page-header">
             <FileTextOutlined className="page-icon" />
             <Title level={2} className="page-title">
-              Contract Employee Management
+              Quản Lí Gán Hợp Đồng Cho Nhân Viên
             </Title>
           </div>
 

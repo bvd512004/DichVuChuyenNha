@@ -19,28 +19,43 @@ const validationSchema = Yup.object().shape({
     .matches(/^[0-9]+$/, "Số điện thoại chỉ được chứa ký tự số")
     .min(10, "Số điện thoại phải có ít nhất 10 số")
     .required("Số điện thoại không được để trống"),
-  roleId: Yup.number().required("Vui lòng chọn Role"),
+  roleId: Yup.number().required("Vui lòng chọn loại tài khoản"),
 });
 
 export default function CustomerRegisterForm() {
   const [roles, setRoles] = useState([]);
   const [selectedRole, setSelectedRole] = useState(null);
 
+  // 📌 Load danh sách vai trò từ backend
   useEffect(() => {
     axios
       .get("http://localhost:8080/api/users/roles")
       .then((res) => {
-        setRoles(res.data.result || []);
+        const rolesData = res.data.result || [];
+        setRoles(rolesData);
+        if (rolesData.length === 0) {
+          message.warning("Không có loại tài khoản nào để chọn.");
+        }
       })
       .catch((err) => {
-        console.error(err); // thêm log
-        message.error("Không load được roles! " + err.message);
+        const msg =
+          err.response?.data?.message || "Không tải được danh sách tài khoản";
+        message.error(msg);
       });
   }, []);
 
   const getRoleNameById = (roleId) =>
     roles.find((r) => r.roleId === roleId)?.roleName;
 
+  const getDisplayRoleName = (roleName) => {
+    return roleName === "customer_individual"
+      ? "Cá nhân"
+      : roleName === "customer_company"
+      ? "Doanh nghiệp"
+      : roleName;
+  };
+
+  // 🧠 Formik setup
   const formik = useFormik({
     initialValues: {
       username: "",
@@ -53,33 +68,53 @@ export default function CustomerRegisterForm() {
       address: "",
     },
     validationSchema,
-    onSubmit: async (values) => {
+    onSubmit: async (values, { setSubmitting }) => {
       let url = "";
       let payload = { ...values };
-      const selectedRoleName = getRoleNameById(values.roleId);
-
-      if (selectedRoleName === "customer_company") {
-        url = "http://localhost:8080/api/users/customer-company";
-        delete payload.roleId;
-
-        if (!values.companyName || !values.taxCode || !values.address) {
-          message.error("Vui lòng nhập đầy đủ thông tin công ty.");
-          return;
-        }
-      } else {
-        url = "http://localhost:8080/api/users/create";
-        delete payload.companyName;
-        delete payload.taxCode;
-        delete payload.address;
-      }
+      const roleName = getRoleNameById(values.roleId);
 
       try {
+        if (roleName === "customer_company") {
+          url = "http://localhost:8080/api/users/customer-company";
+          delete payload.roleId;
+
+          if (!values.companyName || !values.taxCode || !values.address) {
+            message.error("Vui lòng nhập đầy đủ thông tin công ty.");
+            setSubmitting(false);
+            return;
+          }
+        } else {
+          url = "http://localhost:8080/api/users/create";
+          delete payload.companyName;
+          delete payload.taxCode;
+          delete payload.address;
+        }
+
         await axios.post(url, payload);
         message.success("Đăng ký thành công!");
         formik.resetForm();
         setSelectedRole(null);
       } catch (err) {
-        message.error(err.response?.data?.message || "Đăng ký thất bại!");
+        // 🧩 Hiển thị lỗi backend (AppException, ErrorCode, v.v.)
+        console.error("❌ Lỗi đăng ký:", err.response || err);
+
+        const errorMessage =
+          err.response?.data?.message ||
+          err.response?.data?.error ||
+          err.response?.data?.errorCode ||
+          err.message ||
+          "Đăng ký thất bại. Vui lòng thử lại.";
+
+        // Nếu backend trả lỗi cụ thể cho email hoặc username, gán vào formik
+        if (errorMessage.toLowerCase().includes("email")) {
+          formik.setFieldError("email", errorMessage);
+        } else if (errorMessage.toLowerCase().includes("username")) {
+          formik.setFieldError("username", errorMessage);
+        } else {
+          message.error(errorMessage);
+        }
+      } finally {
+        setSubmitting(false);
       }
     },
   });
@@ -99,13 +134,15 @@ export default function CustomerRegisterForm() {
       <Form onFinish={formik.handleSubmit} layout="vertical">
         {/* Username */}
         <Form.Item
-          label="Username"
-          validateStatus={formik.errors.username && formik.touched.username ? "error" : ""}
+          label="Tên đăng nhập"
+          validateStatus={
+            formik.errors.username && formik.touched.username ? "error" : ""
+          }
           help={formik.touched.username && formik.errors.username}
         >
           <Input
             name="username"
-            placeholder="Nhập username"
+            placeholder="Nhập tên đăng nhập"
             value={formik.values.username}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -114,25 +151,27 @@ export default function CustomerRegisterForm() {
 
         {/* Password */}
         <Form.Item
-          label="Password"
-          validateStatus={formik.errors.password && formik.touched.password ? "error" : ""}
+          label="Mật khẩu"
+          validateStatus={
+            formik.errors.password && formik.touched.password ? "error" : ""
+          }
           help={formik.touched.password && formik.errors.password}
-          className="password-field"
         >
           <Input.Password
             name="password"
-            placeholder="Nhập password"
+            placeholder="Nhập mật khẩu"
             value={formik.values.password}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            className="custom-password-input"
           />
         </Form.Item>
 
         {/* Email */}
         <Form.Item
           label="Email"
-          validateStatus={formik.errors.email && formik.touched.email ? "error" : ""}
+          validateStatus={
+            formik.errors.email && formik.touched.email ? "error" : ""
+          }
           help={formik.touched.email && formik.errors.email}
         >
           <Input
@@ -146,8 +185,10 @@ export default function CustomerRegisterForm() {
 
         {/* Phone */}
         <Form.Item
-          label="Phone"
-          validateStatus={formik.errors.phone && formik.touched.phone ? "error" : ""}
+          label="Số điện thoại"
+          validateStatus={
+            formik.errors.phone && formik.touched.phone ? "error" : ""
+          }
           help={formik.touched.phone && formik.errors.phone}
         >
           <Input
@@ -161,12 +202,14 @@ export default function CustomerRegisterForm() {
 
         {/* Role */}
         <Form.Item
-          label="Chọn Role"
-          validateStatus={formik.errors.roleId && formik.touched.roleId ? "error" : ""}
+          label="Loại tài khoản"
+          validateStatus={
+            formik.errors.roleId && formik.touched.roleId ? "error" : ""
+          }
           help={formik.touched.roleId && formik.errors.roleId}
         >
           <Select
-            placeholder="Chọn role"
+            placeholder="Chọn loại tài khoản"
             value={formik.values.roleId}
             onChange={handleRoleChange}
             onDropdownVisibleChange={(open) => {
@@ -178,19 +221,21 @@ export default function CustomerRegisterForm() {
           >
             {roles.map((r) => (
               <Option key={r.roleId} value={r.roleId}>
-                {r.roleName}
+                {getDisplayRoleName(r.roleName)}
               </Option>
             ))}
           </Select>
         </Form.Item>
 
-        {/* Company Fields - KHÔNG CÓ DẤU * */}
+        {/* Company fields */}
         {isCompanyRole && (
           <div className="company-fields">
             <Form.Item
               label="Tên công ty"
               validateStatus={
-                formik.touched.companyName && !formik.values.companyName ? "error" : ""
+                formik.touched.companyName && !formik.values.companyName
+                  ? "error"
+                  : ""
               }
               help={
                 formik.touched.companyName && !formik.values.companyName
@@ -228,7 +273,7 @@ export default function CustomerRegisterForm() {
             </Form.Item>
 
             <Form.Item
-              label="Địa Chỉ"
+              label="Địa chỉ"
               validateStatus={
                 formik.touched.address && !formik.values.address ? "error" : ""
               }
@@ -252,9 +297,11 @@ export default function CustomerRegisterForm() {
         {/* Submit */}
         <Form.Item>
           <Button
+            type="primary"
             htmlType="submit"
-            className="auth-btn mt-3"
             loading={formik.isSubmitting}
+            block
+            className="auth-btn"
           >
             Đăng ký
           </Button>

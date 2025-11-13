@@ -51,6 +51,7 @@ import InvoiceList from "../customer/InvoiceList";
 
 import AboutPage from "../HomePage/AboutPage";
 import ContactPage from "../HomePage/ContactPage";
+import AllFeedbacksPage from "../components/AllFeedbacksPage";
 
 
 
@@ -120,6 +121,10 @@ const Router = () => {
         {
           path: "review-quotations",
           element: <ReviewQuotationManagement />
+        },
+        {
+          path: "feedback-admin",
+          element: <AllFeedbacksPage />
         },
         
 
@@ -202,6 +207,10 @@ const Router = () => {
         {
           path:"services/:id",
           element:<ServiceDetail/>
+        },
+         {
+          path:"feedback-page",
+          element:<AllFeedbacksPage/>
         },
 
 
