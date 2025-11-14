@@ -102,6 +102,7 @@ public class SecurityConfig {
                                 .requestMatchers(PUBLIC_URL).permitAll()
 
                                 // Admin endpoints
+                                .requestMatchers("/api/roles").hasRole("ADMIN")
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .requestMatchers("/api/users").hasRole("ADMIN") // GET all users
                                 .requestMatchers("/api/users/{userId}").hasRole("ADMIN") // PUT/DELETE
@@ -109,7 +110,7 @@ public class SecurityConfig {
 //                                                .requestMatchers("/api/assignments/**").hasRole("MANAGER") //moi
                                 // Assignment endpoints
 //                                                .requestMatchers(POST, "/api/assignments/assign").hasRole("MANAGER")
-                                .requestMatchers("PATCH", "/api/work-progress/**/status").hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
+//                                .requestMatchers("PATCH", "/api/work-progress/*/status").hasAnyRole("EMPLOYEE", "MANAGER", "ADMIN")
 //                                                .requestMatchers("/api/assignments").hasRole("ADMIN")
                                 // ✅ Customer có thể tạo payment
 
@@ -217,7 +218,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-//                 return new BCryptPasswordEncoder(); // Đổi sang BCrypt
-        return NoOpPasswordEncoder.getInstance();
+                 return new BCryptPasswordEncoder(); // Đổi sang BCrypt
+//        return NoOpPasswordEncoder.getInstance();
     }
 }
