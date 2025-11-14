@@ -32,6 +32,7 @@ public class QuotationResponse {
    private String employeePhone;
    private String employeeEmail;
    private String reason;
+   private Double distanceKm;
 
 }
 

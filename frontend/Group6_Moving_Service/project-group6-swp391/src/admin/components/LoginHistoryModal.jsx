@@ -4,7 +4,7 @@ import moment from "moment";
 
 export default function LoginHistoryModal({ user, history, onHide }) {
     return (
-        <Modal show onHide={onHide} size="lg">
+        <Modal centered show onHide={onHide} size="lg" dialogClassName="custom-modal">
             <Modal.Header closeButton>
                 <Modal.Title>Lịch sử đăng nhập - {user?.username}</Modal.Title>
             </Modal.Header>

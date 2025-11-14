@@ -370,22 +370,6 @@ export default function VehicleAssignment() {
       ),
     },
     {
-      title: "Xe Đã Phân Công",
-      key: "hasVehicles",
-      width: 120,
-      render: (_, record) => (
-        <Badge
-          count={record.hasVehicles ? 1 : 0}
-          showZero
-          style={{
-            backgroundColor: record.hasVehicles ? "#52c41a" : "#faad14",
-          }}
-        >
-          <CarOutlined style={{ fontSize: 20, color: record.hasVehicles ? "#52c41a" : "#d9d9d9" }} />
-        </Badge>
-      ),
-    },
-    {
       title: "Thao Tác",
       key: "action",
       width: 120,

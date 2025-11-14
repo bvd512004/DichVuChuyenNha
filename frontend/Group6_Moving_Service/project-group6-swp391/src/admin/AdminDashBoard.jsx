@@ -1,7 +1,32 @@
 import React, { useState } from "react";
-import { Container, Row, Col, Nav, Alert } from "react-bootstrap";
-import { FiUserPlus, FiShield, FiTruck, FiClock, FiDollarSign, FiList } from "react-icons/fi";  // Thêm icons cho service
-import { message } from "antd";
+import {
+  Layout,
+  Menu,
+  Card,
+  Statistic,
+  Row,
+  Col,
+  Typography,
+  Space,
+  Button,
+  Badge,
+  Avatar,
+  Spin,
+  message,
+} from "antd";
+import {
+  UserOutlined,
+  TeamOutlined,
+  CarOutlined,
+  DollarOutlined,
+  UnorderedListOutlined,
+  ClockCircleOutlined,
+  PlusOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  DashboardOutlined,
+  SafetyOutlined,
+} from "@ant-design/icons";
 import { useAdminData } from "./hooks/useAdminData";
 import UserTable from "./components/UserTable";
 import RoleTable from "./components/RoleTable";
@@ -10,14 +35,21 @@ import AuditLogTable from "./components/AuditLogTable";
 import CreateUserModal from "./components/CreateUserModal";
 import EditUserModal from "./components/EditUserModal";
 import LoginHistoryModal from "./components/LoginHistoryModal";
+import CreateVehicleModal from "./components/CreateVehicleModal";
 import ServicePrice from "./components/ServicePrice";
 import ServiceDetail from "./components/ServiceDetail";
 import "./style/AdminDashboard.css";
 
+const { Sider, Content } = Layout;
+const { Title, Text } = Typography;
+
 export default function AdminDashboard() {
-  const { users, roles, vehicles, auditLogs, loading, refetchUsers } = useAdminData();
-  const [activeTab, setActiveTab] = useState("users");
-  const [showCreate, setShowCreate] = useState(false);
+  const { users, roles, vehicles, auditLogs, loading, refetchUsers, refetchVehicles } = useAdminData();
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [collapsed, setCollapsed] = useState(false);
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [showCreateVehicle, setShowCreateVehicle] = useState(false);
+  const [showEditUser, setShowEditUser] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [historyUser, setHistoryUser] = useState(null);
   const [loginHistory, setLoginHistory] = useState([]);
@@ -25,6 +57,7 @@ export default function AdminDashboard() {
   const handleEdit = (user) => {
     if (roles.length === 0) return message.warning("Đang tải roles...");
     setEditUser(user);
+    setShowEditUser(true);
   };
 
   const handleViewHistory = async (user) => {
@@ -37,76 +70,293 @@ export default function AdminDashboard() {
     }
   };
 
+  const menuItems = [
+    {
+      key: "dashboard",
+      icon: <DashboardOutlined />,
+      label: "Tổng Quan",
+    },
+    {
+      key: "users",
+      icon: <UserOutlined />,
+      label: "Quản Lý Người Dùng",
+    },
+   
+    {
+      key: "vehicles",
+      icon: <CarOutlined />,
+      label: "Quản Lý Xe",
+    },
+    {
+      key: "serviceprices",
+      icon: <DollarOutlined />,
+      label: "Giá Dịch Vụ",
+    },
+    
+    
+  ];
+
+  // Tính toán thống kê
+  const stats = {
+    totalUsers: users.length,
+    totalRoles: roles.length,
+    totalVehicles: vehicles.length,
+    totalLogs: auditLogs.length,
+    activeUsers: users.filter((u) => u.status !== "INACTIVE").length,
+    availableVehicles: vehicles.filter((v) => v.status === "AVAILABLE").length,
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="loading-container">
+          <Spin size="large" tip="Đang tải dữ liệu..." />
+        </div>
+      );
+    }
+
+    switch (activeTab) {
+      case "dashboard":
+        return (
+          <div className="dashboard-content">
+            <Row gutter={[24, 24]}>
+              <Col xs={24} lg={12}>
+                <Card
+                  title={
+                    <Space>
+                      <UserOutlined />
+                      <span>Người Dùng Gần Đây</span>
+                    </Space>
+                  }
+                  className="recent-card"
+                  extra={
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => setShowCreateUser(true)}
+                    >
+                      Tạo Mới
+                    </Button>
+                  }
+                >
+                  <div className="recent-list">
+                    {users.slice(0, 5).map((user) => (
+                      <div key={user.userId} className="recent-item">
+                        <Avatar icon={<UserOutlined />} className="recent-avatar" />
+                        <div className="recent-info">
+                          <Text strong>{user.username}</Text>
+                          <Text type="secondary">{user.email}</Text>
+                        </div>
+                        <Badge
+                          status={user.status === "ACTIVE" ? "success" : "default"}
+                          text={
+                            roles.find((r) => r.roleId === user.roleId)?.roleName || "Unknown"
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} lg={12}>
+                <Card
+                  title={
+                    <Space>
+                      <CarOutlined />
+                      <span>Xe Gần Đây</span>
+                    </Space>
+                  }
+                  className="recent-card"
+                >
+                  <div className="recent-list">
+                    {vehicles.slice(0, 5).map((vehicle) => (
+                      <div key={vehicle.vehicleId} className="recent-item">
+                        <Avatar icon={<CarOutlined />} className="recent-avatar" />
+                        <div className="recent-info">
+                          <Text strong>{vehicle.vehicleType}</Text>
+                          <Text type="secondary">{vehicle.licensePlate}</Text>
+                        </div>
+                        <Badge
+                          status={vehicle.status === "AVAILABLE" ? "success" : "warning"}
+                          text={vehicle.status}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </Col>
+            </Row>
+          </div>
+        );
+      case "users":
+        return (
+          <Card
+            title={
+              <Space>
+                <UserOutlined />
+                <span>Quản Lý Người Dùng</span>
+              </Space>
+            }
+            extra={
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setShowCreateUser(true)}
+              >
+                Tạo Người Dùng Mới
+              </Button>
+            }
+            className="content-card"
+          >
+            <UserTable
+              users={users}
+              roles={roles}
+              onEdit={handleEdit}
+              onViewHistory={handleViewHistory}
+              refetchUsers={refetchUsers}
+            />
+          </Card>
+        );
+      case "roles":
+        return (
+          <Card
+            title={
+              <Space>
+                <SafetyOutlined />
+                <span>Quản Lý Vai Trò</span>
+              </Space>
+            }
+            className="content-card"
+          >
+            <RoleTable roles={roles} />
+          </Card>
+        );
+      case "vehicles":
+        return (
+          <Card
+            title={
+              <Space>
+                <CarOutlined />
+                <span>Quản Lý Xe</span>
+              </Space>
+            }
+            extra={
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setShowCreateVehicle(true)}
+              >
+                Thêm Xe Mới
+              </Button>
+            }
+            className="content-card"
+          >
+            <VehicleTable vehicles={vehicles} />
+          </Card>
+        );
+      case "serviceprices":
+        return (
+          <Card
+            title={
+              <Space>
+                <DollarOutlined />
+                <span>Quản Lý Giá Dịch Vụ</span>
+              </Space>
+            }
+            className="content-card"
+          >
+            <ServicePrice />
+          </Card>
+        );
+      case "servicedetails":
+        return (
+          <Card
+            title={
+              <Space>
+                <UnorderedListOutlined />
+                <span>Chi Tiết Dịch Vụ</span>
+              </Space>
+            }
+            className="content-card"
+          >
+            <ServiceDetail />
+          </Card>
+        );
+      case "logs":
+        return (
+          <Card
+            title={
+              <Space>
+                <ClockCircleOutlined />
+                <span>Nhật Ký Hệ Thống</span>
+              </Space>
+            }
+            className="content-card"
+          >
+            <AuditLogTable logs={auditLogs} />
+          </Card>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <Container fluid className="admin-dashboard py-4">
-      <Row>
-        <Col md={2} className="sidebar bg-light border-right p-3">
-          <h4 className="mb-4">Admin Menu</h4>
-          <Nav className="flex-column">
-            <Nav.Link onClick={() => setActiveTab("users")} active={activeTab === "users"}>
-              <FiUserPlus className="me-2" /> Users
-            </Nav.Link>
-            <Nav.Link onClick={() => setShowCreate(true)}>
-              <FiUserPlus className="me-2" /> Create User
-            </Nav.Link>
-            <Nav.Link onClick={() => setActiveTab("roles")} active={activeTab === "roles"}>
-              <FiShield className="me-2" /> Roles
-            </Nav.Link>
-            <Nav.Link onClick={() => setActiveTab("vehicles")} active={activeTab === "vehicles"}>
-              <FiTruck className="me-2" /> Vehicles
-            </Nav.Link>
-            <Nav.Link onClick={() => setActiveTab("serviceprices")} active={activeTab === "serviceprices"}>
-              <FiDollarSign className="me-2" /> Service Prices
-            </Nav.Link>
-            <Nav.Link onClick={() => setActiveTab("servicedetails")} active={activeTab === "servicedetails"}>
-              <FiList className="me-2" /> Service Details
-            </Nav.Link>
-            <Nav.Link onClick={() => setActiveTab("logs")} active={activeTab === "logs"}>
-              <FiClock className="me-2" /> Logs
-            </Nav.Link>
-          </Nav>
-        </Col>
-
-        <Col md={9} className="p-4">
-          <h2 className="mb-4 text-center fw-bold">
-            <FiShield className="me-2" /> Admin Dashboard
-          </h2>
-
-          {loading ? (
-            <Alert variant="info">Đang tải dữ liệu...</Alert>
-          ) : (
-            <>
-              {activeTab === "users" && (
-                <UserTable users={users} roles={roles} onEdit={handleEdit} onViewHistory={handleViewHistory} />
-              )}
-              {activeTab === "roles" && <RoleTable roles={roles} />}
-              {activeTab === "vehicles" && <VehicleTable vehicles={vehicles} />}
-              {activeTab === "serviceprices" && <ServicePrice />}
-              {activeTab === "servicedetails" && <ServiceDetail />}
-              {activeTab === "logs" && <AuditLogTable logs={auditLogs} />}
-            </>
-          )}
-        </Col>
-      </Row>
+    <Layout className="admin-dashboard-layout">
+      <Sider
+        trigger={null}
+        collapsible
+        collapsed={collapsed}
+        className="admin-sidebar"
+        width={260}
+      >
+      
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[activeTab]}
+          items={menuItems}
+          onClick={({ key }) => setActiveTab(key)}
+          className="admin-menu"
+        />
+      </Sider>
+      <Layout className="admin-layout-content">
+        <Content className="admin-content">
+          <Button
+            type="text"
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={() => setCollapsed(!collapsed)}
+            className="sidebar-toggle-btn"
+            size="large"
+          />
+          {renderContent()}
+        </Content>
+      </Layout>
 
       <CreateUserModal
-        show={showCreate}
-        onHide={() => setShowCreate(false)}
+        open={showCreateUser}
+        onCancel={() => setShowCreateUser(false)}
         roles={roles}
         onSuccess={() => {
-          setShowCreate(false);
+          setShowCreateUser(false);
           refetchUsers();
         }}
       />
 
-      {editUser && (
-        <EditUserModal
-          user={editUser}
-          roles={roles}
-          onHide={() => setEditUser(null)}
-          onSuccess={refetchUsers}
-        />
-      )}
+      <EditUserModal
+        open={showEditUser}
+        onCancel={() => {
+          setShowEditUser(false);
+          setEditUser(null);
+        }}
+        user={editUser}
+        roles={roles}
+        onSuccess={() => {
+          setShowEditUser(false);
+          setEditUser(null);
+          refetchUsers();
+        }}
+      />
 
       {historyUser && (
         <LoginHistoryModal
@@ -115,6 +365,15 @@ export default function AdminDashboard() {
           onHide={() => setHistoryUser(null)}
         />
       )}
-    </Container>
+
+      <CreateVehicleModal
+        open={showCreateVehicle}
+        onCancel={() => setShowCreateVehicle(false)}
+        onSuccess={() => {
+          setShowCreateVehicle(false);
+          refetchVehicles();
+        }}
+      />
+    </Layout>
   );
 }

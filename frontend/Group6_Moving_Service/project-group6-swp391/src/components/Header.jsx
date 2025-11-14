@@ -111,6 +111,19 @@ const Header = () => {
         },
       ]
       : []),
+    ...(roleName?.toLowerCase() === "customer_individual"||
+      roleName?.toLowerCase() === "customer_enterprise"
+      ? [
+        {
+          key: "customer-page",
+          label: "Quản lý yêu cầu",
+          onClick: () => {
+            navigate("/customer-page");
+            setIsDropdownVisible(false);
+          },
+        },
+      ]
+      : []),
     ...(roleName?.toLowerCase() === "employee" &&
       position &&
       (position.toLowerCase() === "driver" || position.toLowerCase() === "tài xế")
@@ -120,6 +133,20 @@ const Header = () => {
           label: "Driver Dashboard",
           onClick: () => {
             navigate("/driver/dashboard");
+            setIsDropdownVisible(false);
+          },
+        },
+      ]
+      : []),
+    ...(roleName?.toLowerCase() === "employee" &&
+      position &&
+      (position.toLowerCase() === "surveyer" || position.toLowerCase() === "khảo sát")
+      ? [
+        {
+          key: "survey-dashboard",
+          label: "Survey Dashboard",
+          onClick: () => {
+            navigate("/survey-dashboard");
             setIsDropdownVisible(false);
           },
         },
