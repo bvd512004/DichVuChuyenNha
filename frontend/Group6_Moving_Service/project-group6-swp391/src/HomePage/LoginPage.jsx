@@ -21,8 +21,8 @@ const LoginPage = () => {
   const validationSchema = Yup.object({
    
     email: Yup.string()
-      .required("Email hoặc Username là bắt buộc")
-      .min(3, "Email/Username phải có ít nhất 3 ký tự"),
+      .required("Email là bắt buộc")
+      .min(3, "Email phải có ít nhất 3 ký tự"),
     password: Yup.string().required("Mật khẩu là bắt buộc"),
   });
 

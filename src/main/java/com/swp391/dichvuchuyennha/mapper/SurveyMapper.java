@@ -31,7 +31,7 @@ public interface SurveyMapper {
     @Mapping(target = "addressFrom",source = "request.pickupAddress")
     @Mapping(target = "addressTo",source = "request.destinationAddress")
     @Mapping(target = "surveyFloors", source = "floors") // ✅ map list floors
-
+    @Mapping(target = "estimateWorkers",source="estimateWorkers")
     SurveyResponse toResponse(Surveys survey);
     @Mapping(target = "images", source = "images")
 

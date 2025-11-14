@@ -357,7 +357,7 @@ const handleCreateQuotation = async (survey) => {
                     
                     <Descriptions.Item label="Địa chỉ đi" span={3}>{viewingSurvey.addressFrom}</Descriptions.Item>
                     <Descriptions.Item label="Địa chỉ đến" span={3}>{viewingSurvey.addressTo}</Descriptions.Item>
-                    
+                    <Descriptions.Item label="Số công nhân ước tính" span={3}>{viewingSurvey.estimateWorkers}</Descriptions.Item>
                     {/* THÔNG TIN CHI TIẾT TỪ KHẢO SÁT */}
                     <Descriptions.Item label="Diện tích (m²)">{viewingSurvey.totalArea || 'N/A'}</Descriptions.Item>
                     <Descriptions.Item label="Số tầng ">{viewingSurvey.numFloors || 'N/A'}</Descriptions.Item>

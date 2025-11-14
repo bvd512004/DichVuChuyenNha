@@ -115,6 +115,10 @@ public class AdminService {
 
         Users savedUser = userRepository.save(user);
 
+        Employee employee = new Employee();
+        employee.setUser(savedUser);
+        employee.setStatus("FREE");
+        employeeRepository.save(employee);
         logAction("CREATE_USER", "USER", savedUser.getUserId(),
                 "Created user: " + savedUser.getUsername() + " | Role: " + role.getRoleName());
 
