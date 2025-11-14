@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Form, Input, Button, Select, message } from "antd";
+import { Form, Input, Button, Select, message, notification } from "antd";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { useNavigate } from "react-router-dom";
 import "./style/CustomerRegisterForm.css";
 
 const { Option } = Select;
@@ -12,6 +13,9 @@ const validationSchema = Yup.object().shape({
   password: Yup.string()
     .min(6, "Password phải có ít nhất 6 ký tự")
     .required("Password không được để trống"),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref("password"), null], "Mật khẩu xác nhận không khớp")
+    .required("Vui lòng xác nhận mật khẩu"),
   email: Yup.string()
     .email("Email không hợp lệ")
     .required("Email không được để trống"),
@@ -25,8 +29,9 @@ const validationSchema = Yup.object().shape({
 export default function CustomerRegisterForm() {
   const [roles, setRoles] = useState([]);
   const [selectedRole, setSelectedRole] = useState(null);
+  const navigate = useNavigate();
 
-  // 📌 Load danh sách vai trò từ backend
+  // Load danh sách vai trò
   useEffect(() => {
     axios
       .get("http://localhost:8080/api/users/roles")
@@ -55,11 +60,11 @@ export default function CustomerRegisterForm() {
       : roleName;
   };
 
-  // 🧠 Formik setup
   const formik = useFormik({
     initialValues: {
       username: "",
       password: "",
+      confirmPassword: "",
       email: "",
       phone: "",
       roleId: null,
@@ -72,6 +77,9 @@ export default function CustomerRegisterForm() {
       let url = "";
       let payload = { ...values };
       const roleName = getRoleNameById(values.roleId);
+
+      // Xóa confirmPassword trước khi gửi lên backend
+      delete payload.confirmPassword;
 
       try {
         if (roleName === "customer_company") {
@@ -90,12 +98,21 @@ export default function CustomerRegisterForm() {
           delete payload.address;
         }
 
-        await axios.post(url, payload);
-        message.success("Đăng ký thành công!");
+        const res = await axios.post(url, payload);
+
+        const successMessage = res.data?.message || "Đăng ký thành công!";
+        notification.success({
+          message: "Đăng ký thành công",
+          description: successMessage,
+          placement: "topRight",
+        });
+
+        // Delay 1s để user thấy notification trước khi chuyển trang
+        setTimeout(() => navigate("/login"), 1000);
+
         formik.resetForm();
         setSelectedRole(null);
       } catch (err) {
-        // 🧩 Hiển thị lỗi backend (AppException, ErrorCode, v.v.)
         console.error("❌ Lỗi đăng ký:", err.response || err);
 
         const errorMessage =
@@ -105,7 +122,6 @@ export default function CustomerRegisterForm() {
           err.message ||
           "Đăng ký thất bại. Vui lòng thử lại.";
 
-        // Nếu backend trả lỗi cụ thể cho email hoặc username, gán vào formik
         if (errorMessage.toLowerCase().includes("email")) {
           formik.setFieldError("email", errorMessage);
         } else if (errorMessage.toLowerCase().includes("username")) {
@@ -132,7 +148,6 @@ export default function CustomerRegisterForm() {
       <p className="auth-subtitle">Vui lòng điền đầy đủ thông tin</p>
 
       <Form onFinish={formik.handleSubmit} layout="vertical">
-        {/* Username */}
         <Form.Item
           label="Tên đăng nhập"
           validateStatus={
@@ -149,7 +164,6 @@ export default function CustomerRegisterForm() {
           />
         </Form.Item>
 
-        {/* Password */}
         <Form.Item
           label="Mật khẩu"
           validateStatus={
@@ -166,7 +180,24 @@ export default function CustomerRegisterForm() {
           />
         </Form.Item>
 
-        {/* Email */}
+        <Form.Item
+          label="Xác nhận mật khẩu"
+          validateStatus={
+            formik.errors.confirmPassword && formik.touched.confirmPassword
+              ? "error"
+              : ""
+          }
+          help={formik.touched.confirmPassword && formik.errors.confirmPassword}
+        >
+          <Input.Password
+            name="confirmPassword"
+            placeholder="Nhập lại mật khẩu"
+            value={formik.values.confirmPassword}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+          />
+        </Form.Item>
+
         <Form.Item
           label="Email"
           validateStatus={
@@ -183,7 +214,6 @@ export default function CustomerRegisterForm() {
           />
         </Form.Item>
 
-        {/* Phone */}
         <Form.Item
           label="Số điện thoại"
           validateStatus={
@@ -200,7 +230,6 @@ export default function CustomerRegisterForm() {
           />
         </Form.Item>
 
-        {/* Role */}
         <Form.Item
           label="Loại tài khoản"
           validateStatus={
@@ -227,7 +256,6 @@ export default function CustomerRegisterForm() {
           </Select>
         </Form.Item>
 
-        {/* Company fields */}
         {isCompanyRole && (
           <div className="company-fields">
             <Form.Item
@@ -294,7 +322,6 @@ export default function CustomerRegisterForm() {
           </div>
         )}
 
-        {/* Submit */}
         <Form.Item>
           <Button
             type="primary"
