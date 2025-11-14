@@ -18,13 +18,13 @@ export const useAdminData = () => {
                 adminApi.getUsers(),
                 adminApi.getRoles(),
                 adminApi.getVehicles(),
-                adminApi.getAuditLogs(),
+                // adminApi.getAuditLogs(),
             ]);
 
             setUsers(usersData);
             setRoles(rolesData);
             setVehicles(vehiclesData);
-            setAuditLogs(logsData);
+            // setAuditLogs(logsData);
         } catch (err) {
             console.error("Load data error:", err.response?.data || err.message);
             if (err.response?.status === 403) {
@@ -58,7 +58,7 @@ export const useAdminData = () => {
         users,
         roles,
         vehicles,
-        auditLogs,
+        // auditLogs,
         loading,
         refetchUsers,
         refetchVehicles,

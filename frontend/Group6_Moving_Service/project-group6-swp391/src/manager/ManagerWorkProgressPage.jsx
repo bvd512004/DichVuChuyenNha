@@ -172,8 +172,8 @@ const ManagerWorkProgressPage = () => {
         (wp) => wp.employeeId === selectedEmployee
       );
       if (isDuplicate) {
-        setMsgText("⚠️ Nhân viên này đã có Work Progress cho hợp đồng này!");
-        message.warning("⚠️ Nhân viên này đã có Work Progress cho hợp đồng này!");
+        setMsgText("⚠️ Nhân viên này đã có công việc cho hợp đồng này!");
+        message.warning("⚠️ Nhân viên này đã có công việc cho hợp đồng này!");
         return;
       }
     } catch (err) {
@@ -192,14 +192,14 @@ const ManagerWorkProgressPage = () => {
 
     try {
       await workProgressApi.createForEmployee(payload);
-      message.success("✅ Tạo Work Progress thành công!");
+      message.success("✅ Phân công công viêc thành công!");
       setTimeout(() => handleCloseModal(), 1000);
     } catch (err) {
       const errorMsg =
         err.response?.data?.message || err.message || "Lỗi không xác định";
-      console.error("❌ Lỗi tạo Work Progress:", err);
+      console.error("❌ Lỗi tạo công việc:", err);
       setMsgText("❌ " + errorMsg);
-      message.error("❌ Tạo Work Progress thất bại: " + errorMsg);
+      message.error("❌ Tạo công việc thất bại: " + errorMsg);
     } finally {
       setLoading(false);
     }
@@ -309,7 +309,7 @@ const ManagerWorkProgressPage = () => {
                     className="btn-create"
                     onClick={() => handleOpenCreateModal(c.contractId)}
                   >
-                    Tạo Work Progress
+                    Tạo Công Việc
                   </button>
                 </td>
               </tr>
@@ -544,7 +544,7 @@ const ManagerWorkProgressPage = () => {
             maxWidth: "600px",
           }}
         >
-          <h3>🧱 Tạo Work Progress cho hợp đồng #{selectedContract}</h3>
+          <h3>🧱 Phân công công việc cho hợp đồng #{selectedContract}</h3>
           <div style={{ marginBottom: "20px" }}>
             <label>Chọn nhân viên *</label>
             <select

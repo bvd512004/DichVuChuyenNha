@@ -131,13 +131,13 @@ public class AdminController {
     }
 
     // === AUDIT LOGS ===
-    @GetMapping("/logs")
-    public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getAuditLogs() {
-        List<AuditLogResponse> logs = adminService.getAuditLogs();
-        return ResponseEntity.ok(ApiResponse.<List<AuditLogResponse>>builder()
-                .code(1000)
-                .message("System audit logs")
-                .result(logs)
-                .build());
-    }
+//    @GetMapping("/logs")
+//    public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getAuditLogs() {
+//        List<AuditLogResponse> logs = adminService.getAuditLogs();
+//        return ResponseEntity.ok(ApiResponse.<List<AuditLogResponse>>builder()
+//                .code(1000)
+//                .message("System audit logs")
+//                .result(logs)
+//                .build());
+//    }
 }

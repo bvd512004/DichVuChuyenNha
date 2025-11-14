@@ -218,7 +218,11 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-                 return new BCryptPasswordEncoder(); // Đổi sang BCrypt
+
+        return new BCryptPasswordEncoder(); // Đổi sang BCrypt
+
+                
+
 //        return NoOpPasswordEncoder.getInstance();
     }
 }
