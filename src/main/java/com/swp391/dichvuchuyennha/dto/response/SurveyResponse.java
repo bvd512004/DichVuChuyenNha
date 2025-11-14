@@ -29,6 +29,7 @@ public class SurveyResponse {
     private String companyName;
     private LocalDateTime requestTime;
     private List<SurveyFloorResponse> surveyFloors;
+    private Integer estimateWorkers;
 
 
 

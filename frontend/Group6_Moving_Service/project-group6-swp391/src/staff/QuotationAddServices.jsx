@@ -152,7 +152,7 @@ const QuotationAddServices = () => {
             key: "action",
             render: (_, record) => {
                 // ✨ CHỈ CHO PHÉP THÊM/SỬA DỊCH VỤ KHI Ở DRAFT, REVIEW, hoặc PENDING
-                const isEditable =  record.status === "DRAFT" || record.status === "REJECTED";
+                const isEditable =  record.status === "REVIEW" || record.status === "REJECTED";
                 
                 return (
                     <Button

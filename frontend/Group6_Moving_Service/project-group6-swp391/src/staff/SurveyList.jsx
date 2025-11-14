@@ -244,6 +244,7 @@ export const SurveyList = ({ surveys, loading, onEdit, onDelete, onCreateQuotati
                   <br />
                   <Text strong style={{ fontSize: '1.1em', display: 'block' }}>{record.username}</Text>
                   <Text type="secondary" style={{ fontSize: '0.9em' }}>{record.companyName}</Text>
+
                 </div>
 
                 {/* Hiển thị tiến độ tầng */}
