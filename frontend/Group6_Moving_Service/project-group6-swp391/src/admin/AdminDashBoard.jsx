@@ -101,7 +101,7 @@ export default function AdminDashboard() {
     totalUsers: users.length,
     totalRoles: roles.length,
     totalVehicles: vehicles.length,
-    totalLogs: auditLogs.length,
+    // totalLogs: auditLogs.length,
     activeUsers: users.filter((u) => u.status !== "INACTIVE").length,
     availableVehicles: vehicles.filter((v) => v.status === "AVAILABLE").length,
   };

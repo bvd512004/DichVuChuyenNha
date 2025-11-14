@@ -94,7 +94,7 @@ export default function ContractAssignment() {
 
   const handleAssign = async () => {
     if (!selectedEmployee) {
-      setAssignError("Please select an employee");
+      setAssignError("Vui Lòng Chọn Một Công Nhân Để Gán!");
       return;
     }
 
@@ -208,7 +208,7 @@ export default function ContractAssignment() {
           onClick={() => handleViewDetails(record.contractId)}
           loading={loading && selectedContract === record.contractId}
         >
-          View Details
+          Xem Chi Tiết
         </Button>
       ),
     },
@@ -337,7 +337,7 @@ export default function ContractAssignment() {
                             handleUnassign(emp.employeeId);
                           }}
                         >
-                          Remove
+                          Xóa
                         </Button>,
                       ]}
                     >
@@ -359,7 +359,7 @@ export default function ContractAssignment() {
         title={
           <Space>
             <UserAddOutlined />
-            <span>Assign Employee to Contract</span>
+            <span>Gán Công Nhân Vào Hợp Đồng</span>
           </Space>
         }
         open={assignModalVisible}
@@ -370,8 +370,8 @@ export default function ContractAssignment() {
         }}
         onOk={handleAssign}
         confirmLoading={loading}
-        okText="Assign"
-        cancelText="Cancel"
+        okText="Gán"
+        cancelText="Hủy"
         okButtonProps={{ disabled: loading || !!assignError }}
       >
         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
@@ -395,7 +395,7 @@ export default function ContractAssignment() {
           )}
           <div>
             <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>
-              Select Employee
+              Chọn Công Nhân
             </label>
             <Select
               placeholder="Choose an employee"
@@ -429,22 +429,22 @@ export default function ContractAssignment() {
               fontSize: '13px',
               color: '#666'
             }}>
-              <strong>📅 Assignment Date:</strong> {dayjs(contractDetail.movingDay).format("DD/MM/YYYY")}
+              <strong>📅 Thời Gian Gán:</strong> {dayjs(contractDetail.movingDay).format("DD/MM/YYYY")}
             </div>
           )}
         </Space>
       </Modal>
 
       <Modal
-        title="Confirm Unassign"
+        title="Xác nhận Bỏ gán"
         open={employeeToRemove !== null}
         onCancel={() => setEmployeeToRemove(null)}
         onOk={confirmUnassign}
-        okText="Yes, Remove"
+        okText="Có, Xóa"
         okType="danger"
-        cancelText="Cancel"
+        cancelText="Hủy"
       >
-        <p>Are you sure you want to remove this employee from the contract?</p>
+        <p>Bạn có chắc muốn xóa công nhân này khỏi hợp đồng?</p>
       </Modal>
     </div>
   );

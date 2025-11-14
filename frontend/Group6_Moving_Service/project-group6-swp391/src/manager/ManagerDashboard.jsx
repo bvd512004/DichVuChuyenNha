@@ -26,7 +26,7 @@ const ManagerDashboard = () => {
     {
       key: "contract-assignment",
       icon: <FileTextOutlined />,
-      label: <Link to="contract-assignment">Phân công hợp đồng</Link>,
+      label: <Link to="contract-assignment">Phân công công nhân </Link>,
     },
     {
       key: "assign-surveyer",
@@ -51,7 +51,7 @@ const ManagerDashboard = () => {
     {
       key: "manager/work-progress",
       icon: <UserAddOutlined />,
-      label: <Link to="manager/work-progress">Tạo tiến độ công việc</Link>,
+      label: <Link to="manager/work-progress">Phân công công việc</Link>,
     },
     {
       key: "manager/work-progress-list",

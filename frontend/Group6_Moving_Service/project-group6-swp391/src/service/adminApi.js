@@ -42,7 +42,7 @@ export const adminApi = {
     createVehicle: (data) => api.post("/api/admin/vehicles", data),
 
     // Audit Logs
-    getAuditLogs: () => api.get("/api/admin/logs").then(r => r.data.result || []),
+    // getAuditLogs: () => api.get("/api/admin/logs").then(r => r.data.result || []),
 
     // Login History
     getLoginHistory: (userId) =>
